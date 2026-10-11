@@ -5,6 +5,7 @@ Todo lo que puedes hacer en Obsidita una vez instalada. Para instalarla y config
 ## 📑 Índice
 
 - [🧭 La interfaz](#-la-interfaz)
+- [📱 En el móvil](#-en-el-móvil)
 - [🔤 Fuentes](#-fuentes)
 - [📂 Explorador y pestañas](#-explorador-y-pestañas)
 - [✍️ Editar notas](#️-editar-notas)
@@ -32,6 +33,23 @@ Todo lo que puedes hacer en Obsidita una vez instalada. Para instalarla y config
 | **Barra de estado** | Recuento de palabras y caracteres de la nota abierta. |
 
 Los avisos (guardado, errores, sincronización, versión nueva disponible) aparecen como notificaciones breves en una esquina.
+
+---
+
+## 📱 En el móvil
+
+En pantallas de 768 px de ancho o menos (móviles y tablets en vertical) la interfaz cambia sola:
+
+- **Cabecera**: ☰ abre la barra lateral; 🔍 abre el buscador rápido de notas; luego el botón de lectura/edición y el menú ⋯ de la nota.
+- **Barra lateral**: se despliega sobre la nota y se cierra al abrir una nota o al tocar fuera. Los botones de la cinta están en su pie.
+- **Menú contextual** de archivos y carpetas: mantén pulsado el elemento.
+- **Pestañas**: solo aparecen si hay más de una abierta (con *Abrir en nueva pestaña*).
+- **Barra de formato**: en una sola fila que se desliza en horizontal. El botón 🖼️ sube imágenes de la galería o de la cámara.
+- **Preferencias**: a pantalla completa; primero la lista de secciones y luego la elegida.
+
+Se puede instalar como app con *Añadir a pantalla de inicio* (Safari en iOS, Chrome en Android): se abre a pantalla completa, sin la barra del navegador.
+
+No están en el móvil: arrastrar y soltar archivos en el explorador (usa *Mover a…* en el menú), los atajos de teclado salvo con teclado físico, la barra de estado, la cinta (la opción *Mostrar menú de cinta* no se aplica) y el ajuste de fuente con <kbd>Ctrl</kbd>+rueda (usa *Preferencias → Apariencia*).
 
 ---
 
@@ -215,7 +233,7 @@ Lista todas las etiquetas del vault con el número de notas de cada una:
 
 ## 🖼️ Adjuntos e imágenes
 
-Arrastra o pega una imagen en el editor: se sube y se inserta el enlace en la nota.
+Arrastra o pega una imagen en el editor, o usa el botón 🖼️ de la barra de formato: se sube y se inserta el enlace en la nota.
 
 La ubicación se elige en *Preferencias → Archivos → Archivos adjuntos*, con las mismas opciones que Obsidian de escritorio:
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import type { EditorView } from '@codemirror/view';
 import { undo, redo } from '@codemirror/commands';
 import {
@@ -18,9 +18,12 @@ import {
   IconLink,
   IconBrackets,
   IconTable,
+  IconImage,
   IconChevronDown,
 } from './Icons';
 import { t as translate, useT } from '../i18n';
+import { pickImages } from '../imageUpload';
+import { isMobile } from '../mobile';
 
 // Instantánea del editor sobre la que trabajan las acciones de formato
 interface TA {
@@ -223,6 +226,8 @@ interface MenuItem {
 
 function ToolMenu({ title, icon, items }: { title: string; icon: ReactNode; items: MenuItem[] }) {
   const [open, setOpen] = useState(false);
+  // En el móvil la barra se desliza en horizontal y recortaría el desplegable: se coloca fijo bajo el botón
+  const [fixedAt, setFixedAt] = useState<CSSProperties>();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -243,13 +248,19 @@ function ToolMenu({ title, icon, items }: { title: string; icon: ReactNode; item
         aria-label={title}
         aria-expanded={open}
         onMouseDown={keepFocus}
-        onClick={() => setOpen(!open)}
+        onClick={(e) => {
+          if (!open && isMobile()) {
+            const r = e.currentTarget.getBoundingClientRect();
+            setFixedAt({ position: 'fixed', top: r.bottom + 4, left: Math.max(4, Math.min(r.left, window.innerWidth - 200)) });
+          } else setFixedAt(undefined);
+          setOpen(!open);
+        }}
       >
         {icon}
         <IconChevronDown size={10} className="toolbar-caret" />
       </button>
       {open && (
-        <div className="toolbar-dropdown">
+        <div className="toolbar-dropdown" style={fixedAt}>
           {items.map((item) => (
             <button
               key={item.title}
@@ -271,7 +282,7 @@ function ToolMenu({ title, icon, items }: { title: string; icon: ReactNode; item
   );
 }
 
-export default function EditorToolbar({ viewRef }: { viewRef: RefObject<EditorView | null> }) {
+export default function EditorToolbar({ viewRef, filePath }: { viewRef: RefObject<EditorView | null>; filePath: string }) {
   const act = (fn: (ta: TA) => void) => () => {
     if (viewRef.current) fn(snapshot(viewRef.current));
   };
@@ -345,6 +356,9 @@ export default function EditorToolbar({ viewRef }: { viewRef: RefObject<EditorVi
       </ToolButton>
       <ToolButton title={t('toolbar.table')} onClick={act(insertTable)}>
         <IconTable />
+      </ToolButton>
+      <ToolButton title={t('toolbar.image')} onClick={() => viewRef.current && pickImages(viewRef.current, filePath)}>
+        <IconImage />
       </ToolButton>
     </div>
   );

@@ -1,6 +1,7 @@
 import { useStore } from '../store';
 import { useT } from '../i18n';
 import { IconClose, IconPlus, IconSidebar } from './Icons';
+import { useIsMobile } from '../mobile';
 
 export default function Tabs() {
   const tabs = useStore((s) => s.tabs);
@@ -9,12 +10,13 @@ export default function Tabs() {
   const removeTab = useStore((s) => s.removeTab);
   const showRibbon = useStore((s) => s.showRibbon);
   const toggleSidebar = useStore((s) => s.toggleSidebar);
+  const mobile = useIsMobile();
   const t = useT();
 
   return (
     <div className="tabs">
       {/* Sin la cinta, este es el único botón para volver a abrir la barra lateral */}
-      {!showRibbon && (
+      {!showRibbon && !mobile && (
         <button className="icon-btn tabs-sidebar-toggle" title={`${t('sidebar.toggle')} (Ctrl+B)`} onClick={toggleSidebar}>
           <IconSidebar size={16} />
         </button>

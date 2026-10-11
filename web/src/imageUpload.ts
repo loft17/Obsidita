@@ -45,6 +45,24 @@ async function upload(view: EditorView, notePath: string, files: File[], pos: nu
   }
 }
 
+// Botón "Insertar imagen" de la barra de herramientas: en el móvil no hay arrastrar y soltar, y
+// el selector de archivos permite elegir de la galería o hacer una foto con la cámara
+export function pickImages(view: EditorView, notePath: string) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.multiple = true;
+  input.onchange = () => {
+    const files = imageFiles(input.files);
+    if (!files.length) return;
+    const { from, to } = view.state.selection.main;
+    if (from !== to) view.dispatch({ changes: { from, to } });
+    // Las fotos de la cámara se llaman todas igual (image.jpg): mejor con fecha, como al pegar
+    upload(view, notePath, files, from, files.length > 1 ? (f) => f.name || pastedName(f) : pastedName);
+  };
+  input.click();
+}
+
 export const imageUpload = (getPath: () => string) =>
   EditorView.domEventHandlers({
     paste(event, view) {

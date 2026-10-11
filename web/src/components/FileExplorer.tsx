@@ -5,6 +5,7 @@ import { flushPendingSave, cancelPendingSave, changeNotePath } from './Editor';
 import { RenameDialog, MoveDialog, DeleteFileDialog } from './FileDialogs';
 import { useT } from '../i18n';
 import { IconChevronRight, IconChevronDown, IconCollapseAll, IconFileNew, IconFolderNew } from './Icons';
+import { isMobile, useIsMobile, useLongPress } from '../mobile';
 
 interface TreeItem {
   type: 'folder' | 'file' | 'other';
@@ -70,24 +71,35 @@ function FileTreeNode({
   expandedFolders: Set<string>;
   onToggle: (path: string) => void;
   onSelect: (path: string) => void;
-  onContextMenu: (e: React.MouseEvent, path: string, isFolder: boolean) => void;
+  onContextMenu: (at: { x: number; y: number }, path: string, isFolder: boolean) => void;
   drag: DragHandlers;
   depth: number;
 }) {
+  const mobile = useIsMobile();
   const activeTab = useStore((s) => s.activeTab);
   const isFolder = item.type === 'folder';
   const isExpanded = expandedFolders.has(item.path);
   const children = grouped.get(item.path) ?? [];
   const folder = isFolder ? item.path : parentFolder(item.path);
+  const longPress = useLongPress((x, y) => onContextMenu({ x, y }, item.path, isFolder));
 
   return (
     <div className={`tree-node ${isFolder && drag.dropTarget === item.path ? 'drop-target' : ''}`}>
       <div
         className={`tree-item ${isFolder ? 'folder' : 'file'} ${activeTab === item.path ? 'active' : ''}`}
         style={{ paddingLeft: '8px' }}
-        draggable
-        onClick={() => (isFolder ? onToggle(item.path) : onSelect(item.path))}
-        onContextMenu={(e) => onContextMenu(e, item.path, isFolder)}
+        // En pantallas táctiles arrastrar choca con el scroll y la pulsación larga: se mueve con el menú
+        draggable={!mobile}
+        {...longPress.handlers}
+        onClick={() => {
+          if (longPress.fired.current) return;
+          if (isFolder) onToggle(item.path);
+          else onSelect(item.path);
+        }}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          onContextMenu({ x: e.clientX, y: e.clientY }, item.path, isFolder);
+        }}
         onDragStart={(e) => drag.onDragStart(e, item.path)}
         onDragOver={(e) => drag.onDragOver(e, folder, isFolder ? item.path : undefined)}
         onDrop={(e) => drag.onDrop(e, folder)}
@@ -146,18 +158,21 @@ export default function FileExplorer() {
 
   const refreshTree = async () => setTree(await filesApi.getTree());
 
-  const handleSelect = (path: string) => openFile(path, fileName(path));
+  const handleSelect = (path: string) => {
+    openFile(path, fileName(path));
+    // En el móvil la barra lateral tapa la nota (también si ya estaba abierta)
+    if (isMobile()) useStore.setState({ sidebarOpen: false });
+  };
 
   const handleOpenInNewTab = (path: string) => {
     addTab(path, fileName(path));
     setActiveTab(path);
   };
 
-  const handleContextMenu = (e: React.MouseEvent, path: string, isFolder: boolean) => {
-    e.preventDefault();
+  const handleContextMenu = (at: { x: number; y: number }, path: string, isFolder: boolean) => {
     // Mantener el menú dentro de la ventana
-    const x = Math.min(e.clientX, window.innerWidth - 220);
-    const y = Math.min(e.clientY, window.innerHeight - 240);
+    const x = Math.max(4, Math.min(at.x, window.innerWidth - 220));
+    const y = Math.max(4, Math.min(at.y, window.innerHeight - 240));
     setMenu({ x, y, path, isFolder });
   };
 

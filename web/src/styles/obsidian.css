@@ -154,6 +154,8 @@ a:hover {
   display: flex;
   flex-direction: row;
   height: 100vh;
+  /* En el móvil 100vh incluye la barra del navegador, que tapa el final de la página */
+  height: 100dvh;
 }
 
 /* Ribbon */
@@ -2526,4 +2528,281 @@ a:hover {
 
 .settings-heading-first {
   margin-top: 0;
+}
+
+/* ===== Versión móvil (ver mobile.ts) ===== */
+
+/* Cabecera compacta: sustituye a la cinta y a la ruta de la nota */
+.mobile-header {
+  position: relative;
+  z-index: 10;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 48px;
+  padding: 4px 6px;
+  padding-top: max(4px, env(safe-area-inset-top));
+  background-color: var(--background-secondary);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.mobile-header-title {
+  flex: 1;
+  min-width: 0;
+  padding: 0 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
+.settings-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 0;
+  background: transparent;
+  color: var(--text-normal);
+  font-weight: 600;
+}
+
+.settings-back:hover,
+.settings-back:active {
+  background: transparent;
+}
+
+@keyframes sidebar-in {
+  from { transform: translateX(-100%); }
+}
+
+@keyframes backdrop-in {
+  from { opacity: 0; }
+}
+
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+
+  /* iOS amplía la página al enfocar un campo con letra de menos de 16px */
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+
+  /* Botones a tamaño de dedo */
+  .mobile-header .icon-btn,
+  .sidebar-toolbar .icon-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .sidebar-footer .icon-btn {
+    width: 36px;
+    height: 40px;
+  }
+
+  /* Barra lateral como panel deslizante sobre la nota */
+  .sidebar-left {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 900;
+    width: min(320px, 85vw);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
+    animation: sidebar-in 0.2s ease-out;
+  }
+
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 899;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: backdrop-in 0.2s ease-out;
+  }
+
+  .sidebar-footer {
+    justify-content: space-between;
+  }
+
+  .sidebar-footer-spacer {
+    display: none;
+  }
+
+  .tree-item {
+    min-height: 40px;
+    font-size: 15px;
+    /* Sin el menú de "copiar enlace" de iOS: la pulsación larga abre el menú contextual */
+    -webkit-touch-callout: none;
+  }
+
+  .search-match {
+    padding: 8px;
+    font-size: 13px;
+  }
+
+  .dropdown-item {
+    padding: 10px 12px;
+    font-size: 15px;
+  }
+
+  .dropdown-menu {
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .tabs {
+    padding-top: 4px;
+  }
+
+  .tab {
+    max-width: 160px;
+  }
+
+  .tab-new {
+    display: none;
+  }
+
+  /* Nota a todo el ancho */
+  .cm-editor .cm-content {
+    padding: 12px 16px 80px;
+  }
+
+  .reading-view-inner {
+    padding: 16px 16px 80px;
+  }
+
+  .inline-title-wrap {
+    padding: 16px 16px 0;
+  }
+
+  .property-key {
+    flex-basis: 110px;
+  }
+
+  .image-viewer {
+    padding: 12px;
+  }
+
+  /* Barra de formato en una sola fila que se desliza en horizontal */
+  .editor-toolbar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin: 0 0 4px;
+    border-radius: 0;
+    border-width: 0 0 1px;
+    scrollbar-width: none;
+  }
+
+  .editor-toolbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .toolbar-btn {
+    flex: none;
+    min-width: 38px;
+    height: 36px;
+  }
+
+  .toolbar-sep {
+    flex: none;
+  }
+
+  .toolbar-dropdown-item {
+    padding: 10px 12px;
+    font-size: 15px;
+  }
+
+  /* Buscar en la nota: bajo la cabecera, a todo el ancho */
+  .search-bar {
+    position: fixed;
+    top: calc(52px + env(safe-area-inset-top));
+    left: 8px;
+    right: 8px;
+    width: auto;
+  }
+
+  .search-bar button {
+    padding: 8px 12px;
+  }
+
+  .toasts {
+    left: 12px;
+    right: 12px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    align-items: stretch;
+  }
+
+  .toasts-top {
+    top: calc(56px + env(safe-area-inset-top));
+    bottom: auto;
+  }
+
+  /* Diálogos */
+  .modal {
+    width: calc(100% - 24px);
+    padding: 18px;
+  }
+
+  .file-dialog-buttons button {
+    padding: 10px 16px;
+  }
+
+  .auth-screen {
+    padding: 16px;
+  }
+
+  /* Ajustes a pantalla completa: primero la lista de secciones y luego la elegida */
+  .settings-modal {
+    width: 100vw;
+    height: 100dvh;
+    border: none;
+    border-radius: 0;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .settings-titlebar {
+    min-height: 48px;
+  }
+
+  .settings-body.mobile-nav .settings-content,
+  .settings-body.mobile-section .settings-sidebar {
+    display: none;
+  }
+
+  .settings-body.mobile-nav .settings-sidebar {
+    width: 100%;
+    border-right: none;
+  }
+
+  .settings-nav-item {
+    padding: 12px 10px;
+    font-size: 15px;
+  }
+
+  .settings-content {
+    padding: 16px;
+  }
+
+  .settings-group {
+    padding: 4px 14px;
+  }
+
+  .setting-item {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .setting-info {
+    flex: 1 1 180px;
+    min-width: 0;
+  }
 }

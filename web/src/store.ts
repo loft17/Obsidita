@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { isMobile } from './mobile';
 
 interface TreeItem {
   type: 'folder' | 'file' | 'other';
@@ -121,6 +122,8 @@ const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
 const applyTheme = (theme: Theme) => {
   const resolved = theme === 'system' ? (systemDark.matches ? 'dark' : 'light') : theme;
   document.documentElement.dataset.theme = resolved;
+  // Color de la barra del navegador en el móvil, a juego con la cabecera (--background-secondary)
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolved === 'light' ? '#f6f6f6' : '#1e1e1e');
 };
 
 applyTheme(initialTheme);
@@ -402,7 +405,8 @@ export const useStore =create<AppStore>((set) => ({
   setSettingsOpen: (open) => set({ settingsOpen: open }),
   expandedFolders: new Set(),
   collapseAll: () => set({ expandedFolders: new Set() }),
-  sidebarOpen: true,
+  // En el móvil la barra lateral tapa la nota: se empieza con ella cerrada
+  sidebarOpen: !isMobile(),
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   sidebarView: 'files',
   // Pulsar la vista que ya está abierta cierra la barra lateral, como en Obsidian

@@ -15,13 +15,14 @@ import ImageViewer from './ImageViewer';
 import StatusBar from './StatusBar';
 import { isImage } from '../attachments';
 import NoteMenu from './NoteMenu';
-import { IconBook, IconEdit } from './Icons';
+import { IconBook, IconEdit, IconSidebar, IconSearch } from './Icons';
 import { useT, t as translate } from '../i18n';
 import Toasts from './Toasts';
 import { notify } from '../toast';
 import { useSyncNotifications } from '../syncNotify';
 import { useUpdateNotification } from '../updateNotify';
 import { loadServerFonts } from '../serverFonts';
+import { useIsMobile } from '../mobile';
 
 // Cada cuánto se comprueba si la nota abierta ha cambiado en el servidor (ms)
 const EXTERNAL_CHECK_INTERVAL = 15000;
@@ -43,6 +44,9 @@ export default function MainLayout() {
   const settingsOpen = useStore((s) => s.settingsOpen);
   const setSettingsOpen = useStore((s) => s.setSettingsOpen);
   const conflict = useStore((s) => s.conflicts[0]);
+  const tabCount = useStore((s) => s.tabs.length);
+  const toggleSidebar = useStore((s) => s.toggleSidebar);
+  const mobile = useIsMobile();
   const t = useT();
   useSyncNotifications();
   useUpdateNotification();
@@ -109,6 +113,11 @@ export default function MainLayout() {
     document.addEventListener('wheel', onWheel, { passive: false });
     return () => document.removeEventListener('wheel', onWheel);
   }, []);
+
+  // En el móvil la barra lateral tapa la nota: al abrir una se cierra
+  useEffect(() => {
+    if (mobile && activeTab) useStore.setState({ sidebarOpen: false });
+  }, [activeTab]);
 
   useEffect(() => {
     if (!activeTab) return;
@@ -195,10 +204,23 @@ export default function MainLayout() {
     if (activeTab === path) setFileContent(theirs);
   };
 
+  const editToggle = activeTab && !activeIsImage && (
+    <button
+      className="icon-btn"
+      title={editMode ? t('note.toReading') : t('note.toEditing')}
+      onClick={() => setEditMode(!editMode)}
+    >
+      {editMode ? <IconBook /> : <IconEdit />}
+    </button>
+  );
+
   return (
-    <div className="app-container">
-      {showRibbon && <Ribbon />}
+    <div className={`app-container ${mobile ? 'is-mobile' : ''}`}>
+      {showRibbon && !mobile && <Ribbon />}
       <div className="main-content">
+        {mobile && sidebarOpen && (
+          <div className="sidebar-backdrop" onClick={() => useStore.setState({ sidebarOpen: false })} />
+        )}
         {sidebarOpen && (
           <aside className="sidebar-left">
             {sidebarView === 'search' ? (
@@ -210,13 +232,29 @@ export default function MainLayout() {
             ) : (
               <FileExplorer />
             )}
-            {!showRibbon && <SidebarFooter />}
+            {(!showRibbon || mobile) && <SidebarFooter />}
           </aside>
         )}
 
         <div className="editor-container">
-          <Tabs />
-          {activeTab && showTabHeader && (
+          {mobile && (
+            <div className="mobile-header">
+              <button className="icon-btn" title={t('sidebar.toggle')} onClick={toggleSidebar}>
+                <IconSidebar />
+              </button>
+              <div className="mobile-header-title">
+                {activeTab ? (activeTab.split('/').pop() || activeTab).replace(/\.md$/i, '') : ''}
+              </div>
+              <button className="icon-btn" title={t('quickOpen.title')} onClick={() => setQuickOpen(true)}>
+                <IconSearch />
+              </button>
+              {editToggle}
+              {activeTab && <NoteMenu />}
+            </div>
+          )}
+          {/* En el móvil las pestañas solo se muestran si hay más de una */}
+          {(!mobile || tabCount > 1) && <Tabs />}
+          {!mobile && activeTab && showTabHeader && (
             <div className="breadcrumb">
               <div className="breadcrumb-path">
                 {activeTab.replace(/\.md$/i, '').split('/').map((part, i, arr) => (
@@ -227,15 +265,7 @@ export default function MainLayout() {
                 ))}
               </div>
               <div className="breadcrumb-actions">
-                {!activeIsImage && (
-                  <button
-                    className="icon-btn"
-                    title={editMode ? t('note.toReading') : t('note.toEditing')}
-                    onClick={() => setEditMode(!editMode)}
-                  >
-                    {editMode ? <IconBook /> : <IconEdit />}
-                  </button>
-                )}
+                {editToggle}
                 <NoteMenu />
               </div>
             </div>
@@ -259,7 +289,7 @@ export default function MainLayout() {
               </div>
             )}
           </div>
-          {!activeIsImage && <StatusBar content={fileContent} />}
+          {!activeIsImage && !mobile && <StatusBar content={fileContent} />}
         </div>
       </div>
       <Toasts />

@@ -304,7 +304,7 @@ export default function Editor({ filePath, content, onContentChange }: Props) {
           onChange={(e) => commit(e.target.value)}
         />
       )}
-      {!rawMode && <EditorToolbar viewRef={viewRef} />}
+      {!rawMode && <EditorToolbar viewRef={viewRef} filePath={filePath} />}
       <div className="editor-scroll" hidden={rawMode}>
         {showInlineTitle && <InlineTitle filePath={filePath} onEnter={() => viewRef.current?.focus()} />}
         {note.valid && (

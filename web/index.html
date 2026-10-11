@@ -3,7 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- viewport-fit=cover: la app ocupa también la zona de la muesca (se respeta con env(safe-area-inset-*));
+       interactive-widget: el teclado del móvil encoge la página en lugar de taparla -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
+  <!-- Instalable en el móvil ("Añadir a pantalla de inicio") -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <meta name="theme-color" content="#1e1e1e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Obsidita" />
   <title>Obsidita</title>
   <script>
     // Aplica el tema guardado antes de pintar para evitar un destello del tema oscuro

@@ -3,10 +3,11 @@ import { useStore, type EditorMode, type FontKind, type Theme, DEFAULT_FONT_SIZE
 import { settingsApi, syncApi, type NotesConfig, type NotesConfigUpdate, type ServerLimits, type SyncConfig, type SyncConfigUpdate, type SyncProvider, type UpdateStatus } from '../api';
 import { formatDate as formatMoment, DEFAULT_DAILY_FORMAT, DEFAULT_DATE_FORMAT, DEFAULT_TIME_FORMAT } from '../templates';
 import { getLang, LANGUAGES, Trans, useI18n, useT, type Lang, type MessageKey } from '../i18n';
-import { IconClose, IconEdit, IconEye, IconFolderNew, IconList, IconLock, IconReset, IconSearch, IconSync, IconUserCircle } from './Icons';
+import { IconChevronLeft, IconClose, IconEdit, IconEye, IconFolderNew, IconList, IconLock, IconReset, IconSearch, IconSync, IconUserCircle } from './Icons';
 import { runSync } from '../syncNotify';
 import { BUNDLED_FONTS, isBundledFont, type FontCategory } from '../fonts';
 import { useServerFonts } from '../serverFonts';
+import { useIsMobile } from '../mobile';
 
 interface Props {
   onClose: () => void;
@@ -1253,6 +1254,9 @@ function VariablesSection() {
 export default function SettingsModal({ onClose }: Props) {
   const [section, setSection] = useState('about');
   const [query, setQuery] = useState('');
+  // En el móvil no caben la lista y la sección a la vez: primero la lista y luego la sección elegida
+  const mobile = useIsMobile();
+  const [showSection, setShowSection] = useState(false);
   const t = useT();
 
   useEffect(() => {
@@ -1267,12 +1271,19 @@ export default function SettingsModal({ onClose }: Props) {
     <div className="modal-overlay" onMouseDown={onClose}>
       <div className="settings-modal" onMouseDown={(e) => e.stopPropagation()}>
         <div className="settings-titlebar">
-          <span>{t('settings.title')}</span>
+          {mobile && showSection ? (
+            <button className="settings-back" onClick={() => setShowSection(false)}>
+              <IconChevronLeft size={16} />
+              <span>{t(SECTIONS.find((s) => s.id === section)!.label)}</span>
+            </button>
+          ) : (
+            <span>{t('settings.title')}</span>
+          )}
           <button className="icon-btn" title={t('common.close')} onClick={onClose}>
             <IconClose size={16} />
           </button>
         </div>
-        <div className="settings-body">
+        <div className={`settings-body ${mobile ? (showSection ? 'mobile-section' : 'mobile-nav') : ''}`}>
           <nav className="settings-sidebar">
             <div className="settings-search">
               <IconSearch size={14} />
@@ -1287,7 +1298,10 @@ export default function SettingsModal({ onClose }: Props) {
               <div
                 key={id}
                 className={`settings-nav-item ${section === id ? 'active' : ''}`}
-                onClick={() => setSection(id)}
+                onClick={() => {
+                  setSection(id);
+                  setShowSection(true);
+                }}
               >
                 <Icon size={16} />
                 <span>{t(label)}</span>
