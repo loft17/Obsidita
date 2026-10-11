@@ -584,6 +584,8 @@ a:hover {
 .cm-editor .cm-scroller {
   font-family: inherit;
   overflow: visible;
+  /* Ya lo pone el tema base de CodeMirror; se repite para no depender de él al centrar */
+  display: flex;
   /* Centra el texto junto con los números de línea, para que estos queden pegados a él */
   justify-content: center;
 }
@@ -593,6 +595,7 @@ a:hover {
   width: 100%;
   margin: 0;
   padding: 16px 32px 80px;
+  outline: none;
   caret-color: var(--text-normal);
 }
 

@@ -375,6 +375,9 @@ sudo certbot --nginx -d notas.ejemplo.com   # si aún no tienes certificado
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
+> [!WARNING]
+> **No añadas tu propia `Content-Security-Policy` en el proxy** (p. ej. `add_header Content-Security-Policy "default-src 'self'";`, típica de los fragmentos de "hardening", o la pestaña *Advanced* de Nginx Proxy Manager). La app ya envía la suya. Si llegan dos, el navegador aplica las dos y gana la más restrictiva. Así se bloquean el script inline de `index.html` y los estilos de CodeMirror: el texto de la nota sale sin centrar y con un borde blanco, y fallan el cursor, la selección y el autocompletado. En DevTools → Red → `index.html` debe aparecer **una sola** cabecera `Content-Security-Policy`, la que empieza por `default-src 'self'; script-src 'self' 'sha256-…'`.
+
 </details>
 
 <details>
@@ -398,6 +401,7 @@ pm2 logs obsidian-web
 - [ ] Proxy inverso con HTTPS delante.
 - [ ] `TRUST_PROXY=1` (o el valor adecuado).
 - [ ] En nginx: cabeceras `Host` y `X-Forwarded-Proto`, y `client_max_body_size 50m`.
+- [ ] El proxy no añade su propia `Content-Security-Policy` (solo debe llegar la de la app).
 - [ ] `VAULTS_ROOT` definida.
 - [ ] Contraseña larga y única.
 - [ ] La cookie `token` es `Secure` y la respuesta incluye `Strict-Transport-Security`.

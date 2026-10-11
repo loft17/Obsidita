@@ -39,6 +39,7 @@ Los comandos de esta guía suponen el despliegue del [README](../README.md#-desp
 | **Las preferencias no se mantienen entre dispositivos** | Las de interfaz se guardan en cada navegador (`localStorage`). |
 | **He olvidado la contraseña** | Ver [MANTENIMIENTO.md](MANTENIMIENTO.md#he-olvidado-la-contraseña). |
 | **El navegador bloquea un script (error de CSP en la consola)** | Has recompilado el frontend sin reiniciar el servidor: los hashes CSP se calculan al arrancar. Reinicia el servicio. |
+| **El texto de la nota sale sin centrar y con un borde blanco; en la consola: *"Applying inline style violates… 'default-src 'self''"*** | El proxy inverso añade su propia `Content-Security-Policy` además de la de la app, y bloquea los estilos de CodeMirror y el script inline. Quita ese `add_header Content-Security-Policy …` de nginx (o la cabecera equivalente en Caddy o Nginx Proxy Manager) y recarga el proxy. Ver el aviso de la [sección de nginx](../README.md#4️⃣-ponle-https-delante). |
 
 ---
 
