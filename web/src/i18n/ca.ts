@@ -269,11 +269,6 @@ export const ca: Messages = {
   'settings.defaultMode.desc': "Com s'obren les notes en seleccionar-les",
   'settings.defaultMode.view': 'Mode lectura',
   'settings.defaultMode.edit': 'Mode edició',
-  'settings.editorMode': "Mode d'edició predeterminat",
-  'settings.editorMode.desc':
-    "Previsualització: amaga la sintaxi markdown excepte a la línia que edites. Font: mostra el markdown tal qual.",
-  'settings.editorMode.preview': 'Mode previsualització',
-  'settings.editorMode.source': 'Mode font',
   'settings.display': 'Pantalla',
   'settings.inlineTitle': 'Títol en línia',
   'settings.inlineTitle.desc': 'Mostra el nom del fitxer com un títol editable en línia amb el contingut del fitxer.',

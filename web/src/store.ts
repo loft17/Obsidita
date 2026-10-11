@@ -53,8 +53,6 @@ interface AppStore {
   setFont: (kind: FontKind, name: string) => void;
   quickFontSize: boolean;
   setQuickFontSize: (enabled: boolean) => void;
-  editorMode: EditorMode;
-  setEditorMode: (mode: EditorMode) => void;
   showInlineTitle: boolean;
   setShowInlineTitle: (show: boolean) => void;
   showLineNumbers: boolean;
@@ -80,17 +78,6 @@ interface AppStore {
 }
 
 export type SidebarView = 'files' | 'search' | 'tags' | 'trash';
-
-// 'preview': vista previa en vivo (oculta la sintaxis fuera de la línea activa); 'source': markdown tal cual
-export type EditorMode = 'preview' | 'source';
-const EDITOR_MODE_KEY = 'editorMode';
-const initialEditorMode = ((): EditorMode => {
-  try {
-    return localStorage.getItem(EDITOR_MODE_KEY) === 'source' ? 'source' : 'preview';
-  } catch {
-    return 'preview';
-  }
-})();
 
 // true si `path` es `base` o está dentro de la carpeta `base`
 export const isUnder = (path: string, base: string) => path === base || path.startsWith(base + '/');
@@ -365,15 +352,6 @@ export const useStore =create<AppStore>((set) => ({
       // almacenamiento no disponible: la preferencia solo dura la sesión
     }
     set({ quickFontSize: enabled });
-  },
-  editorMode: initialEditorMode,
-  setEditorMode: (mode) => {
-    try {
-      localStorage.setItem(EDITOR_MODE_KEY, mode);
-    } catch {
-      // almacenamiento no disponible: la preferencia solo dura la sesión
-    }
-    set({ editorMode: mode });
   },
   showInlineTitle: readBool(INLINE_TITLE_KEY, true),
   setShowInlineTitle: (show) => {

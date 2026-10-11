@@ -268,11 +268,6 @@ export const en: Messages = {
   'settings.defaultMode.desc': 'How notes open when you select them',
   'settings.defaultMode.view': 'Reading mode',
   'settings.defaultMode.edit': 'Editing mode',
-  'settings.editorMode': 'Default editing mode',
-  'settings.editorMode.desc':
-    'Live preview: hides markdown syntax except on the line you are editing. Source: shows the markdown as is.',
-  'settings.editorMode.preview': 'Live preview',
-  'settings.editorMode.source': 'Source mode',
   'settings.display': 'Display',
   'settings.inlineTitle': 'Inline title',
   'settings.inlineTitle.desc': 'Show the file name as an editable title inline with the file contents.',

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { useStore, isUnder, type EditorMode } from '../store';
+import { useStore, isUnder } from '../store';
 import { filesApi, ConflictError } from '../api';
 import { parseNote, composeNote, type FrontmatterData } from '../frontmatter';
 import Properties from './Properties';
@@ -11,7 +11,7 @@ import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirro
 import { markdown, markdownKeymap, markdownLanguage } from '@codemirror/lang-markdown';
 import { indentUnit } from '@codemirror/language';
 import { languages } from '@codemirror/language-data';
-import { livePreview, sourceMode, HighlightSyntax, notePath } from '../livePreview';
+import { livePreview, HighlightSyntax, notePath } from '../livePreview';
 import { imageUpload } from '../imageUpload';
 import { wikilinkCompletion } from '../wikilinkComplete';
 import { setEmbedContent } from '../noteEmbeds';
@@ -116,10 +116,6 @@ export function insertIntoNote(text: string) {
 // del usuario, así que no se autoguardan ni entran en el historial de deshacer
 const externalChange = Annotation.define<boolean>();
 
-// Permite cambiar entre vista previa en vivo y modo fuente sin recrear el editor
-const modeCompartment = new Compartment();
-const modeExtension = (mode: EditorMode) => (mode === 'source' ? sourceMode : livePreview);
-
 const lineNumbersCompartment = new Compartment();
 const lineNumbersExtension = (show: boolean) => (show ? [lineNumbers(), highlightActiveLineGutter()] : []);
 
@@ -135,7 +131,7 @@ function createState(doc: string, onChange: (doc: string) => void, getPath: () =
       // Los bloques ```lang se resaltan con su lenguaje; cada paquete se descarga
       // la primera vez que aparece un bloque que lo usa
       markdown({ base: markdownLanguage, codeLanguages: languages, extensions: [HighlightSyntax] }),
-      modeCompartment.of(modeExtension(useStore.getState().editorMode)),
+      livePreview,
       lineNumbersCompartment.of(lineNumbersExtension(useStore.getState().showLineNumbers)),
       imageUpload(getPath),
       wikilinkCompletion,
@@ -156,7 +152,6 @@ export default function Editor({ filePath, content, onContentChange }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const setTabDirty = useStore((s) => s.setTabDirty);
-  const editorMode = useStore((s) => s.editorMode);
   const showLineNumbers = useStore((s) => s.showLineNumbers);
   const showInlineTitle = useStore((s) => s.showInlineTitle);
   const rawMode = useStore((s) => s.rawMode);
@@ -196,10 +191,6 @@ export default function Editor({ filePath, content, onContentChange }: Props) {
       insertHandler = null;
     };
   }, []);
-
-  useEffect(() => {
-    viewRef.current?.dispatch({ effects: modeCompartment.reconfigure(modeExtension(editorMode)) });
-  }, [editorMode]);
 
   useEffect(() => {
     viewRef.current?.dispatch({ effects: lineNumbersCompartment.reconfigure(lineNumbersExtension(showLineNumbers)) });

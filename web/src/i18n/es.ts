@@ -268,11 +268,6 @@ export const es = {
   'settings.defaultMode.desc': 'Cómo se abren las notas al seleccionarlas',
   'settings.defaultMode.view': 'Modo visor',
   'settings.defaultMode.edit': 'Modo edición',
-  'settings.editorMode': 'Modo de edición predeterminado',
-  'settings.editorMode.desc':
-    'Vista previa: oculta la sintaxis de markdown salvo en la línea que editas. Fuente: muestra el markdown tal cual.',
-  'settings.editorMode.preview': 'Modo vista previa',
-  'settings.editorMode.source': 'Modo fuente',
   'settings.display': 'Pantalla',
   'settings.inlineTitle': 'Título en línea',
   'settings.inlineTitle.desc': 'Mostrar el nombre de archivo como un título editable en línea con el contenido del archivo.',

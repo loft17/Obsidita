@@ -128,10 +128,9 @@ Las notas se abren en **modo visor** o **modo edición** según *Preferencias �
 | Modo | Cómo se ve |
 | :--- | :--- |
 | **Vista previa en vivo** | El Markdown se ve con formato y los marcadores (`#`, `**`, `>`, `[](url)`…) solo aparecen en la línea donde está el cursor. |
-| **Fuente** | El Markdown tal cual, con coloreado de sintaxis. |
 | **Texto sin formato** | El archivo completo como en un bloc de notas, frontmatter incluido (ver [Menú de la nota](#-menú-de-la-nota)). |
 
-El modo por defecto (vista previa o fuente) se elige en *Preferencias → Editor*.
+Al editar siempre se usa la vista previa en vivo; el Markdown tal cual solo se ve en *Texto sin formato*.
 
 ### En la vista previa en vivo
 

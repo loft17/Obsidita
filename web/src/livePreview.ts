@@ -372,4 +372,3 @@ const wikilinkClicks = EditorView.domEventHandlers({
 export const livePreview = [syntaxHighlighting(markdownHighlight), codeBlocks, livePreviewPlugin, liveTables, wikilinkClicks];
 
 // Modo fuente: el markdown se ve tal cual, solo con el coloreado de sintaxis y los bloques de código
-export const sourceMode = [syntaxHighlighting(markdownHighlight), codeBlocks];

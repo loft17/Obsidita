@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import { useStore, type EditorMode, type FontKind, type Theme, DEFAULT_FONT_SIZE, MIN_FONT_SIZE, MAX_FONT_SIZE } from '../store';
+import { useStore, type FontKind, type Theme, DEFAULT_FONT_SIZE, MIN_FONT_SIZE, MAX_FONT_SIZE } from '../store';
 import { settingsApi, syncApi, type NotesConfig, type NotesConfigUpdate, type ServerLimits, type SyncConfig, type SyncConfigUpdate, type SyncProvider, type UpdateStatus } from '../api';
 import { formatDate as formatMoment, DEFAULT_DAILY_FORMAT, DEFAULT_DATE_FORMAT, DEFAULT_TIME_FORMAT } from '../templates';
 import { getLang, LANGUAGES, Trans, useI18n, useT, type Lang, type MessageKey } from '../i18n';
@@ -248,8 +248,6 @@ function AppearanceSection() {
 function EditorSection() {
   const defaultEditMode = useStore((s) => s.defaultEditMode);
   const setDefaultEditMode = useStore((s) => s.setDefaultEditMode);
-  const editorMode = useStore((s) => s.editorMode);
-  const setEditorMode = useStore((s) => s.setEditorMode);
   const showInlineTitle = useStore((s) => s.showInlineTitle);
   const setShowInlineTitle = useStore((s) => s.setShowInlineTitle);
   const showLineNumbers = useStore((s) => s.showLineNumbers);
@@ -271,16 +269,6 @@ function EditorSection() {
         >
           <option value="view">{t('settings.defaultMode.view')}</option>
           <option value="edit">{t('settings.defaultMode.edit')}</option>
-        </select>
-      </div>
-      <div className="setting-item">
-        <div className="setting-info">
-          <div className="setting-name">{t('settings.editorMode')}</div>
-          <div className="setting-desc">{t('settings.editorMode.desc')}</div>
-        </div>
-        <select value={editorMode} onChange={(e) => setEditorMode(e.target.value as EditorMode)}>
-          <option value="preview">{t('settings.editorMode.preview')}</option>
-          <option value="source">{t('settings.editorMode.source')}</option>
         </select>
       </div>
     </div>
