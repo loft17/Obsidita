@@ -9,7 +9,7 @@ import {
   followWikilink, isResolved, parseWikilink, resolveWikilink, scrollToHeading, takePendingHeading, wikilinkLabel,
 } from '../wikilinks';
 import { embedSection, getEmbedContent, getEmbedsVersion, refreshEmbeds, subscribeEmbeds } from '../noteEmbeds';
-import { NOTES_CHANGED } from './Editor';
+import { NOTES_CHANGED, saveNote } from './Editor';
 import { highlightCodeBlocks } from '../codeHighlight';
 import { cachedDiagram, currentDiagramTheme, renderMermaidDiagrams } from '../mermaidDiagrams';
 import { t, useI18n } from '../i18n';
@@ -141,6 +141,62 @@ md.core.ruler.after('inline', 'note_embed_block', (state) => {
     );
   }
 });
+
+// Listas de tareas: - [ ] pendiente / - [x] hecha → casilla (data-line apunta a la línea del cuerpo)
+const TASK = /^\[([ xX])\](?=\s|$)\s?/;
+
+md.core.ruler.after('inline', 'task_list', (state) => {
+  const tokens = state.tokens;
+  for (let i = 2; i < tokens.length; i++) {
+    const inline = tokens[i];
+    if (inline.type !== 'inline' || tokens[i - 1].type !== 'paragraph_open') continue;
+    const item = tokens[i - 2];
+    if (item.type !== 'list_item_open') continue;
+    const first = inline.children?.[0];
+    const m = first?.type === 'text' ? TASK.exec(first.content) : null;
+    if (!first || !m) continue;
+
+    first.content = first.content.slice(m[0].length);
+    const box = new state.Token('task_checkbox', 'input', 0);
+    box.meta = { checked: m[1] !== ' ', line: inline.map?.[0] ?? item.map?.[0] };
+    inline.children!.unshift(box);
+    item.attrJoin('class', m[1] === ' ' ? 'task-list-item' : 'task-list-item is-checked');
+    if (m[1] !== ' ') item.attrSet('data-task', m[1]);
+
+    // Lista que la contiene
+    for (let j = i - 3, depth = 0; j >= 0; j--) {
+      const type = tokens[j].type;
+      if (type === 'bullet_list_close' || type === 'ordered_list_close') depth++;
+      else if (type === 'bullet_list_open' || type === 'ordered_list_open') {
+        if (depth-- === 0) {
+          if (!/contains-task-list/.test(String(tokens[j].attrGet('class') ?? ''))) tokens[j].attrJoin('class', 'contains-task-list');
+          break;
+        }
+      }
+    }
+  }
+});
+
+// En las notas incrustadas la casilla es de solo lectura
+md.renderer.rules.task_checkbox = (tokens, idx, _options, env) => {
+  const { checked, line } = tokens[idx].meta as { checked: boolean; line?: number };
+  const editable = line !== undefined && !Array.isArray(env?.embedStack);
+  return (
+    '<input type="checkbox" class="task-list-item-checkbox"' +
+    (editable ? ` data-line="${line}"` : ' disabled') +
+    (checked ? ' checked' : '') +
+    '>'
+  );
+};
+
+// Marca o desmarca la tarea de la línea indicada del cuerpo de la nota
+function toggleTask(body: string, line: number, checked: boolean): string | null {
+  const lines = body.split('\n');
+  const re = /^(\s*(?:>\s*)*(?:[-*+]|\d+[.)])\s+\[)[ xX](\])/;
+  if (line < 0 || line >= lines.length || !re.test(lines[line])) return null;
+  lines[line] = lines[line].replace(re, `$1${checked ? 'x' : ' '}$2`);
+  return lines.join('\n');
+}
 
 // Límite de incrustaciones anidadas (y protección contra notas que se incrustan entre sí)
 const MAX_EMBED_DEPTH = 4;
@@ -333,8 +389,18 @@ function openWikilink(e: MouseEvent<HTMLDivElement>, notePath: string) {
   return true;
 }
 
-function handleContentClick(e: MouseEvent<HTMLDivElement>, notePath: string) {
+function handleContentClick(
+  e: MouseEvent<HTMLDivElement>,
+  notePath: string,
+  onToggleTask: (line: number, checked: boolean) => void
+) {
   if (openWikilink(e, notePath)) return;
+  const box = (e.target as HTMLElement).closest<HTMLInputElement>('input.task-list-item-checkbox');
+  if (box) {
+    if (box.dataset.line === undefined) e.preventDefault();
+    else onToggleTask(Number(box.dataset.line), box.checked);
+    return;
+  }
   const tag = (e.target as HTMLElement).closest<HTMLElement>('a.tag');
   if (tag) {
     e.preventDefault();
@@ -358,10 +424,11 @@ function handleContentClick(e: MouseEvent<HTMLDivElement>, notePath: string) {
 interface Props {
   content: string;
   filePath?: string;
+  onContentChange?: (content: string) => void;
 }
 
-export default function ReadingView({ content, filePath }: Props) {
-  const { data: frontmatter, body: markdownContent } = useMemo(() => parseNote(content), [content]);
+export default function ReadingView({ content, filePath, onContentChange }: Props) {
+  const { data: frontmatter, body: markdownContent, head } = useMemo(() => parseNote(content), [content]);
   const searchTag = useStore((s) => s.searchTag);
   const showInlineTitle = useStore((s) => s.showInlineTitle);
   // Las rutas de las imágenes se resuelven contra el árbol del vault
@@ -407,6 +474,15 @@ export default function ReadingView({ content, filePath }: Props) {
     renderMermaidDiagrams(contentRef.current, t('mermaid.error'));
   }, [html]);
 
+  // Clic en una casilla: se cambia en el texto de la nota y se guarda
+  const toggleTaskAt = (line: number, checked: boolean) => {
+    const body = toggleTask(markdownContent, line, checked);
+    if (body === null || !filePath) return;
+    const next = head + body;
+    onContentChange?.(next);
+    saveNote(filePath, next);
+  };
+
   return (
     <div className="reading-view">
       <div className="reading-view-inner">
@@ -417,7 +493,7 @@ export default function ReadingView({ content, filePath }: Props) {
         <div
           ref={contentRef}
           className="reading-view-content"
-          onClick={(e) => handleContentClick(e, notePath)}
+          onClick={(e) => handleContentClick(e, notePath, toggleTaskAt)}
           onAuxClick={(e) => e.button === 1 && openWikilink(e, notePath)}
           dangerouslySetInnerHTML={{ __html: html }} />
       </div>

@@ -281,7 +281,7 @@ export default function MainLayout() {
               ) : editMode ? (
                 <Editor filePath={activeTab} content={fileContent} onContentChange={setFileContent} />
               ) : (
-                <ReadingView content={fileContent} filePath={activeTab} />
+                <ReadingView content={fileContent} filePath={activeTab} onContentChange={setFileContent} />
               )
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, color: 'var(--text-faint)' }}>

@@ -1400,6 +1400,34 @@ a:hover {
   margin-bottom: 4px;
 }
 
+.reading-view li.task-list-item {
+  list-style: none;
+}
+
+.reading-view li.task-list-item > .task-list-item-checkbox,
+.reading-view li.task-list-item > p > .task-list-item-checkbox {
+  width: 14px;
+  height: 14px;
+  margin: 0 6px 0 -20px;
+  vertical-align: -2px;
+  accent-color: var(--interactive-accent);
+  cursor: pointer;
+}
+
+.reading-view .task-list-item-checkbox:disabled {
+  cursor: default;
+}
+
+.reading-view li.task-list-item.is-checked {
+  color: var(--text-faint);
+  text-decoration: line-through;
+}
+
+.reading-view li.task-list-item.is-checked li:not(.is-checked) {
+  color: var(--text-normal);
+  text-decoration: none;
+}
+
 .reading-view code {
   background-color: var(--background-secondary);
   padding: 2px 4px;
