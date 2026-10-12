@@ -61,6 +61,19 @@ export function useLongPress(onLongPress: (x: number, y: number) => void, delay 
 // en lugar de encogerla y Safari desplaza la página entera para enseñar el cursor. Al escribir,
 // el editor y Safari se pelean por el scroll y la nota salta arriba. Se ajusta la altura de la
 // app a la zona visible (--app-height) y la página se mantiene sin desplazar
+function revealFocus() {
+  const active = document.activeElement as HTMLElement | null;
+  if (!active || active === document.body) return;
+  const view = EditorView.findFromDOM(active);
+  // En el texto de la nota se muestra su cursor; en un campo (celda de tabla, propiedad,
+  // título...) el propio campo, porque el cursor de CodeMirror no está en él
+  if (view && active === view.contentDOM) {
+    view.dispatch({ effects: EditorView.scrollIntoView(view.state.selection.main.head) });
+  } else {
+    active.scrollIntoView({ block: 'nearest' });
+  }
+}
+
 export function fitToVisualViewport() {
   const vv = window.visualViewport;
   if (!vv) return;
@@ -71,11 +84,7 @@ export function fitToVisualViewport() {
     document.documentElement.style.setProperty('--app-height', `${vv.height}px`);
     if (window.scrollY || window.scrollX) window.scrollTo(0, 0);
     // Al abrirse el teclado, el cursor puede quedar por debajo de la nueva altura
-    if (vv.height < lastHeight) {
-      const cm = document.activeElement?.closest<HTMLElement>('.cm-editor');
-      const view = cm && EditorView.findFromDOM(cm);
-      if (view) requestAnimationFrame(() => view.dispatch({ effects: EditorView.scrollIntoView(view.state.selection.main.head) }));
-    }
+    if (vv.height < lastHeight) requestAnimationFrame(revealFocus);
     lastHeight = vv.height;
   };
   vv.addEventListener('resize', update);

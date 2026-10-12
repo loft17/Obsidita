@@ -213,6 +213,12 @@ class TableWidget extends WidgetType {
       commit(view, wrap);
     });
     wrap.addEventListener('keydown', (e) => onKeyDown(view, wrap, e));
+    // El cursor de CodeMirror no entra en las celdas: se lleva al inicio de la tabla para que
+    // lo que muestre el cursor (p. ej. al abrirse el teclado del móvil) no salte a otra parte
+    wrap.addEventListener('focusin', () => {
+      const pos = view.posAtDOM(wrap);
+      if (view.state.selection.main.head !== pos) view.dispatch({ selection: { anchor: pos } });
+    });
     return wrap;
   }
 
