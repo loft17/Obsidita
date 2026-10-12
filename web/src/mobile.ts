@@ -1,6 +1,7 @@
 // Versión móvil: por debajo de este ancho la interfaz pasa a una sola columna, con la barra
 // lateral como panel deslizante y una cabecera compacta en lugar de pestañas y ruta
 import { useEffect, useRef, useState, type TouchEvent } from 'react';
+import { EditorView } from '@codemirror/view';
 
 const MOBILE_QUERY = '(max-width: 768px)';
 
@@ -54,4 +55,30 @@ export function useLongPress(onLongPress: (x: number, y: number) => void, delay 
   };
 
   return { handlers, fired };
+}
+
+// Safari en iOS no hace caso de interactive-widget=resizes-content: el teclado tapa la página
+// en lugar de encogerla y Safari desplaza la página entera para enseñar el cursor. Al escribir,
+// el editor y Safari se pelean por el scroll y la nota salta arriba. Se ajusta la altura de la
+// app a la zona visible (--app-height) y la página se mantiene sin desplazar
+export function fitToVisualViewport() {
+  const vv = window.visualViewport;
+  if (!vv) return;
+  let lastHeight = vv.height;
+  const update = () => {
+    // Con zoom de pellizco la zona visible es más pequeña, pero no hay que encoger la app
+    if (Math.abs(vv.scale - 1) > 0.01) return;
+    document.documentElement.style.setProperty('--app-height', `${vv.height}px`);
+    if (window.scrollY || window.scrollX) window.scrollTo(0, 0);
+    // Al abrirse el teclado, el cursor puede quedar por debajo de la nueva altura
+    if (vv.height < lastHeight) {
+      const cm = document.activeElement?.closest<HTMLElement>('.cm-editor');
+      const view = cm && EditorView.findFromDOM(cm);
+      if (view) requestAnimationFrame(() => view.dispatch({ effects: EditorView.scrollIntoView(view.state.selection.main.head) }));
+    }
+    lastHeight = vv.height;
+  };
+  vv.addEventListener('resize', update);
+  vv.addEventListener('scroll', update);
+  update();
 }

@@ -156,6 +156,8 @@ a:hover {
   height: 100vh;
   /* En el móvil 100vh incluye la barra del navegador, que tapa el final de la página */
   height: 100dvh;
+  /* Zona visible sin el teclado en pantalla (fitToVisualViewport en mobile.ts) */
+  height: var(--app-height, 100dvh);
 }
 
 /* Ribbon */
@@ -2765,7 +2767,7 @@ a:hover {
   /* Ajustes a pantalla completa: primero la lista de secciones y luego la elegida */
   .settings-modal {
     width: 100vw;
-    height: 100dvh;
+    height: var(--app-height, 100dvh);
     border: none;
     border-radius: 0;
     padding-top: env(safe-area-inset-top);
