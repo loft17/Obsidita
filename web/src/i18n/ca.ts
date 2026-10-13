@@ -86,6 +86,10 @@ export const ca: Messages = {
   'file.deleteFolder': 'Esborra la carpeta',
   'file.copyError': "No s'ha pogut copiar: {error}",
   'file.moveError': "No s'ha pogut moure: {error}",
+  'file.uploading': 'Pujant fitxers…',
+  'file.uploaded': 'Fitxers pujats: {count}',
+  'file.uploadNothing': 'No hi havia notes (.md) ni imatges per pujar',
+  'file.uploadError': "No s'han pogut pujar alguns fitxers: {error}",
   'name.empty': 'El nom no pot estar buit',
   'name.invalid': 'El nom conté caràcters no vàlids: \\ / : * ? " < > |',
 

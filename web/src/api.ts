@@ -131,6 +131,17 @@ export const filesApi = {
     if (!res.ok) throw new Error((await res.json()).error);
     return res.json();
   },
+  // Sube un archivo (nota o imagen) a la carpeta `folder` ('' = raíz); devuelve la ruta guardada
+  uploadToFolder: async (folder: string, file: Blob, name: string): Promise<{ path: string }> => {
+    const params = new URLSearchParams({ folder, name });
+    const res = await fetch(`${API_URL}/files/upload?${params}`, {
+      method: 'POST',
+      headers: { 'Content-Type': file.type || 'application/octet-stream' },
+      body: file,
+    });
+    if (!res.ok) throw new Error((await res.json()).error);
+    return res.json();
+  },
   createFolder: async (path: string) => {
     const res = await fetch(`${API_URL}/files/create-folder`, {
       method: 'POST',

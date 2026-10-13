@@ -111,6 +111,7 @@ la propia web.
 - **Pestañas**: `Ctrl`/`Cmd` + clic o botón central para abrir en una nueva.
 - Duplica, mueve, renombra (los **enlaces se actualizan** solos) y borra a la **papelera** `.trash`, desde donde puedes restaurar.
 - **Adjuntos**: arrastra o pega imágenes; se guardan donde lo hace Obsidian de escritorio.
+- **Sube archivos y carpetas** arrastrándolos desde tu ordenador al explorador: se copian las notas `.md` y las imágenes (respetando las subcarpetas) e ignora el resto.
 - **Notas diarias y plantillas** desde la cinta, con la misma configuración que Obsidian de escritorio.
 
 </td>

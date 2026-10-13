@@ -86,6 +86,10 @@ export const en: Messages = {
   'file.deleteFolder': 'Delete folder',
   'file.copyError': 'Could not copy: {error}',
   'file.moveError': 'Could not move: {error}',
+  'file.uploading': 'Uploading files…',
+  'file.uploaded': 'Files uploaded: {count}',
+  'file.uploadNothing': 'There were no notes (.md) or images to upload',
+  'file.uploadError': 'Some files could not be uploaded: {error}',
   'name.empty': 'The name cannot be empty',
   'name.invalid': 'The name contains invalid characters: \\ / : * ? " < > |',
 

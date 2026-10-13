@@ -32,6 +32,9 @@ const PRINT_STYLES = `
 
 const escapeHtml = (s) => md.utils.escapeHtml(s);
 
+// Archivos que se pueden soltar en el explorador: notas e imágenes
+const UPLOADABLE = /\.(md|png|jpe?g|gif|webp|svg|bmp|avif|ico)$/i;
+
 const PRINT_SCRIPT = "window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 300); });";
 // La página de exportación solo puede ejecutar su script de impresión
 const PRINT_CSP = `default-src 'none'; script-src ${scriptHash(PRINT_SCRIPT)}; style-src 'unsafe-inline'; img-src 'self' data: https:; frame-ancestors 'none'`;
@@ -103,7 +106,8 @@ ${md.render(body)}
     }
   }));
 
-  // Sube un adjunto de la nota `note` (cuerpo binario); la carpeta destino sale de los ajustes
+  // Sube un adjunto de la nota `note` (cuerpo binario); la carpeta destino sale de los ajustes.
+  // Con `folder` (arrastrar archivos al explorador) se guarda en esa carpeta, y solo notas o imágenes
   router.post(
     '/upload',
     express.raw({ type: () => true, limit: MAX_UPLOAD_MB * 1024 * 1024 }),
@@ -111,7 +115,13 @@ ${md.render(body)}
       const note = String(req.query.note || '');
       const name = String(req.query.name || '');
       if (!name || !Buffer.isBuffer(req.body) || !req.body.length) throw new Error('Archivo vacío');
-      const folder = vault.attachmentFolder(cfg.vaultPath, note);
+      let folder;
+      if (req.query.folder !== undefined) {
+        if (!UPLOADABLE.test(name)) throw new Error('Solo se pueden subir notas (.md) e imágenes');
+        folder = String(req.query.folder).replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+      } else {
+        folder = vault.attachmentFolder(cfg.vaultPath, note);
+      }
       res.json({ path: vault.saveAttachment(cfg.vaultPath, folder, name, req.body) });
     })
   );

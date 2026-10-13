@@ -6,6 +6,8 @@ import { RenameDialog, MoveDialog, DeleteFileDialog } from './FileDialogs';
 import { useT } from '../i18n';
 import { IconChevronRight, IconChevronDown, IconCollapseAll, IconFileNew, IconFolderNew } from './Icons';
 import { isMobile, useIsMobile, useLongPress } from '../mobile';
+import { hasExternalFiles, droppedEntries, uploadDropped } from '../folderUpload';
+import { notify } from '../toast';
 
 interface TreeItem {
   type: 'folder' | 'file' | 'other';
@@ -275,6 +277,21 @@ export default function FileExplorer() {
     clearExpandTimer();
   };
 
+  // Archivos o carpetas soltados desde el sistema: se suben las notas e imágenes a `folder`
+  const handleExternalDrop = async (e: React.DragEvent, folder: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    endDrag();
+    const dropped = droppedEntries(e.dataTransfer);
+    notify('upload', t('file.uploading'), 'info', 0);
+    const { uploaded, errors } = await uploadDropped(folder, dropped);
+    await refreshTree();
+    if (folder && uploaded) expandFolder(folder);
+    if (errors.length) notify('upload', t('file.uploadError', { error: errors.join('; ') }), 'error');
+    else if (uploaded) notify('upload', t('file.uploaded', { count: uploaded }));
+    else notify('upload', t('file.uploadNothing'), 'info');
+  };
+
   // No se mueve a su misma carpeta ni una carpeta dentro de sí misma
   const canDrop = (from: string, folder: string) => parentFolder(from) !== folder && !isUnder(folder, from);
 
@@ -288,8 +305,9 @@ export default function FileExplorer() {
     },
     onDragOver: (e, folder, hoveredFolder) => {
       const from = dragPath.current;
-      // Arrastres que no salen del explorador (archivos del sistema, texto...): no se tocan
-      if (from === null) return;
+      const external = from === null && hasExternalFiles(e.dataTransfer);
+      // Arrastres de texto, enlaces...: no se tocan
+      if (from === null && !external) return;
       e.stopPropagation();
       if (hoveredFolder !== expandTimer.current?.folder) {
         clearExpandTimer();
@@ -297,16 +315,20 @@ export default function FileExplorer() {
           expandTimer.current = { folder: hoveredFolder, timer: window.setTimeout(() => expandFolder(hoveredFolder), 700) };
         }
       }
-      const target = canDrop(from, folder) ? folder : null;
+      // Los archivos del sistema se pueden soltar en cualquier carpeta: se copian
+      const target = external || canDrop(from!, folder) ? folder : null;
       if (target !== null) {
         e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
+        e.dataTransfer.dropEffect = external ? 'copy' : 'move';
       }
       if (target !== dropTarget) setDropTarget(target);
     },
     onDrop: async (e, folder) => {
       const from = dragPath.current;
-      if (from === null) return;
+      if (from === null) {
+        if (hasExternalFiles(e.dataTransfer)) handleExternalDrop(e, folder);
+        return;
+      }
       e.preventDefault();
       e.stopPropagation();
       endDrag();
@@ -362,7 +384,7 @@ export default function FileExplorer() {
         onDragOver={(e) => drag.onDragOver(e, '')}
         onDrop={(e) => drag.onDrop(e, '')}
         onDragLeave={(e) => {
-          if (dragPath.current !== null && !e.currentTarget.contains(e.relatedTarget as Node | null)) {
+          if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
             setDropTarget(null);
             clearExpandTimer();
           }

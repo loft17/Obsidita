@@ -85,6 +85,10 @@ export const es = {
   'file.deleteFolder': 'Borrar carpeta',
   'file.copyError': 'No se pudo copiar: {error}',
   'file.moveError': 'No se pudo mover: {error}',
+  'file.uploading': 'Subiendo archivos…',
+  'file.uploaded': 'Archivos subidos: {count}',
+  'file.uploadNothing': 'No había notas (.md) ni imágenes que subir',
+  'file.uploadError': 'No se pudieron subir algunos archivos: {error}',
   'name.empty': 'El nombre no puede estar vacío',
   'name.invalid': 'El nombre contiene caracteres no válidos: \\ / : * ? " < > |',
 

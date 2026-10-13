@@ -110,10 +110,12 @@ Se reconocen los sufijos `Thin`, `ExtraLight`, `Light`, `Regular`, `Medium`, `Se
 | **`Ctrl`/`Cmd` + clic**, **botón central** o **clic derecho → Abrir en pestaña nueva** | La abre en otra pestaña. |
 | **Clic derecho** sobre archivos o carpetas | Nueva nota, nueva carpeta, hacer una copia, mover a…, renombrar, borrar. |
 | Botones de la cabecera del explorador | Crear nota, crear carpeta, contraer todo. |
+| **Arrastrar** archivos o carpetas **desde tu ordenador** al explorador | Los sube a la carpeta donde los sueltas (sobre una nota: a su carpeta; en el hueco libre: a la raíz). |
 
 - **Mover a…** abre un buscador de carpetas: escribe parte del nombre y elige el destino (o `/` para la raíz).
 - **Renombrar o mover** una nota **actualiza los enlaces** que apuntan a ella en el resto del vault.
 - Los nombres no pueden contener `\ / : * ? " < > |`.
+- **Subir desde el ordenador**: solo se suben las notas (`.md`) y las imágenes; el resto de archivos y los ocultos (`.git`, `.DS_Store`…) se ignoran. Una carpeta soltada se recrea con sus subcarpetas: si sueltas `_recursos` sobre `Notas`, sus imágenes quedan en `Notas/_recursos/`. Las carpetas sin notas ni imágenes no se crean. Si ya existe un archivo con el mismo nombre no se sobrescribe: se guarda como `foto 1.png`. Cada archivo puede ocupar como máximo `MAX_UPLOAD_MB` (50 MB por defecto).
 - **Ocultar carpetas**: en *Preferencias → Archivos → Explorador de archivos* escribe un patrón por línea (`*` como comodín, por ejemplo `_recursos` o `Archivo*`). Esas carpetas y su contenido desaparecen del árbol, de la búsqueda y del panel de etiquetas. Se guarda en el navegador, así que es por dispositivo.
 - Las imágenes del vault se abren en un **visor**: ajustadas a la ventana; clic para verlas a tamaño real.
 
