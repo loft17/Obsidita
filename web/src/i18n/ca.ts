@@ -78,6 +78,7 @@ export const ca: Messages = {
   'file.folderName': 'Nom de la carpeta',
   'file.openInNewTab': 'Obre en una pestanya nova',
   'file.makeCopy': "Fes-ne una còpia",
+  'file.downloadFolder': 'Descarrega la carpeta com a ZIP',
   'file.moveFile': 'Mou el fitxer a...',
   'file.moveFolder': 'Mou la carpeta a...',
   'file.rename': 'Canvia el nom',

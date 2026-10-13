@@ -140,6 +140,9 @@ export const filesApi = {
     if (!res.ok) throw new Error((await res.json()).error);
     return res.json();
   },
+  downloadFolder: (path: string) => {
+    return `${API_URL}/files/download-folder/${encodeURIComponent(path)}`;
+  },
 };
 
 export interface TrashItem {

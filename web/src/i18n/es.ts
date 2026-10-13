@@ -77,6 +77,7 @@ export const es = {
   'file.folderName': 'Nombre de la carpeta',
   'file.openInNewTab': 'Abrir en pestaña nueva',
   'file.makeCopy': 'Hacer una copia',
+  'file.downloadFolder': 'Descargar carpeta como ZIP',
   'file.moveFile': 'Mover archivo a...',
   'file.moveFolder': 'Mover carpeta a...',
   'file.rename': 'Renombrar',

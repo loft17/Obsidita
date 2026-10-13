@@ -1,5 +1,8 @@
 import express, { Router } from 'express';
 import MarkdownIt from 'markdown-it';
+import { ZipArchive } from 'archiver';
+import { statSync, readdirSync } from 'fs';
+import { join } from 'path';
 import * as vault from '../vault.js';
 import { prepareLinkUpdate } from '../links.js';
 import { publicError, scriptHash } from '../security.js';
@@ -158,6 +161,61 @@ ${md.render(body)}
   router.post('/create-folder', withVault((cfg, req, res) => {
     vault.createFolder(cfg.vaultPath, req.body.path);
     res.json({ success: true });
+  }));
+
+  // Descargar carpeta como ZIP
+  router.get('/download-folder/:folderPath', withVault((cfg, req, res) => {
+    const folderPath = req.params.folderPath;
+    const fullPath = vault.resolveFile(cfg.vaultPath, folderPath);
+    const stat = statSync(fullPath);
+
+    if (!stat.isDirectory()) {
+      return res.status(400).json({ error: 'No es una carpeta' });
+    }
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+    const folderName = folderPath.split('/').pop() || 'vault';
+    const filename = `${folderName}-${timestamp}.zip`;
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    const archive = new ZipArchive({ zlib: { level: 9 } });
+
+    archive.on('error', (err) => {
+      console.error('Archiver error:', err);
+      if (!res.headersSent) {
+        res.status(500).json({ error: publicError(err, 'No se pudo crear el archivo ZIP') });
+      } else {
+        res.destroy(err);
+      }
+    });
+
+    res.on('close', () => {
+      if (!res.writableFinished) archive.abort();
+    });
+
+    archive.pipe(res);
+
+    const addDirToArchive = (dirPath, arcPath = '') => {
+      const entries = readdirSync(dirPath, { withFileTypes: true });
+
+      for (const entry of entries) {
+        if (entry.isSymbolicLink()) continue;
+
+        const entryPath = join(dirPath, entry.name);
+        const archivePath = arcPath ? `${arcPath}/${entry.name}` : entry.name;
+
+        if (entry.isDirectory()) {
+          addDirToArchive(entryPath, archivePath);
+        } else if (entry.isFile()) {
+          archive.file(entryPath, { name: archivePath });
+        }
+      }
+    };
+
+    addDirToArchive(fullPath);
+    archive.finalize();
   }));
 
   return router;

@@ -78,6 +78,7 @@ export const en: Messages = {
   'file.folderName': 'Folder name',
   'file.openInNewTab': 'Open in new tab',
   'file.makeCopy': 'Make a copy',
+  'file.downloadFolder': 'Download folder as ZIP',
   'file.moveFile': 'Move file to...',
   'file.moveFolder': 'Move folder to...',
   'file.rename': 'Rename',

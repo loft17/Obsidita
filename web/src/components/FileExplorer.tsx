@@ -219,6 +219,16 @@ export default function FileExplorer() {
     }
   };
 
+  const handleDownloadFolder = (path: string) => {
+    const url = filesApi.downloadFolder(path);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Renombrar y mover son el mismo cambio de ruta en el servidor
   const changePath = async (oldPath: string, newPath: string) => {
     await changeNotePath(oldPath, newPath);
@@ -392,6 +402,11 @@ export default function FileExplorer() {
           <div className="dropdown-item" onClick={() => runMenuAction(handleCopy)}>
             {t('file.makeCopy')}
           </div>
+          {menu.isFolder && (
+            <div className="dropdown-item" onClick={() => runMenuAction(handleDownloadFolder)}>
+              {t('file.downloadFolder')}
+            </div>
+          )}
           <div className="dropdown-item" onClick={() => openDialog('move')}>
             {menu.isFolder ? t('file.moveFolder') : t('file.moveFile')}
           </div>
