@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { authApi } from '../api';
 import { useT } from '../i18n';
+import { useStore, DEFAULT_SITE_TITLE } from '../store';
 
 interface Props {
   onComplete: () => void;
@@ -11,6 +12,7 @@ export default function Login({ onComplete }: Props) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const t = useT();
+  const siteTitle = useStore((s) => s.siteTitle);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +37,7 @@ export default function Login({ onComplete }: Props) {
   return (
     <div className="auth-screen">
       <div className="auth-form">
-        <h1>Obsidita</h1>
+        <h1>{siteTitle || DEFAULT_SITE_TITLE}</h1>
         <p style={{ fontSize: '12px', color: 'var(--text-faint)', marginBottom: '16px' }}>
           {t('login.prompt')}
         </p>

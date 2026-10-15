@@ -122,6 +122,24 @@ export default (dataDir, getConfig, limiter, sessions) => {
     res.json({ success: true });
   });
 
+  // Título de la web (pestaña del navegador y pantalla de login). Vacío = el predeterminado
+  const MAX_SITE_TITLE = 60;
+  router.post('/site-title', (req, res) => {
+    const cfg = getConfig();
+    if (!cfg) return res.status(400).json({ error: 'Not configured' });
+    const siteTitle = String(req.body?.siteTitle ?? '').replace(/[\u0000-\u001f\u007f]/g, '').trim();
+    if (siteTitle.length > MAX_SITE_TITLE) {
+      return res.status(400).json({ error: `El título no puede superar los ${MAX_SITE_TITLE} caracteres` });
+    }
+    try {
+      const { siteTitle: _, ...rest } = cfg;
+      writeFileSync(configPath, JSON.stringify(siteTitle ? { ...rest, siteTitle } : rest, null, 2), { mode: 0o600 });
+      res.json({ siteTitle });
+    } catch (err) {
+      res.status(500).json({ error: publicError(err, 'No se pudo guardar') });
+    }
+  });
+
   // Ubicación de los adjuntos nuevos, en el mismo formato que Obsidian (attachmentFolderPath)
   router.get('/attachments', (req, res) => {
     const cfg = getConfig();

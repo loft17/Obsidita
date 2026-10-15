@@ -13,6 +13,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const setTree = useStore((s) => s.setTree);
+  const setSiteTitle = useStore((s) => s.setSiteTitle);
   const tr = useT();
 
   useEffect(() => {
@@ -20,6 +21,7 @@ export default function App() {
       try {
         const status = await setupApi.checkStatus();
         console.log('Setup status:', status);
+        setSiteTitle(status.siteTitle || '');
         if (status.configured) {
           // Si la cookie de sesión sigue siendo válida (p. ej. al recargar), entrar directamente
           try {

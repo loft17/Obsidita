@@ -18,7 +18,8 @@ export interface ServerLimits {
 
 export const setupApi = {
   // minPasswordLength: mínimo que exige el servidor (configurable con MIN_PASSWORD_LENGTH)
-  checkStatus: async (): Promise<{ configured: boolean; minPasswordLength?: number }> => {
+  // siteTitle: título de la web elegido en Preferencias (vacío = el predeterminado)
+  checkStatus: async (): Promise<{ configured: boolean; minPasswordLength?: number; siteTitle?: string }> => {
     const res = await fetch(`${API_URL}/setup/status`);
     return res.json();
   },
@@ -250,6 +251,15 @@ export const settingsApi = {
   // Cierra todas las sesiones, también la actual
   revokeSessions: async () => {
     const res = await fetch(`${API_URL}/settings/sessions/revoke`, { method: 'POST' });
+    if (!res.ok) throw new Error((await res.json()).error);
+    return res.json();
+  },
+  setSiteTitle: async (siteTitle: string): Promise<{ siteTitle: string }> => {
+    const res = await fetch(`${API_URL}/settings/site-title`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ siteTitle }),
+    });
     if (!res.ok) throw new Error((await res.json()).error);
     return res.json();
   },

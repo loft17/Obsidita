@@ -41,7 +41,14 @@ export default (dataDir, sessions) => {
   router.get('/status', (req, res) => {
     ensureSetupToken();
     // minPasswordLength: el formulario de la web valida con el mismo mínimo que el servidor
-    res.json({ configured: existsSync(configPath), minPasswordLength: MIN_PASSWORD_LENGTH });
+    // siteTitle es público: se muestra en la pantalla de login y en la pestaña del navegador
+    let siteTitle = '';
+    try {
+      if (existsSync(configPath)) siteTitle = JSON.parse(readFileSync(configPath, 'utf8')).siteTitle || '';
+    } catch {
+      // config.json ilegible: se usa el título por defecto
+    }
+    res.json({ configured: existsSync(configPath), minPasswordLength: MIN_PASSWORD_LENGTH, siteTitle });
   });
 
   router.post('/init', async (req, res) => {

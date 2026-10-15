@@ -63,6 +63,9 @@ interface AppStore {
   setShowTabHeader: (show: boolean) => void;
   showRibbon: boolean;
   setShowRibbon: (show: boolean) => void;
+  // Título de la web (lo guarda el servidor); vacío = DEFAULT_SITE_TITLE
+  siteTitle: string;
+  setSiteTitle: (title: string) => void;
   settingsOpen: boolean;
   setSettingsOpen: (open: boolean) => void;
   expandedFolders: Set<string>;
@@ -116,6 +119,12 @@ const applyTheme = (theme: Theme) => {
 applyTheme(initialTheme);
 // En modo "sistema", seguir los cambios del sistema operativo en caliente
 systemDark.addEventListener('change', () => applyTheme(useStore.getState().theme));
+
+// Título de la pestaña del navegador y de la pantalla de login
+export const DEFAULT_SITE_TITLE = 'Obsidita';
+const applySiteTitle = (title: string) => {
+  document.title = title || DEFAULT_SITE_TITLE;
+};
 
 // Tamaño de la fuente del editor y la vista de lectura (px); se aplica con la variable CSS --font-text-size
 export const DEFAULT_FONT_SIZE = 15;
@@ -378,6 +387,11 @@ export const useStore =create<AppStore>((set) => ({
   setShowRibbon: (show) => {
     saveBool(SHOW_RIBBON_KEY, show);
     set({ showRibbon: show });
+  },
+  siteTitle: '',
+  setSiteTitle: (title) => {
+    applySiteTitle(title);
+    set({ siteTitle: title });
   },
   settingsOpen: false,
   setSettingsOpen: (open) => set({ settingsOpen: open }),

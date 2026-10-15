@@ -53,6 +53,12 @@ No están en el móvil: arrastrar y soltar archivos en el explorador (usa *Mover
 
 ---
 
+## 🏷️ Título de la web
+
+En *Preferencias → Apariencia → Web* puedes cambiar el **título de la web**, el nombre que aparece en la pestaña del navegador y en la pantalla de inicio de sesión. Se guarda en el servidor, así que se ve igual en todos los dispositivos. Si lo dejas vacío (o pulsas el botón de restablecer) se usa **Obsidita**.
+
+---
+
 ## 🔤 Fuentes
 
 En *Preferencias → Apariencia → Fuente* eliges tres fuentes por separado:

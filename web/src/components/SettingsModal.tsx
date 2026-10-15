@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import { useStore, type FontKind, type Theme, DEFAULT_FONT_SIZE, MIN_FONT_SIZE, MAX_FONT_SIZE } from '../store';
+import { useStore, type FontKind, type Theme, DEFAULT_FONT_SIZE, DEFAULT_SITE_TITLE, MIN_FONT_SIZE, MAX_FONT_SIZE } from '../store';
 import { settingsApi, syncApi, type NotesConfig, type NotesConfigUpdate, type ServerLimits, type SyncConfig, type SyncConfigUpdate, type SyncProvider, type UpdateStatus } from '../api';
 import { formatDate as formatMoment, DEFAULT_DAILY_FORMAT, DEFAULT_DATE_FORMAT, DEFAULT_TIME_FORMAT } from '../templates';
 import { getLang, LANGUAGES, Trans, useI18n, useT, type Lang, type MessageKey } from '../i18n';
@@ -131,6 +131,58 @@ function FontSetting({ kind }: { kind: FontKind }) {
   );
 }
 
+// Título de la web: se guarda en el servidor (vale para todos los dispositivos) al salir del campo o pulsar Intro
+function SiteTitleSetting() {
+  const siteTitle = useStore((s) => s.siteTitle);
+  const setSiteTitle = useStore((s) => s.setSiteTitle);
+  const [value, setValue] = useState(siteTitle);
+  const [error, setError] = useState('');
+  const t = useT();
+
+  const save = async (title: string) => {
+    const clean = title.trim();
+    if (clean === siteTitle) return setValue(clean);
+    setError('');
+    try {
+      const saved = await settingsApi.setSiteTitle(clean);
+      setSiteTitle(saved.siteTitle);
+      setValue(saved.siteTitle);
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
+  return (
+    <div className="setting-item">
+      <div className="setting-info">
+        <div className="setting-name">{t('settings.siteTitle')}</div>
+        <div className="setting-desc">{t('settings.siteTitle.desc', { title: DEFAULT_SITE_TITLE })}</div>
+        {error && <div className="setting-desc" style={{ color: 'var(--text-error, #e5484d)' }}>{error}</div>}
+      </div>
+      <div className="setting-slider">
+        <button
+          className="icon-btn"
+          title={t('settings.resetDefault')}
+          disabled={!siteTitle}
+          onClick={() => save('')}
+        >
+          <IconReset size={16} />
+        </button>
+        <input
+          className="setting-input setting-font-input"
+          type="text"
+          maxLength={60}
+          placeholder={DEFAULT_SITE_TITLE}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={() => save(value)}
+          onKeyDown={(e) => e.key === 'Enter' && save(value)}
+        />
+      </div>
+    </div>
+  );
+}
+
 // Los cambios se guardan automáticamente (el store los persiste en localStorage)
 function AppearanceSection() {
   const theme = useStore((s) => s.theme);
@@ -194,6 +246,10 @@ function AppearanceSection() {
           <span />
         </label>
       </div>
+    </div>
+    <h3 className="settings-heading">{t('settings.site')}</h3>
+    <div className="settings-group">
+      <SiteTitleSetting />
     </div>
     <h3 className="settings-heading">{t('settings.font')}</h3>
     <div className="settings-group">
