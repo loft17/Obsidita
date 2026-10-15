@@ -12,6 +12,7 @@
     "postinstall": "npm run web:build",
     "start": "node server/index.js"
   },
+  
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.0",
     "@codemirror/commands": "^6.6.0",
