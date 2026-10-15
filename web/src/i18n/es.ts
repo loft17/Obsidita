@@ -50,6 +50,7 @@ export const es = {
 
   // Barra lateral y cinta
   'sidebar.toggle': 'Mostrar/ocultar barra lateral',
+  'sidebar.resize': 'Arrastra para cambiar el ancho (doble clic para restablecer)',
   'sidebar.files': 'Archivos',
   'sidebar.search': 'Búsqueda',
   'sidebar.tags': 'Etiquetas',

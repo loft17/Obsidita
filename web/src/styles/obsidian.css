@@ -228,11 +228,46 @@ a:hover {
 /* Left sidebar */
 .sidebar-left {
   width: 270px;
+  flex-shrink: 0;
   background-color: var(--background-secondary);
   border-right: 1px solid var(--background-modifier-border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+/* Borde arrastrable para cambiar el ancho de la barra lateral: zona de agarre de 7px
+   superpuesta al borde, sin ocupar espacio en el diseño */
+.sidebar-resizer {
+  flex: none;
+  width: 7px;
+  margin: 0 -4px 0 -3px;
+  position: relative;
+  z-index: 10;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.sidebar-resizer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 2px;
+  width: 3px;
+  background-color: transparent;
+  transition: background-color 0.15s;
+}
+
+.sidebar-resizer:hover::after,
+body.is-resizing .sidebar-resizer::after {
+  background-color: var(--interactive-accent);
+}
+
+/* Mientras se arrastra: cursor fijo y sin seleccionar texto */
+body.is-resizing {
+  cursor: col-resize;
+  user-select: none;
 }
 
 .sidebar-toolbar {

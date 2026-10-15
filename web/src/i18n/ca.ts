@@ -51,6 +51,7 @@ export const ca: Messages = {
 
   // Barra lateral i cinta
   'sidebar.toggle': 'Mostra/amaga la barra lateral',
+  'sidebar.resize': 'Arrossega per canviar l’amplada (doble clic per restablir-la)',
   'sidebar.files': 'Fitxers',
   'sidebar.search': 'Cerca',
   'sidebar.tags': 'Etiquetes',

@@ -51,6 +51,7 @@ export const en: Messages = {
 
   // Sidebar and ribbon
   'sidebar.toggle': 'Show/hide sidebar',
+  'sidebar.resize': 'Drag to resize (double-click to reset)',
   'sidebar.files': 'Files',
   'sidebar.search': 'Search',
   'sidebar.tags': 'Tags',

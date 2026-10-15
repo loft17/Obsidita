@@ -71,6 +71,9 @@ interface AppStore {
   expandedFolders: Set<string>;
   toggleFolder: (path: string) => void;
   collapseAll: () => void;
+  // Ancho de la barra lateral en el escritorio (px), ajustable arrastrando su borde
+  sidebarWidth: number;
+  setSidebarWidth: (width: number, persist?: boolean) => void;
   sidebarOpen: boolean;
   toggleSidebar: () => void;
   sidebarView: SidebarView;
@@ -216,6 +219,21 @@ const INLINE_TITLE_KEY = 'showInlineTitle';
 const applyReadableLineLength = (enabled: boolean) =>
   document.documentElement.style.setProperty('--line-width', enabled ? '720px' : 'none');
 applyReadableLineLength(readBool(READABLE_LINE_KEY, true));
+
+export const DEFAULT_SIDEBAR_WIDTH = 270;
+export const MIN_SIDEBAR_WIDTH = 180;
+export const MAX_SIDEBAR_WIDTH = 600;
+const SIDEBAR_WIDTH_KEY = 'sidebarWidth';
+const clampSidebarWidth = (width: number) =>
+  Math.min(MAX_SIDEBAR_WIDTH, Math.max(MIN_SIDEBAR_WIDTH, Math.round(width)));
+const initialSidebarWidth = (() => {
+  try {
+    const value = Number(localStorage.getItem(SIDEBAR_WIDTH_KEY));
+    return value ? clampSidebarWidth(value) : DEFAULT_SIDEBAR_WIDTH;
+  } catch {
+    return DEFAULT_SIDEBAR_WIDTH;
+  }
+})();
 
 const HIDDEN_KEY = 'hiddenFolders';
 const initialHiddenFolders = (() => {
@@ -397,6 +415,19 @@ export const useStore =create<AppStore>((set) => ({
   setSettingsOpen: (open) => set({ settingsOpen: open }),
   expandedFolders: new Set(),
   collapseAll: () => set({ expandedFolders: new Set() }),
+  sidebarWidth: initialSidebarWidth,
+  // Durante el arrastre solo se actualiza el estado; se guarda al soltar (persist)
+  setSidebarWidth: (width, persist = false) => {
+    const value = clampSidebarWidth(width);
+    if (persist) {
+      try {
+        localStorage.setItem(SIDEBAR_WIDTH_KEY, String(value));
+      } catch {
+        // almacenamiento no disponible: la preferencia solo dura la sesión
+      }
+    }
+    set({ sidebarWidth: value });
+  },
   // En el móvil la barra lateral tapa la nota: se empieza con ella cerrada
   sidebarOpen: !isMobile(),
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useStore } from '../store';
+import { useState, useEffect, type PointerEvent as ReactPointerEvent } from 'react';
+import { useStore, DEFAULT_SIDEBAR_WIDTH } from '../store';
 import { filesApi } from '../api';
 import Ribbon, { SidebarFooter } from './Ribbon';
 import SettingsModal from './SettingsModal';
@@ -24,6 +24,44 @@ import { useUpdateNotification } from '../updateNotify';
 import { loadServerFonts } from '../serverFonts';
 import { useIsMobile } from '../mobile';
 
+// Borde arrastrable entre la barra lateral y la nota; doble clic vuelve al ancho por defecto
+function SidebarResizer() {
+  const setSidebarWidth = useStore((s) => s.setSidebarWidth);
+  const t = useT();
+
+  const startDrag = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const handle = e.currentTarget;
+    const startX = e.clientX;
+    const startWidth = useStore.getState().sidebarWidth;
+    handle.setPointerCapture(e.pointerId);
+    document.body.classList.add('is-resizing');
+    const move = (ev: PointerEvent) => setSidebarWidth(startWidth + ev.clientX - startX);
+    const end = (ev: PointerEvent) => {
+      setSidebarWidth(startWidth + ev.clientX - startX, true);
+      document.body.classList.remove('is-resizing');
+      handle.removeEventListener('pointermove', move);
+      handle.removeEventListener('pointerup', end);
+      handle.removeEventListener('pointercancel', end);
+    };
+    handle.addEventListener('pointermove', move);
+    handle.addEventListener('pointerup', end);
+    handle.addEventListener('pointercancel', end);
+  };
+
+  return (
+    <div
+      className="sidebar-resizer"
+      role="separator"
+      aria-orientation="vertical"
+      title={t('sidebar.resize')}
+      onPointerDown={startDrag}
+      onDoubleClick={() => setSidebarWidth(DEFAULT_SIDEBAR_WIDTH, true)}
+    />
+  );
+}
+
 // Cada cuánto se comprueba si la nota abierta ha cambiado en el servidor (ms)
 const EXTERNAL_CHECK_INTERVAL = 15000;
 
@@ -33,6 +71,7 @@ export default function MainLayout() {
   const setEditMode = useStore((s) => s.setEditMode);
   const sidebarOpen = useStore((s) => s.sidebarOpen);
   const sidebarView = useStore((s) => s.sidebarView);
+  const sidebarWidth = useStore((s) => s.sidebarWidth);
   const [fileContent, setFileContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
@@ -222,7 +261,7 @@ export default function MainLayout() {
           <div className="sidebar-backdrop" onClick={() => useStore.setState({ sidebarOpen: false })} />
         )}
         {sidebarOpen && (
-          <aside className="sidebar-left">
+          <aside className="sidebar-left" style={mobile ? undefined : { width: sidebarWidth }}>
             {sidebarView === 'search' ? (
               <SearchPanel />
             ) : sidebarView === 'tags' ? (
@@ -235,6 +274,7 @@ export default function MainLayout() {
             {(!showRibbon || mobile) && <SidebarFooter />}
           </aside>
         )}
+        {sidebarOpen && !mobile && <SidebarResizer />}
 
         <div className="editor-container">
           {mobile && (

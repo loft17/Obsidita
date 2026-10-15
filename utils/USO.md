@@ -27,7 +27,7 @@ Todo lo que puedes hacer en Obsidita una vez instalada. Para instalarla y config
 | Zona | Qué contiene |
 | :--- | :--- |
 | **Cinta** (barra vertical izquierda) | Archivos, búsqueda, etiquetas, papelera, nota diaria, insertar plantilla y ⚙️ Preferencias. Si la ocultas en *Preferencias → Apariencia*, sus botones pasan al pie de la barra lateral. |
-| **Barra lateral** | El panel elegido en la cinta. Se muestra u oculta con <kbd>Ctrl</kbd>+<kbd>B</kbd>. |
+| **Barra lateral** | El panel elegido en la cinta. Se muestra u oculta con <kbd>Ctrl</kbd>+<kbd>B</kbd>. Arrastra su borde derecho para cambiar el ancho (doble clic en el borde para volver al ancho por defecto). |
 | **Pestañas** | Una por nota abierta. |
 | **Nota** | Título en línea, propiedades, barra de formato y contenido. |
 | **Barra de estado** | Recuento de palabras y caracteres de la nota abierta. |
