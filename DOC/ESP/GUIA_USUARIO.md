@@ -14,7 +14,7 @@ Bienvenido a **Obsidita**, tu vault de Obsidian en el navegador. Esta guía te m
 
 ---
 
-## 📝 Crear y editar notas
+## 📝 Crear y editar notas.
 
 ### Crear una nota nueva
 
