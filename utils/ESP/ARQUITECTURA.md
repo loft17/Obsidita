@@ -85,6 +85,29 @@
 
 ---
 
+### 📦 Gestión de dependencias
+
+> **⚠️ Importante:** Todas las dependencias están en el `package.json` de la raíz. El frontend se compila con Vite en el `postinstall`, por eso **las dependencias de desarrollo son necesarias también en producción**.
+
+Esto significa que:
+- `npm install --omit=dev` **NO** funcionará correctamente
+- Debes hacer `npm install` (incluyendo devDependencies) también en producción
+- El directorio `web/` tiene su propio `package.json` pero las dependencias se resuelven desde la raíz
+- El script `postinstall` automáticamente ejecuta `npm run web:build` después de instalar
+
+Flujo en instalación:
+```bash
+npm install
+  ↓
+npm run postinstall
+  ↓
+cd web && vite build    # Compila el frontend
+  ↓
+Frontend listo para servir desde dist/
+```
+
+---
+
 ## 📁 Estructura del proyecto
 
 ```
@@ -331,6 +354,201 @@ Cambios remotos                           Sin cambios remotos
     ├─ Actualizar índice
     └─ Notificar al cliente
 ```
+
+---
+
+## 🔄 Flujos principales
+
+### Arranque y autenticación
+
+1. **Inicio del servidor** (`server/index.js`):
+   - Crea `data/` con permisos `700` (solo usuario)
+   - Carga o genera `data/.secret` para firmar las cookies
+   - Monta todas las rutas de la API
+
+2. **Primera configuración** (sin `data/config.json`):
+   - `routes/setup.js` genera un **token de un solo uso** e imprime en consola
+   - En el navegador, `App.tsx` llama a `GET /api/setup/status`
+   - Si no está configurado → muestra `Setup.tsx`
+   - Usuario hace `POST /api/setup/init` con: token, ruta del vault, contraseña
+   - Servidor valida la ruta y guarda hash **scrypt** en `data/config.json`
+
+3. **Login en sesiones posteriores**:
+   - `App.tsx` llama `GET /api/setup/status`
+   - Si está configurado e intenta `GET /api/files/tree`
+   - Si responde `401` → muestra `Login.tsx`
+   - Usuario entra credencial en `POST /api/auth/login`
+   - Servidor verifica contraseña y crea sesión:
+     - Cookie firmada `session=<token>` (HttpOnly, Secure, SameSite=Strict)
+     - En `data/sessions.json` guarda hash SHA-256 del token (nunca en claro)
+
+4. **Middleware de autenticación**:
+   - Todo `/api` salvo `setup` y `auth` pasa por validación de sesión
+   - `getConfig()` relee `data/config.json` en cada request
+   - Cambios de vault se aplican **al instante**
+
+---
+
+### Abrir y guardar una nota
+
+**Flujo con detección de conflictos:**
+
+```mermaid
+sequenceDiagram
+    participant E as Editor.tsx
+    participant S as Servidor
+    E->>S: GET /api/files/read/:path
+    S-->>E: { content, version }
+    Note over E: Usuario escribe (2 s de espera)
+    E->>S: POST /api/files/write/:path<br/>{content, baseVersion}
+    alt Versión coincide en servidor
+        S-->>E: ✅ Éxito - nueva versión
+    else Versión cambió en otro lado
+        S-->>E: ❌ 409 Conflict<br/>(contenido y versión actuales)
+        Note over E: ConflictDialog:<br/>¿Conservar mía o del servidor?
+    end
+```
+
+**Detalles importantes:**
+
+- `MainLayout.tsx` carga nota al cambiar pestaña y guarda versión en `noteVersions`
+- **Autoguardado**: 2 segundos sin escribir; `Ctrl+S` lo adelanta
+- Antes de renombrar, mover o borrar → se vacían guardados pendientes
+- `vault.writeFile` solo escribe si versión del disco = `baseVersion`
+- Si no coincide → lanza `ConflictError` → respuesta `409`
+- El cliente abre `ConflictDialog` para resolver
+
+---
+
+### Detectar cambios hechos fuera de la pestaña
+
+`MainLayout.tsx` vuelve a leer la nota abierta:
+- **Cada 15 segundos** mientras la pestaña está visible
+- Al volver a ella (cambio de foco)
+- Al recibir evento `NOTES_CHANGED` (desde sincronización)
+
+**Lógica:**
+- Si versión cambió y **no hay** cambios sin guardar → sustituye contenido
+- Si **hay** cambios sin guardar → espera al guardado para detectar conflicto
+
+---
+
+### Renombrar y mover archivos
+
+`POST /api/files/rename` ejecuta en dos fases:
+
+1. **Fase 1 - Antes de mover** (`links.prepareLinkUpdate`):
+   - Resuelve cada enlace del vault con el **árbol antiguo**
+   
+2. **Fase 2 - Después de mover**:
+   - Reescribe enlaces que ya no llegan a su destino:
+     - `[[wikilinks]]` 
+     - `![[incrustaciones de notas]]`
+     - `[enlaces](markdown)`
+   - Devuelve lista de notas modificadas (`{ updated }`)
+   - Cliente lanza `NOTES_CHANGED` para recargar nota abierta e incrustaciones
+
+> **⚠️ Importante:** Resolución de wikilinks está **duplicada**:
+> - Cliente: `web/src/wikilinks.ts`
+> - Servidor: `server/links.js`
+> 
+> **Deben comportarse IGUAL:** ruta exacta → relativa a la nota → por nombre en cualquier carpeta (la más cercana). Si cambias una, cambia la otra.
+
+---
+
+### Modo lectura e incrustaciones
+
+`ReadingView.tsx` renderiza markdown con reglas propias:
+
+**Sintaxis soportada:**
+- `[[wikilinks]]` - Atenuados si no existen
+- `![[imagen]]` - Con detección automática de tamaño
+- `![[nota]]` / `![[nota#encabezado]]` - Incrustación de notas completas
+- `> [!tipo]` - Callouts (info, warning, etc)
+- `==resaltado==` - Highlighting de texto
+- `#etiquetas` - Tags procesados
+- Bloques de código con botón copiar y resaltado con highlight.js
+- ` ```mermaid ` - Diagramas convertidos automáticamente
+
+**Lazy loading:**
+- `markdown-it` renderiza **sincronamente** (sin await)
+- Notas incrustadas se piden en **background** a `noteEmbeds.ts`
+- Al llegar la respuesta, avisa con `useSyncExternalStore` y se repinta
+- **Límite de profundidad:** máximo 4 niveles
+- **Protección contra bucles:** una nota no puede incrustarse a sí misma
+
+**Seguridad de Mermaid:**
+- Usa `securityLevel: 'strict'` (etiquetas saneadas, sin JS)
+- SVGs se cachean por tema
+- CSP permite `style-src 'unsafe-inline'` (Mermaid mete `<style>` en cada SVG)
+- No usa `eval`, así que `script-src` no cambia
+
+---
+
+### Búsqueda y etiquetas
+
+`routes/search.js` busca sobre **índice en memoria** (`searchIndex.js`):
+
+**Cómo funciona el índice:**
+- En cada búsqueda se **recorre el árbol** (solo `stat`)
+- Se relectan **solo** archivos cuya fecha o tamaño cambiaron
+- Recoge cambios desde: web, GitHub sync, cambios externos (sin vigilar carpeta)
+- Se construye en **primera búsqueda**
+
+**Características:**
+- `q=texto` - Búsqueda full-text
+- `tag:etiqueta` - Busca en frontmatter `tags` y en `#etiquetas` del cuerpo (fuera de código)
+- `GET /api/search/tags` - Todas las etiquetas con sus notas
+- Tags se calculan **una vez por versión**
+- Límites aplican: tamaño archivo, total indexado, resultados, coincidencias, rate limit
+
+---
+
+### Papelera
+
+`vault.deleteFile` mueve a `.trash/` con nombre: `nombre.ext.<timestamp>.deleted`
+
+**Cómo funciona:**
+- Ruta original se guarda en `.trash/.index.json`
+- `TrashPanel.tsx` permite:
+  - Restaurar a ruta original
+  - Borrar definitivamente
+  - Vaciar toda la papelera
+
+> **Nota:** Operaciones de papelera van por `POST` (no `DELETE`) para no chocar con `DELETE /api/files/:filePath` cuando una nota se llama `trash`
+
+---
+
+### Sincronización con GitHub
+
+`server/sync.js` ejecuta git de forma segura:
+
+**Proceso de sincronización:**
+1. Commit cambios locales
+2. `fetch` desde remoto
+3. `rebase -X theirs` sobre rama remota (el servidor gana en conflictos)
+4. Si falla → `rebase --abort`
+5. `push` de cambios
+
+**Seguridad:**
+- Git ejecutado con `spawn` (sin shell)
+- Configuración de git en **variables de entorno** (`GIT_CONFIG_*`)
+- Token viaja como `extraHeader`, **nunca en URL ni en `.git/config`**
+- Token eliminado de mensajes de error
+- Solo permite `https://github.com/`
+- Sin hooks de git ni `core.fsmonitor`
+
+**Historial de versiones:**
+- `GET /api/sync/history?path=...` - Commits que tocaron la nota (hasta 200)
+- Sigue renombrados automáticamente con `--follow`
+- `GET /api/sync/history/version?path=&commit=...` - Contenido en ese commit + diff
+- Rutas seguras con `GIT_LITERAL_PATHSPECS=1`
+- Commit pedido debe estar en historial de la nota
+- `HistoryDialog` (en menú de nota) muestra y permite restaurar
+
+**Temporizador:**
+- Comprueba cada minuto si toca sincronización periódica según `interval`
+- Configurable en `POST /api/sync/config`
 
 ---
 
@@ -775,6 +993,47 @@ Response: { success: true }  // Excepto la sesión actual
 
 ---
 
+### Medidas de seguridad en el código
+
+Si tocas alguno de estos archivos, **revisa que la medida sigue en pie:**
+
+| Medida | Dónde |
+| :--- | :--- |
+| Rutas dentro del vault, sin `../`, sin symlinks hacia fuera, `.obsidian/` y `.git/` protegidas | `server/vault.js` → `guardPath()`. **Toda** ruta que llega del cliente debe pasar por aquí. |
+| Rutas válidas para un vault (sin carpetas del sistema ni de la app, `VAULTS_ROOT`) | `server/vault.js` → `checkVaultPath()` |
+| CSP, HSTS, X-Frame-Options, X-Content-Type-Options; hashes CSP de los scripts en línea | `server/security.js` → `securityHeaders()` |
+| CSRF (validación de `Sec-Fetch-Site` y `Origin`) | `server/security.js` → `csrfGuard` |
+| Errores sin rutas internas ni trazas | `server/security.js` → `publicError()` y manejador de errores en `server/index.js` |
+| Sesiones revocables y límite de intentos de login | `server/sessions.js` |
+| Contraseñas con scrypt (no bcrypt), comparación en tiempo constante | `server/password.js` |
+| Git sin hooks ni `core.fsmonitor`, solo `https://github.com/`, token nunca en URL/config | `server/sync.js` |
+| Archivos del vault servidos con CSP *sandbox* (SVG) | `server/routes/files.js` → `/raw` |
+
+---
+
+### Archivos de datos
+
+La carpeta `data/` se crea automáticamente, está en `.gitignore` y el servidor ajusta permisos al arrancar.
+
+| Archivo | Contenido |
+| :--- | :--- |
+| `config.json` | `vaultPath`, `passwordHash` (scrypt: 16 bytes sal + 32 hash, hex), `port`, `createdAt`. **Se relee en cada petición.** |
+| `.secret` | Secret aleatorio que firma las cookies. Si se borra, se genera otro y todas las sesiones dejan de valer. |
+| `sessions.json` | Hashes SHA-256 de sesiones activas (nunca tokens en claro), caducidad y última actividad. Actividad se guarda en disco **como mucho una vez por hora**. |
+| `sync.json` | Config de sincronización con GitHub, último estado y token (si existe). |
+
+**Dentro del vault, la app solo usa:**
+
+| Ruta | Uso |
+| :--- | :--- |
+| `.trash/` | Papelera: `nombre.ext.<timestamp>.deleted` con rutas originales en `.trash/.index.json` |
+| `.obsidian/app.json` | Solo clave `attachmentFolderPath` (carpeta de adjuntos) |
+| `.obsidian/daily-notes.json` | Claves `folder`, `format`, `template` (notas diarias) |
+| `.obsidian/templates.json` | Claves `folder`, `dateFormat`, `timeFormat` (plantillas) |
+| `.git/` | Solo con sincronización GitHub: repo local (se crea si no existe) |
+
+---
+
 ## 🚀 Guía de desarrollo
 
 ### Instalación local
@@ -932,24 +1191,62 @@ router.post('/notes/:path', requireAuth, async (req, res) => {
 
 ### Estado global (Zustand)
 
+`web/src/store.ts` guarda todo el estado global de la aplicación:
+
+**Vault y navegación:**
+- `tree` - Lista plana del vault completo (`{ type, path, name, size, modified }`)
+- `tabs` - Archivos abiertos en pestañas (`{ path, name, isDirty }`)
+- `activeTab` - Pestaña actualmente abierta
+- `expandedFolders` - Carpetas expandidas en el explorador
+- `sidebarView` - Vista activa del sidebar (`'files'`, `'search'`, `'tags'`, `'trash'`)
+- `searchQuery` - Texto de búsqueda actual
+
+**Edición:**
+- `editMode` - Modo edición (`true`) o lectura (`false`)
+- `conflicts` - Conflictos de guardado pendientes (se muestran de uno en uno)
+
+**Preferencias de interfaz** (guardadas en `localStorage` - **por navegador, no por usuario**):
+- `theme` - Tema oscuro o claro
+- `fontSize` - Tamaño de fuente
+- `editorMode` - Modo editor (`'preview'` / `'source'`)
+- `inlineTitle` - Mostrar título inline
+- `lineNumbers` - Mostrar números de línea
+- `readableLineLength` - Limitar ancho de línea
+- `ribbon` - Mostrar ribbon de botones
+- `headerTabs` - Mostrar encabezado de pestañas
+- `hiddenFolders` - Carpetas ocultas
+
+**Datos locales** (fuera del store, en `Editor.tsx`):
+- `noteVersions` - Versión SHA-1 conocida de cada nota (para detectar conflictos)
+- Guardados pendientes y en curso
+
+**Ejemplo de uso:**
+
 ```typescript
 // store.ts
 export const useStore = create<AppState>((set, get) => ({
   // State
-  currentNote: null,
-  content: '',
+  tree: [],
+  activeTab: null,
+  editMode: true,
   
   // Acciones
-  setCurrentNote: (note) => set({ currentNote: note }),
-  setContent: (content) => set({ content }),
+  setTree: (tree) => set({ tree }),
+  setEditMode: (mode) => set({ editMode: mode }),
   
   // Derived state (getters)
-  isDirty: () => get().content !== get().currentNote?.content,
+  currentNote: () => get().activeTab,
+  isDirty: () => {
+    const tab = get().activeTab;
+    return tab?.isDirty ?? false;
+  },
 }));
 
 // Usage en componentes
-const { currentNote, content, setContent } = useStore();
+const { tree, activeTab, editMode, setEditMode } = useStore();
 ```
+
+**Importante:** Las preferencias se guardan en `localStorage`, así que son **específicas del navegador**, no del usuario.
 
 ### Componentes React
 
