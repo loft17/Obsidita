@@ -461,123 +461,154 @@ cleanupExpired()   // Limpiar sesiones expiradas (diario)
 
 ## 🔌 API Backend
 
-### Autenticación
+**Todas las rutas cuelgan de `/api`.** Salvo `setup` y `auth`, exigen una sesión válida (si no, devuelven `401`). Las peticiones que no son `GET` pasan la protección CSRF (header `X-CSRF-Token`).
 
-#### `POST /api/setup`
-Configuración inicial del servidor
-```
+**`:filePath`** es la ruta relativa al vault, codificada como un solo segmento de URL.
+
+---
+
+### Tabla de endpoints
+
+| Método | Ruta | Descripción |
+| :---: | :--- | :--- |
+| `GET` | `/api/setup/status` | Verifica si está configurado. Responde `{ configured }` |
+| `POST` | `/api/setup/init` | **Configuración inicial** - `setupToken`, `vaultPath`, `password`, `port` |
+| `POST` | `/api/auth/login` | Inicia sesión (`password`). Set-Cookie: `session=...` |
+| `POST` | `/api/auth/logout` | Cierra la sesión actual |
+| `GET` | `/api/files/tree` | Árbol del vault (lista plana de `{ type, path, name, size?, modified? }`) |
+| `GET` | `/api/files/read/:filePath` | Contenido de una nota y su versión (`{ content, version }`) |
+| `GET` | `/api/files/raw/:filePath` | Archivo binario (imágenes, adjuntos) |
+| `GET` | `/api/files/export-pdf/:filePath` | Versión imprimible (PDF) de la nota |
+| `POST` | `/api/files/write/:filePath` | Guarda una nota (`{ content, baseVersion? }`). Devuelve `409` si conflicto de versión |
+| `POST` | `/api/files/upload?note=…&name=…` | Sube adjunto (cuerpo binario); devuelve `{ path }` |
+| `DELETE` | `/api/files/:filePath` | Mueve a `.trash/` |
+| `GET` | `/api/files/trash` | Contenido de la papelera |
+| `POST` | `/api/files/trash/restore` | Restaura a su ruta original (`{ id }`) |
+| `POST` | `/api/files/trash/delete` | Borra definitivamente (`{ id }`) |
+| `POST` | `/api/files/trash/empty` | Vacía toda la papelera |
+| `POST` | `/api/files/rename` | Renombra o mueve (`{ oldPath, newPath }`), actualiza enlaces; devuelve `{ updated }` |
+| `POST` | `/api/files/copy` | Duplica una nota (`{ path }`) |
+| `POST` | `/api/files/create-note` | Crea nota vacía (`{ path, content? }`) |
+| `POST` | `/api/files/create-folder` | Crea carpeta (`{ path }`) |
+| `GET` | `/api/search?q=…` | Búsqueda full-text o `tag:etiqueta` |
+| `GET` | `/api/search/tags` | Todas las etiquetas del vault (`{ tag, paths }[]`) |
+| `GET` `POST` | `/api/settings/vault` | Lee / cambia ruta del vault (`{ vaultPath, password }`) |
+| `GET` | `/api/settings/limits` | Límites actuales del servidor (solo lectura) |
+| `POST` | `/api/settings/password` | Cambia contraseña (`{ currentPassword, newPassword }`) |
+| `POST` | `/api/settings/sessions/revoke` | Cierra todas las sesiones excepto la actual |
+| `GET` `POST` | `/api/settings/attachments` | Lee / cambia `{ attachmentFolderPath }` |
+| `GET` `POST` | `/api/settings/notes` | Lee / cambia `{ dailyNotes, templates }` |
+| `GET` | `/api/sync` | Config y estado de sincronización (`{ hasToken }`) |
+| `POST` | `/api/sync/config` | Cambia config (`{ provider, interval, github }`) |
+| `POST` | `/api/sync/run` | Sincroniza ahora; devuelve estado |
+| `GET` | `/api/sync/history?path=` | Commits que han tocado la nota |
+| `GET` | `/api/sync/history/version?path=&commit=` | Contenido y diff en ese commit |
+
+---
+
+### Detalles de endpoints importantes
+
+#### Setup y autenticación
+
+**`POST /api/setup/init`** - Solo accesible si no está configurado
+```javascript
 Body: {
-  password: string,
-  vaultPath: string,
-  siteTitle: string
+  setupToken: string,        // Token de seguridad
+  vaultPath: string,         // Ruta al vault de Obsidian
+  password: string,          // Contraseña inicial
+  port: number              // Puerto (ej: 3000)
 }
+
 Response: { success: true }
 ```
 
-#### `POST /api/login`
-Login del usuario
-```
+**`POST /api/auth/login`** - Inicia sesión
+```javascript
 Body: { password: string }
-Response: { success: true }
-Header: Set-Cookie: session=...
-```
 
-#### `POST /api/logout`
-Cierre de sesión
-```
-Response: { success: true }
-```
-
-#### `POST /api/change-password`
-Cambiar contraseña
-```
-Body: {
-  currentPassword: string,
-  newPassword: string
+Response: {
+  success: true,
+  user: { /* info del usuario */ }
 }
-Response: { success: true }
+Header: Set-Cookie: session=<token>; HttpOnly; Secure; SameSite=Strict
 ```
 
 ---
 
-### Gestión de archivos
+#### Gestión de archivos
 
-#### `GET /api/notes/tree`
-Obtener estructura completa de archivos
+**`GET /api/files/tree`** - Estructura completa
+```javascript
+Response: [
+  { type: "folder", path: "notes", name: "notes" },
+  { type: "file", path: "notes/Welcome.md", name: "Welcome.md", size: 2048, modified: 1697... },
+  { type: "file", path: "notes/Archive.md", name: "Archive.md", size: 1024, modified: 1696... }
+]
 ```
+
+**`GET /api/files/read/:filePath`** - Leer nota
+```javascript
+// GET /api/files/read/notes%2FWelcome.md
+
 Response: {
-  name: "root",
-  type: "folder",
-  children: [
-    {
-      name: "notes",
-      type: "folder",
-      children: [
-        {
-          name: "Welcome.md",
-          type: "file",
-          size: 2048,
-          modified: timestamp
-        }
-      ]
-    }
+  content: "# Welcome\n\n...",
+  version: "abc123def456"  // Para control de conflictos
+}
+```
+
+**`POST /api/files/write/:filePath`** - Guardar con control de versión
+```javascript
+// POST /api/files/write/notes%2FWelcome.md
+
+Body: {
+  content: "# Welcome\n\n...",
+  baseVersion: "abc123def456"  // Opcional: detectar conflictos
+}
+
+Response (éxito): { success: true }
+Response (conflicto): { 
+  error: "Version conflict",
+  status: 409,
+  currentVersion: "xyz789..."
+}
+```
+
+**`POST /api/files/upload?note=notes/Welcome&name=image.png`** - Subir adjunto
+```javascript
+Body: [binario de imagen]
+
+Response: {
+  path: "attachments/image-20240115-abc123.png",
+  url: "/api/files/raw/attachments/image-20240115-abc123.png"
+}
+```
+
+**`POST /api/files/rename`** - Renombrar y actualizar enlaces
+```javascript
+Body: {
+  oldPath: "notes/OldName.md",
+  newPath: "notes/NewName.md"
+}
+
+Response: {
+  updated: [
+    "notes/ReferringNote.md"  // Notas que tenían [[OldName]]
   ]
 }
 ```
 
-#### `GET /api/notes/:path`
-Obtener contenido de una nota
-```
-Query params:
-  - path: "notes/file.md" (URL encoded)
-
-Response: {
-  content: string,
-  frontmatter: { title, tags, ... },
-  links: ["[[other-note]]", ...],
-  backlinks: ["notes/referencing-this.md", ...]
-}
-```
-
-#### `POST /api/notes/:path`
-Guardar nota
-```
-Body: { content: string }
-Response: { success: true, saved: timestamp }
-```
-
-#### `POST /api/notes/:path/delete`
-Eliminar nota
-```
-Response: { success: true }
-```
-
-#### `POST /api/attachments/upload`
-Subir archivo adjunto
-```
-Form: multipart/form-data
-  - file: File
-  - path: "path/to/store"
-
-Response: {
-  success: true,
-  url: "attachments/image-2024-01-15.png"
-}
-```
-
 ---
 
-### Búsqueda
+#### Búsqueda
 
-#### `GET /api/search?q=query`
-Búsqueda full-text
-```
+**`GET /api/search?q=typescript`** - Búsqueda full-text
+```javascript
 Response: {
   results: [
     {
-      file: "notes/dev.md",
-      title: "Development Notes",
-      excerpt: "...relevant content...",
+      path: "notes/dev.md",
+      name: "dev.md",
+      excerpt: "...TypeScript is a typed superset...",
       score: 0.95
     }
   ],
@@ -585,68 +616,100 @@ Response: {
 }
 ```
 
+**`GET /api/search/tags`** - Todas las etiquetas
+```javascript
+Response: [
+  { tag: "python", paths: ["notes/dev.md", "notes/tips.md"] },
+  { tag: "javascript", paths: ["notes/dev.md"] },
+  { tag: "archivado", paths: ["notes/old.md"] }
+]
+```
+
 ---
 
-### Configuración
+#### Sincronización con GitHub
 
-#### `GET /api/settings`
-Obtener configuración del usuario
-```
-Response: {
-  theme: "dark",
-  font: "IBM Plex Sans",
-  fontSize: 14,
-  autoSync: true,
-  syncInterval: 300000
-}
-```
-
-#### `POST /api/settings`
-Guardar configuración
-```
+**`POST /api/sync/config`** - Configurar sincronización
+```javascript
 Body: {
-  theme: "light" | "dark",
-  font: string,
-  fontSize: number
+  provider: "github",        // "github" | "none"
+  interval: 300000,          // ms entre syncs automáticos
+  github: {
+    token: "ghp_xxxxx...",   // Token de GitHub
+    owner: "usuario",
+    repo: "mi-vault",
+    branch: "main"
+  }
+  // Para eliminar token: github: { token: null }
 }
+
 Response: { success: true }
 ```
 
-#### `GET /api/settings/check`
-Verificar estado de setup
-```
+**`POST /api/sync/run`** - Sincronizar ahora
+```javascript
 Response: {
-  configured: boolean,
-  siteTitle: string,
-  syncStatus: "idle" | "syncing" | "error"
+  success: true,
+  lastSync: 1697xxx,
+  commits: 5,
+  error: null
+}
+```
+
+**`GET /api/sync/history?path=notes/dev.md`** - Historial de commits
+```javascript
+Response: [
+  {
+    date: "2024-01-15T10:30:00Z",
+    author: "John Doe",
+    message: "Update dev notes",
+    path: "notes/dev.md"  // Ruta en ese commit
+  },
+  // ... más commits
+]
+```
+
+**`GET /api/sync/history/version?path=notes/dev.md&commit=abc123`** - Contenido en commit
+```javascript
+Response: {
+  content: "# Dev Notes\n\n...",  // Contenido en ese commit
+  diff: "- Viejo contenido\n+ Nuevo contenido"
 }
 ```
 
 ---
 
-### Sincronización
+#### Configuración
 
-#### `POST /api/sync`
-Forzar sincronización inmediata
-```
-Response: {
-  success: true,
-  changed: 5,
-  deleted: 2,
-  timestamp: timestamp
+**`POST /api/settings/password`** - Cambiar contraseña
+```javascript
+Body: {
+  currentPassword: "actual",
+  newPassword: "nueva"
 }
+
+Response: { success: true }
 ```
 
-#### `GET /api/sync/status`
-Ver estado de sincronización
+**`POST /api/settings/sessions/revoke`** - Cerrar todas las sesiones
+```javascript
+Response: { success: true }  // Excepto la sesión actual
 ```
-Response: {
-  status: "idle" | "syncing" | "error",
-  lastSync: timestamp,
-  provider: "github" | "dropbox" | "none",
-  nextSync: timestamp
-}
-```
+
+---
+
+### Códigos de respuesta HTTP
+
+| Código | Significado |
+|--------|-----------|
+| `200` | Éxito |
+| `400` | Datos inválidos (validación fallida) |
+| `401` | No autenticado (sesión expirada/inválida) |
+| `403` | No autorizado o CSRF inválido |
+| `404` | Recurso no encontrado |
+| `409` | Conflicto (ej: versión de nota ha cambiado) |
+| `413` | Payload muy grande (excede límites) |
+| `500` | Error interno del servidor |
 
 ---
 

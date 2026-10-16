@@ -1,33 +1,5 @@
-# Arquitectura de Obsidita
 
-Cómo está hecho Obsidita por dentro. Para instalar y usar la app, consulta el [README](../README.md); para preparar el entorno y hacer cambios, [DESARROLLO.md](DESARROLLO.md).
 
-## Índice
-
-- [Visión general](#visión-general)
-- [Tecnologías](#tecnologías)
-- [Estructura del proyecto](#estructura-del-proyecto)
-- [Flujos principales](#flujos-principales)
-- [Seguridad en el código](#seguridad-en-el-código)
-- [Archivos de datos](#archivos-de-datos)
-- [API](#api)
-- [Estado del frontend](#estado-del-frontend)
-
----
-
-## Visión general
-
-Un único proceso de Node.js sirve a la vez la API (`/api/*`) y el frontend ya compilado (`web/dist`). No hay base de datos: las notas son los archivos `.md` del vault, y la configuración de la app vive en `data/`.
-
-```mermaid
-flowchart LR
-    A["React + CodeMirror<br/>(web/src)"] -- "fetch /api (cookie de sesión)" --> B["Express<br/>(server/)"]
-    B --> C[("Vault<br/>archivos .md")]
-    B --> D[("data/<br/>config, sesiones, sync")]
-    B -. "git (sin shell)" .-> E["GitHub"]
-```
-
----
 
 ## Tecnologías
 
@@ -40,76 +12,6 @@ flowchart LR
 | **Estilos** | CSS propio inspirado en Obsidian (`web/src/styles/obsidian.css`), con variables para los temas |
 
 Todas las dependencias están en el `package.json` de la raíz. El frontend se compila con Vite en el `postinstall`, por eso las dependencias de desarrollo son necesarias también en producción.
-
----
-
-## Estructura del proyecto
-
-```text
-Obsidian-Web/
-├── server/                    # Backend Node.js + Express (ESM, sin compilar)
-│   ├── index.js               # Punto de entrada: data/, middleware, montaje de rutas, arranque
-│   ├── env.js                 # Carga el .env (process.loadEnvFile)
-│   ├── limits.js              # Límites configurables por variables de entorno
-│   ├── security.js            # Cabeceras (CSP, HSTS…), protección CSRF, errores públicos
-│   ├── sessions.js            # Sesiones revocables y límite de intentos de login
-│   ├── password.js            # Hash y verificación de contraseñas (scrypt)
-│   ├── vault.js               # Acceso al sistema de archivos: guardPath, papelera, adjuntos, ajustes de .obsidian
-│   ├── links.js               # Reescritura de enlaces al renombrar o mover
-│   ├── searchIndex.js         # Índice en memoria de las notas para la búsqueda
-│   ├── sync.js                # Sincronización con GitHub (git) y sincronización periódica
-│   └── routes/
-│       ├── setup.js           # Configuración inicial (token de un solo uso)
-│       ├── auth.js            # Login / logout
-│       ├── files.js           # Árbol, lectura, escritura, subida, papelera, PDF…
-│       ├── search.js          # Búsqueda de texto y etiquetas
-│       ├── settings.js        # Vault, contraseña, sesiones, adjuntos, notas diarias, límites
-│       └── sync.js            # Configuración y ejecución de la sincronización
-├── web/                       # Frontend React + Vite + TypeScript
-│   ├── index.html             # Incluye un script en línea que aplica el tema antes de pintar
-│   ├── public/                # Archivos estáticos copiados tal cual a dist/ (favicon)
-│   ├── vite.config.ts
-│   └── src/
-│       ├── main.tsx           # Punto de entrada de React
-│       ├── App.tsx            # Elige pantalla: configuración, login o app
-│       ├── store.ts           # Estado global (Zustand) y preferencias en localStorage
-│       ├── api.ts             # Cliente de la API
-│       ├── frontmatter.ts     # Leer y escribir el frontmatter YAML
-│       ├── wikilinks.ts       # Resolver y seguir [[enlaces]]
-│       ├── wikilinkComplete.ts# Autocompletado de [[ en el editor
-│       ├── noteEmbeds.ts      # Caché de notas incrustadas con ![[nota]]
-│       ├── attachments.ts     # Rutas y tamaños de imágenes y adjuntos
-│       ├── imageUpload.ts     # Pegar / arrastrar imágenes en el editor
-│       ├── templates.ts       # Notas diarias y plantillas ({{date}}, {{title}}…)
-│       ├── livePreview.ts     # Vista previa en vivo (decoraciones de CodeMirror)
-│       ├── liveTables.ts      # Tablas en vivo
-│       ├── codeHighlight.ts   # Resaltado de bloques de código en lectura (highlight.js bajo demanda)
-│       ├── mermaidDiagrams.ts # Diagramas ```mermaid en lectura (Mermaid bajo demanda, SVG en caché)
-│       ├── components/
-│       │   ├── MainLayout.tsx # Disposición, atajos globales, carga de notas, cambios externos
-│       │   ├── Editor.tsx     # CodeMirror, autoguardado, versiones y conflictos
-│       │   ├── EditorToolbar.tsx
-│       │   ├── ReadingView.tsx# Modo lectura (markdown-it con reglas propias)
-│       │   ├── Properties.tsx # Editor de propiedades (frontmatter)
-│       │   ├── InlineTitle.tsx# Título editable que renombra la nota
-│       │   ├── FileExplorer.tsx, Tabs.tsx, Ribbon.tsx, StatusBar.tsx
-│       │   ├── SearchPanel.tsx, TagsPanel.tsx, TrashPanel.tsx
-│       │   ├── FileDialogs.tsx# Buscador rápido, diálogo de conflicto, diálogos de archivo
-│       │   ├── NoteMenu.tsx   # Menú de la nota (exportar a PDF, mover, borrar…)
-│       │   ├── SettingsModal.tsx
-│       │   ├── Setup.tsx, Login.tsx, ImageViewer.tsx, Icons.tsx
-│       └── styles/obsidian.css
-├── utils/                     # Documentación técnica y diagnóstico
-│   ├── README.md              # Índice de esta carpeta
-│   ├── DESARROLLO.md          # Entorno, convenciones, recetas y hoja de ruta
-│   ├── ARQUITECTURA.md        # Este archivo
-│   ├── MANTENIMIENTO.md       # Actualizar, copias, contraseña, variables y límites
-│   ├── TROUBLESHOOTING.md     # Errores frecuentes
-│   └── diagnose.sh            # Diagnóstico automático
-├── data/                      # Configuración y secretos (autogenerado, en .gitignore)
-├── .env.example               # Plantilla de variables de entorno
-└── package.json               # Dependencias y scripts de todo el proyecto
-```
 
 ---
 
@@ -221,44 +123,7 @@ Dentro del vault, la app solo usa:
 
 ---
 
-## API
 
-Todas las rutas cuelgan de `/api`. Salvo `setup` y `auth`, exigen una sesión válida (si no, `401`). Las peticiones que no son `GET` pasan la protección CSRF. `:filePath` es la ruta relativa al vault, codificada como un solo segmento de URL.
-
-| Método | Ruta | Descripción |
-| :---: | :--- | :--- |
-| `GET` | `/api/setup/status` | `{ configured }` |
-| `POST` | `/api/setup/init` | Configuración inicial (`setupToken`, `vaultPath`, `password`, `port`) |
-| `POST` | `/api/auth/login` | Inicia sesión (`password`) |
-| `POST` | `/api/auth/logout` | Cierra la sesión actual |
-| `GET` | `/api/files/tree` | Árbol del vault (lista plana de `{ type, path, name }`, y `size` en los archivos) |
-| `GET` | `/api/files/read/:filePath` | Contenido de una nota y su versión (`content`, `version`) |
-| `GET` | `/api/files/raw/:filePath` | Archivo binario (imágenes, adjuntos) |
-| `GET` | `/api/files/export-pdf/:filePath` | Versión imprimible de la nota |
-| `POST` | `/api/files/write/:filePath` | Guarda una nota (`content`, `baseVersion` opcional). `409` con la versión actual si ha cambiado desde `baseVersion` |
-| `POST` | `/api/files/upload?note=…&name=…` | Sube un adjunto (cuerpo binario); devuelve su `path` |
-| `DELETE` | `/api/files/:filePath` | Mueve a `.trash/` |
-| `GET` | `/api/files/trash` | Contenido de la papelera |
-| `POST` | `/api/files/trash/restore` | Restaura a su ruta original (`id`) |
-| `POST` | `/api/files/trash/delete` | Borra definitivamente (`id`) |
-| `POST` | `/api/files/trash/empty` | Vacía la papelera |
-| `POST` | `/api/files/rename` | Renombra o mueve (`oldPath`, `newPath`) y actualiza los enlaces; devuelve las notas modificadas (`updated`) |
-| `POST` | `/api/files/copy` | Duplica (`path`) |
-| `POST` | `/api/files/create-note` | Crea una nota (`path`, `content` opcional) |
-| `POST` | `/api/files/create-folder` | Crea una carpeta (`path`) |
-| `GET` | `/api/search?q=…` | Búsqueda de texto o `tag:` |
-| `GET` | `/api/search/tags` | Todas las etiquetas del vault con las notas que las usan (`{ tag, paths }`) |
-| `GET` `POST` | `/api/settings/vault` | Lee / cambia la ruta del vault (`vaultPath`, `password`) |
-| `GET` | `/api/settings/limits` | Límites actuales del servidor (solo lectura) |
-| `POST` | `/api/settings/password` | Cambia la contraseña (`currentPassword`, `newPassword`) |
-| `POST` | `/api/settings/sessions/revoke` | Cierra todas las sesiones |
-| `GET` `POST` | `/api/settings/attachments` | Lee / cambia `attachmentFolderPath` |
-| `GET` `POST` | `/api/settings/notes` | Lee / cambia la configuración de notas diarias (`dailyNotes`) y plantillas (`templates`) |
-| `GET` | `/api/sync` | Configuración y estado de la sincronización (sin el token: solo `hasToken`) |
-| `POST` | `/api/sync/config` | Cambia la configuración (`provider`, `interval`, `github`; `github.token: null` lo borra) |
-| `POST` | `/api/sync/run` | Sincroniza ahora y devuelve el estado al terminar |
-| `GET` | `/api/sync/history?path=` | Commits que han tocado la nota (fecha, autor, mensaje y ruta en ese commit) |
-| `GET` | `/api/sync/history/version?path=&commit=` | Contenido de la nota en ese commit y su diff |
 
 > [!NOTE]
 > Las acciones de la papelera van por `POST` y no por `DELETE` para no chocar con `DELETE /api/files/:filePath` cuando una nota se llama `trash`.
