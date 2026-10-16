@@ -321,10 +321,16 @@ export const useStore =create<AppStore>((set) => ({
     })),
   activeTab: null,
   setActiveTab: (path) => set({ activeTab: path }),
+  // Marcar la pestaña como sucia/limpia. Si el valor no cambia no se toca `tabs`: crear un
+  // array nuevo en cada pulsación (siempre se llama al escribir) re-renderizaba Tabs tecla a
+  // tecla, porque se suscribe al array entero. Devolver {} no cambia `tabs` por identidad,
+  // así que el selector de Tabs no dispara el re-render
   setTabDirty: (path, isDirty) =>
-    set((state) => ({
-      tabs: state.tabs.map((t) => (t.path === path ? { ...t, isDirty } : t)),
-    })),
+    set((state) => {
+      const tab = state.tabs.find((t) => t.path === path);
+      if (!tab || tab.isDirty === isDirty) return {};
+      return { tabs: state.tabs.map((t) => (t.path === path ? { ...t, isDirty } : t)) };
+    }),
   editMode: initialDefaultEditMode,
   setEditMode: (mode) => set(mode ? { editMode: mode } : { editMode: mode, rawMode: false }),
   rawMode: false,

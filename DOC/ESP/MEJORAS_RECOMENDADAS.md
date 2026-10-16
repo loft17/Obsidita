@@ -36,7 +36,7 @@ Auditoría completa del código (servidor Express + cliente React · ~16 000 lí
 | Sección | Mejoras | 🔴 | 🟠 | 🟡 |
 |---------|:-------:|:--:|:--:|:--:|
 | [1. Seguridad y configuración](#1-seguridad-y-configuración) | 9 | — | 3 | 3 |
-| [2. Rendimiento y memoria](#2-rendimiento-y-memoria) | 11 | 2 | 6 | 3 |
+| [2. Rendimiento y memoria](#2-rendimiento-y-memoria) | 11 | 1 | 5 | 3 |
 | [3. Experiencia de usuario](#3-experiencia-de-usuario) | 11 | 2 | 4 | 5 |
 | [4. Accesibilidad](#4-accesibilidad) | 8 | — | 3 | 5 |
 | [5. Calidad de código y arquitectura](#5-calidad-de-código-y-arquitectura) | 12 | 2 | 5 | 5 |
@@ -44,7 +44,7 @@ Auditoría completa del código (servidor Express + cliente React · ~16 000 lí
 | [7. Operación y documentación](#7-operación-y-documentación) | 10 | 1 | 5 | 4 |
 | [8. Por dónde empezar](#8-por-dónde-empezar) | — | — | — | — |
 | [Lo que ya está corregido](#lo-que-ya-está-corregido) | 16 | — | — | — |
-| **Total** | **67** | **9** | **29** | **26** |
+| **Total** | **67** | **8** | **28** | **26** |
 
 ---
 
@@ -72,9 +72,9 @@ Auditoría completa del código (servidor Express + cliente React · ~16 000 lí
 | # | Prio | Esf. | Hallazgo | Cómo aplicarla |
 |:--:|:----:|:----:|----------|----------------|
 | 10 | 🔴 | M | **El índice de búsqueda guarda `content` y `lower` de cada nota** (`searchIndex.js:24-33`): con los valores por defecto son hasta **~400 MB de RSS** | Guardar solo `lower` para buscar y releer del disco únicamente las notas con coincidencias (para el fragmento). Alternativa rápida: bajar `SEARCH_MAX_SCANNED_MB` de 200 a ~50 en `.env.example` |
-| 11 | 🔴 | S | `setTabDirty` crea un array nuevo de `tabs` en **cada pulsación** (`store.ts:324`, invocado en `Editor.tsx:277`), lo que re-renderiza `Tabs` tecla a tecla | Salir antes si el valor no cambia, y no llamar si la pestaña ya está sucia |
+| 11 | ✅ | S | `setTabDirty` crea un array nuevo de `tabs` en **cada pulsación** (`store.ts:324`, invocado en `Editor.tsx:277`), lo que re-renderiza `Tabs` tecla a tecla | **Corregido:** `setTabDirty` sale antes si `isDirty` no cambia y `commit` no llama si la pestaña ya está sucia. Medido con zustand 4.5.7: **200 → 1** re-render de `Tabs` al escribir 200 teclas |
 | 12 | 🟠 | M | El editor re-parsea y recompone el frontmatter completo en cada tecla (`Editor.tsx:158`, `Editor.tsx:232`) | Memoizar por contenido y separar cuerpo y frontmatter en el estado |
-| 13 | 🟠 | M | En el explorador, `buildTree` y las expresiones regulares de carpetas ocultas se recalculan en **cada render** (`FileExplorer.tsx:373-377`), y `useIsMobile()` se instancia **por nodo** (`FileExplorer.tsx:80` → un `matchMedia` con su listener por cada fila) | `useMemo` para matchers y árbol, subir `useIsMobile` al padre, `React.memo` en `FileTreeNode` |
+| 13 | ✅ | M | En el explorador, `buildTree` y las expresiones regulares de carpetas ocultas se recalculan en **cada render** (`FileExplorer.tsx:373-377`), y `useIsMobile()` se instancia **por nodo** (`FileExplorer.tsx:80` → un `matchMedia` con su listener por cada fila) | **Corregido:** `useMemo` sobre `tree` + `hiddenFolders` (medido: ~3 ms por render con 3000 notas, 18 % de un frame). `useIsMobile` pasa a un store compartido con `useSyncExternalStore`: **un solo `matchMedia` y un solo listener** para toda la app en lugar de uno por fila. Nota: `React.memo` en `FileTreeNode` no se aplicó porque sus props (`drag`, `onContextMenu`, `onSelect`) son nuevos en cada render, así que no evitaría nada sin estabilizarlos antes |
 | 14 | 🟠 | L | No hay virtualización del árbol: con miles de notas y carpetas expandidas se renderiza todo | Virtualizar la lista (ventana deslizante) o paginar por carpeta |
 | 15 | 🟠 | M | El widget de tablas reescribe **toda** la tabla en cada `input` y añade una entrada de deshacer por tecla (`liveTables.ts:210`) | Debounce de 150-300 ms o reescribir solo la celda modificada |
 | 16 | 🟠 | M | Al borrar una nota, `noteImageUsage` lanza O(imágenes × candidatas) peticiones **en serie** y bloquea el botón de confirmar (`attachments.ts:94-128`) | Un endpoint en el servidor («¿qué imágenes usa esta nota?») o `Promise.all` con tope de candidatas |

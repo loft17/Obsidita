@@ -1,23 +1,45 @@
 // Versión móvil: por debajo de este ancho la interfaz pasa a una sola columna, con la barra
 // lateral como panel deslizante y una cabecera compacta en lugar de pestañas y ruta
-import { useEffect, useRef, useState, type TouchEvent } from 'react';
+import { useRef, useSyncExternalStore, type TouchEvent } from 'react';
 
 const MOBILE_QUERY = '(max-width: 768px)';
+
+let mql: MediaQueryList | null = null;
+const listeners = new Set<() => void>();
+
+// Un único matchMedia (y un único listener) para toda la app. Antes cada componente que lo
+// usaba creaba el suyo: FileTreeNode lo llama por cada fila, así que con N nodos había N
+// matchMedia y N listeners vivos a la vez
+const mqlRef = () => {
+  if (!mql && typeof window !== 'undefined') {
+    mql = window.matchMedia(MOBILE_QUERY);
+    mql.addEventListener('change', () => {
+      for (const notify of listeners) notify();
+    });
+  }
+  return mql;
+};
+
+// Se crea el matchMedia al suscribir (no al leer el valor): así el snapshot es una lectura pura
+const subscribe = (notify: () => void) => {
+  mqlRef();
+  listeners.add(notify);
+  return () => {
+    listeners.delete(notify);
+  };
+};
 
 export const isMobile = () => typeof window !== 'undefined' && window.matchMedia(MOBILE_QUERY).matches;
 
 export function useIsMobile() {
-  const [mobile, setMobile] = useState(isMobile);
-
-  useEffect(() => {
-    const mq = window.matchMedia(MOBILE_QUERY);
-    const onChange = () => setMobile(mq.matches);
-    onChange();
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, []);
-
-  return mobile;
+  // El mismo valor (y el mismo snapshot) para todos los componentes: solo se re-renderizan
+  // cuando la media query cambia de verdad. El snapshot es un booleano, así que React lo
+  // compara por Object.is sin riesgo de bucle
+  return useSyncExternalStore(
+    subscribe,
+    () => mql?.matches ?? false,
+    () => false
+  );
 }
 
 // Pulsación larga en pantallas táctiles: abre el menú contextual. Android ya lo hace solo con

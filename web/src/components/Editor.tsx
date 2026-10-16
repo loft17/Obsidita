@@ -274,7 +274,11 @@ export default function Editor({ filePath, content, onContentChange }: Props) {
 
   const commit = (newContent: string) => {
     onContentChange(newContent);
-    setTabDirty(filePath, true);
+    // Solo si no lo está ya: commit() corre en cada pulsación y a partir de la primera la
+    // pestaña ya está sucia (setTabDirty también lo comprueba, esto evita la llamada)
+    if (!useStore.getState().tabs.find((t) => t.path === filePath)?.isDirty) {
+      setTabDirty(filePath, true);
+    }
 
     // Con un conflicto abierto no se guarda: se espera a que el usuario elija
     const { conflicts, setConflict } = useStore.getState();

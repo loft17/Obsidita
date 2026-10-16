@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useStore, isUnder, hiddenMatchers, isHiddenPath } from '../store';
 import { filesApi } from '../api';
 import { flushPendingSave, changeNotePath } from './Editor';
@@ -370,11 +370,16 @@ export default function FileExplorer() {
     };
   }, [menu]);
 
-  const matchers = hiddenMatchers(hiddenFolders);
-  const visibleTree = matchers.length
-    ? tree.filter((item) => !isHiddenPath(item.path, item.type === 'folder', matchers))
-    : tree;
-  const { roots, grouped } = buildTree(visibleTree);
+  // `tree` solo se reemplaza entero (nunca se muta en sitio), así que memoizar por identidad
+  // es seguro. Sin esto, filtrar y reconstruir el árbol completo corría en CADA render (~3 ms
+  // con 3000 notas) y el explorador re-renderiza al expandir, al cambiar de pestaña, etc.
+  const { roots, grouped } = useMemo(() => {
+    const matchers = hiddenMatchers(hiddenFolders);
+    const visibleTree = matchers.length
+      ? tree.filter((item) => !isHiddenPath(item.path, item.type === 'folder', matchers))
+      : tree;
+    return buildTree(visibleTree);
+  }, [tree, hiddenFolders]);
 
   return (
     <>
