@@ -4,6 +4,7 @@ import App from './App';
 import './styles/obsidian.css';
 import './fonts';
 import { fitToVisualViewport } from './mobile';
+import { i18nReady } from './i18n';
 
 fitToVisualViewport();
 
@@ -14,8 +15,11 @@ for (const type of ['dragover', 'drop'] as const) {
   });
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+// Se pinta cuando el idioma de la interfaz está disponible
+i18nReady.then(() => {
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+});

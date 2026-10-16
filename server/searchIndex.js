@@ -10,6 +10,16 @@ import {
 // de la sincronización con GitHub o de Obsidian de escritorio, sin vigilar la carpeta.
 // Las notas que se pasan de los límites de tamaño no se indexan (ni se buscan)
 
+// Mientras se escribe en el buscador llegan varias consultas seguidas: el resultado del
+// recorrido se reutiliza durante SNAPSHOT_TTL. Cualquier cambio hecho desde la web lo
+// invalida al momento (invalidateSnapshot, en index.js); los de fuera tardan como mucho eso
+const SNAPSHOT_TTL = 2500;
+let cached = null; // { vaultPath, at, out }
+
+export const invalidateSnapshot = () => {
+  cached = null;
+};
+
 let indexedVault = null;
 const notes = new Map(); // ruta → { mtime, size, content, lower, tags }
 
@@ -28,6 +38,7 @@ const load = (vaultPath, file) => {
 
 // Árbol del vault con el contenido de cada nota indexada: [{ file, note }], note null si no se indexa
 export function snapshot(vaultPath) {
+  if (cached && cached.vaultPath === vaultPath && Date.now() - cached.at < SNAPSHOT_TTL) return cached.out;
   if (indexedVault !== vaultPath) {
     notes.clear();
     indexedVault = vaultPath;
@@ -52,5 +63,6 @@ export function snapshot(vaultPath) {
   }
   // Fuera lo borrado, renombrado o que ya no cabe
   for (const path of notes.keys()) if (!seen.has(path)) notes.delete(path);
+  cached = { vaultPath, at: Date.now(), out };
   return out;
 }

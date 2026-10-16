@@ -4,15 +4,25 @@
 import { Fragment, useMemo, type ReactNode } from 'react';
 import { create } from 'zustand';
 import { es } from './es';
-import { en } from './en';
-import { ca } from './ca';
 
 export type Lang = 'es' | 'en' | 'ca';
 export type MessageKey = keyof typeof es;
 export type Messages = Record<MessageKey, string>;
 type Params = Record<string, string | number>;
 
-const MESSAGES: Record<Lang, Messages> = { es, en, ca };
+// `es` va siempre en la carga inicial (es la referencia y el respaldo de las claves que falten);
+// los demás idiomas se descargan solo cuando se usan
+const MESSAGES: Partial<Record<Lang, Messages>> = { es };
+const LOADERS: Record<Exclude<Lang, 'es'>, () => Promise<Messages>> = {
+  en: () => import('./en').then((m) => m.en),
+  ca: () => import('./ca').then((m) => m.ca),
+};
+
+const loadLang = async (lang: Lang) => {
+  if (lang !== 'es' && !MESSAGES[lang]) MESSAGES[lang] = await LOADERS[lang]();
+};
+
+const messagesFor = (lang: Lang): Messages => MESSAGES[lang] ?? es;
 
 // Cada idioma se muestra con su propio nombre en el selector
 export const LANGUAGES: { value: Lang; label: string }[] = [
@@ -43,21 +53,27 @@ const applyLang = (lang: Lang) => {
 };
 applyLang(initialLang);
 
+// Se espera antes de pintar la app (main.tsx) para no mostrar un instante el texto en español.
+// Si no se puede descargar el idioma, se usa el español
+export const i18nReady = loadLang(initialLang).catch(() => {});
+
 export const useI18n = create<{ lang: Lang; setLang: (lang: Lang) => void }>((set) => ({
   lang: initialLang,
-  setLang: (lang) => {
+  setLang: async (lang) => {
     try {
       localStorage.setItem(LANG_KEY, lang);
     } catch {
       // almacenamiento no disponible: la preferencia solo dura la sesión
     }
+    // Primero se descarga el idioma, para cambiar todos los textos de una vez
+    await loadLang(lang).catch(() => {});
     applyLang(lang);
     set({ lang });
   },
 }));
 
 const format = (lang: Lang, key: MessageKey, params?: Params) => {
-  const text = MESSAGES[lang][key] ?? es[key] ?? key;
+  const text = messagesFor(lang)[key] ?? es[key] ?? key;
   return params ? text.replace(/\{(\w+)\}/g, (m, name) => (name in params ? String(params[name]) : m)) : text;
 };
 
@@ -79,7 +95,7 @@ export function useT(): TFunction {
 // <Trans k="files.hidden.desc" values={{ example: <code>_*</code> }} />
 export function Trans({ k, values }: { k: MessageKey; values: Record<string, ReactNode> }) {
   const lang = useI18n((s) => s.lang);
-  const parts = MESSAGES[lang][k].split(/\{(\w+)\}/g);
+  const parts = messagesFor(lang)[k].split(/\{(\w+)\}/g);
   return (
     <>
       {parts.map((part, i) => (

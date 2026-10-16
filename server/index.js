@@ -13,6 +13,7 @@ import settingsRoutes from './routes/settings.js';
 import syncRoutes from './routes/sync.js';
 import fontsRoutes from './routes/fonts.js';
 import { createSyncManager } from './sync.js';
+import { invalidateSnapshot } from './searchIndex.js';
 import { createSessionStore, createLoginLimiter } from './sessions.js';
 import { securityHeaders, csrfGuard } from './security.js';
 import { MAX_NOTE_MB, MAX_UPLOAD_MB } from './limits.js';
@@ -139,6 +140,17 @@ app.use('/api', (req, res, next) => {
   if (!sessions.isValid(req.signedCookies.token)) {
     console.log(`[Auth] Unauthorized access attempt to ${req.method} ${req.originalUrl}`);
     return res.status(401).json({ error: 'Unauthorized' });
+  }
+  next();
+});
+
+// Lo que modifica algo (guardar, renombrar, borrar, sincronizar, cambiar el vault...) invalida
+// el recorrido del vault que reutiliza la búsqueda
+app.use('/api', (req, res, next) => {
+  // También al terminar: una búsqueda hecha mientras tanto (p. ej. durante una sincronización) no vale
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    invalidateSnapshot();
+    res.on('finish', invalidateSnapshot);
   }
   next();
 });

@@ -28,8 +28,19 @@ const precompress = (): Plugin => ({
   },
 });
 
+// Las fuentes de @fontsource declaran woff2 y, como respaldo, woff. Todos los navegadores
+// actuales usan woff2, así que se quita el woff: el build no copia esos archivos
+const woff2Only = (): Plugin => ({
+  name: 'woff2-only',
+  enforce: 'pre',
+  transform(code, id) {
+    if (!/[\\/]@fontsource[\\/].*\.css$/.test(id)) return null;
+    return { code: code.replace(/,\s*url\([^)]*\.woff\)\s*format\(['"]woff['"]\)/g, ''), map: null };
+  },
+});
+
 export default defineConfig({
-  plugins: [react(), precompress()],
+  plugins: [react(), woff2Only(), precompress()],
   define: {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? '0.1.0'),
   },
