@@ -29,6 +29,13 @@ const WEIGHTS = {
   black: 900, heavy: 900,
 };
 
+// Caracteres que no deben acabar nunca en el CSS generado: comillas, barra invertida,
+// llaves y punto y coma romperían la declaración; los de control (C0 \x00-\x1f, DEL \x7f
+// y C1 \x80-\x9f) son invisibles y no pintan nada en un nombre de familia (defensa en
+// profundidad: el nombre del archivo es entrada no confiable y va a un <style>)
+const UNSAFE_IN_CSS = /["\\;{}]|[\x00-\x1f\x7f-\x9f]/g;
+const sanitizeFamily = (name) => name.replace(/_/g, ' ').replace(UNSAFE_IN_CSS, '').trim();
+
 // Familia, peso y estilo a partir del nombre del archivo, con la convención de Google Fonts:
 // Lora-Regular.ttf, Lora-BoldItalic.ttf, Lora-VariableFont_wght.ttf, Lora-Italic-VariableFont_wght.ttf
 export const parseFontFile = (file) => {
@@ -52,7 +59,9 @@ export const parseFontFile = (file) => {
       if (italic) style = 'italic';
     }
   }
-  family = family.replace(/_/g, ' ').replace(/["\\;{}]/g, '').trim() || file;
+  // El fallback (nombre ilegible) también se limpia: si no, un control escondido en el
+  // nombre del archivo volvería a colarse por esta vía
+  family = sanitizeFamily(family) || sanitizeFamily(file) || 'Fuente';
   return { file, family, weight, style };
 };
 

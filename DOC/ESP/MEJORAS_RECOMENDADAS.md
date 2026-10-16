@@ -35,7 +35,7 @@ Auditoría completa del código (servidor Express + cliente React · ~16 000 lí
 
 | Sección | Mejoras | 🔴 | 🟠 | 🟡 |
 |---------|:-------:|:--:|:--:|:--:|
-| [1. Seguridad y configuración](#1-seguridad-y-configuración) | 9 | — | 3 | 4 |
+| [1. Seguridad y configuración](#1-seguridad-y-configuración) | 9 | — | 3 | 3 |
 | [2. Rendimiento y memoria](#2-rendimiento-y-memoria) | 11 | 2 | 6 | 3 |
 | [3. Experiencia de usuario](#3-experiencia-de-usuario) | 11 | 2 | 4 | 5 |
 | [4. Accesibilidad](#4-accesibilidad) | 8 | — | 3 | 5 |
@@ -44,7 +44,7 @@ Auditoría completa del código (servidor Express + cliente React · ~16 000 lí
 | [7. Operación y documentación](#7-operación-y-documentación) | 10 | 1 | 5 | 4 |
 | [8. Por dónde empezar](#8-por-dónde-empezar) | — | — | — | — |
 | [Lo que ya está corregido](#lo-que-ya-está-corregido) | 16 | — | — | — |
-| **Total** | **67** | **9** | **29** | **27** |
+| **Total** | **67** | **9** | **29** | **26** |
 
 ---
 
@@ -58,7 +58,7 @@ Auditoría completa del código (servidor Express + cliente React · ~16 000 lí
 | 4 | 🟠 | S | La lista blanca de extensiones solo se aplica si la subida trae `folder` (`files.js:33`, `files.js:118`), y `create-note` no valida extensión | Decidir la política y aplicarla en un único sitio. Ojo: Obsidian admite adjuntos de cualquier tipo, así que lo probable es documentar «todo vale» en vez de «solo imágenes» |
 | 5 | 🟠 | M | El limitador de login bloquea **globalmente** tras 50 fallos (`sessions.js:98`) y, sin `TRUST_PROXY`, todas las IP comparten contador: un atacante puede dejar fuera a todos los usuarios legítimos | Separar el cubo global del de IP (o hacerlo configurable) y documentar `TRUST_PROXY=1` como obligatorio detrás de un proxy |
 | 6 | 🟡 | S | `UPDATE_CHECK` está activo por defecto, así que el servidor llama a `raw.githubusercontent.com` al arrancar (`updates.js:11-18`) | Hacerlo opt-in explícito o avisar en la primera ejecución |
-| 7 | 🟡 | S | `parseFontFile` no filtra caracteres de control del nombre del archivo y acaban en el `@font-face` generado (`fonts.js:55`) | Añadir `\x00-\x1f\x7f` a la clase de limpieza (defensa en profundidad) |
+| 7 | ✅ | S | `parseFontFile` no filtra caracteres de control del nombre del archivo y acaban en el `@font-face` generado (`fonts.js:55`) | **Corregido:** `sanitizeFamily` en `server/routes/fonts.js` elimina controles C0/C1/DEL además de `" \ ; { }`, y el fallback (`\|\| file`) también se limpia para que no se cuelen por esa vía |
 | 8 | 🟡 | S | Si falta `TRUST_PROXY` detrás de HTTPS, la cookie de sesión se emite sin `Secure` | Advertir al arrancar cuando `HOST` no sea `127.0.0.1` y no haya `TRUST_PROXY` |
 | 9 | 🟡 | L | El token de GitHub (`data/sync.json`) y las notas están en claro en disco | Documentar el modelo de amenaza y valorar el cifrado del token en reposo |
 
