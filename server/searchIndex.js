@@ -11,12 +11,16 @@ import {
 // Las notas que se pasan de los límites de tamaño no se indexan (ni se buscan)
 
 let indexedVault = null;
-const notes = new Map(); // ruta → { mtime, size, lines, lower, tags }
+const notes = new Map(); // ruta → { mtime, size, content, lower, tags }
+
+// Las líneas no se guardan (duplicarían la memoria del índice): se calculan solo para las
+// notas que coinciden con la búsqueda
+export const noteLines = (note) => note.content.split(/\r?\n/);
 
 const load = (vaultPath, file) => {
   try {
     const content = vault.readFile(vaultPath, file.path);
-    return { mtime: file.mtime, size: file.size, lines: content.split(/\r?\n/), lower: content.toLowerCase(), tags: null };
+    return { mtime: file.mtime, size: file.size, content, lower: content.toLowerCase(), tags: null };
   } catch {
     return null; // Archivo ilegible: se omite
   }

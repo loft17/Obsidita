@@ -1,7 +1,6 @@
 // Versión móvil: por debajo de este ancho la interfaz pasa a una sola columna, con la barra
 // lateral como panel deslizante y una cabecera compacta en lugar de pestañas y ruta
 import { useEffect, useRef, useState, type TouchEvent } from 'react';
-import { EditorView } from '@codemirror/view';
 
 const MOBILE_QUERY = '(max-width: 768px)';
 
@@ -64,14 +63,22 @@ export function useLongPress(onLongPress: (x: number, y: number) => void, delay 
 function revealFocus() {
   const active = document.activeElement as HTMLElement | null;
   if (!active || active === document.body) return;
-  const view = EditorView.findFromDOM(active);
-  // En el texto de la nota se muestra su cursor; en un campo (celda de tabla, propiedad,
-  // título...) el propio campo, porque el cursor de CodeMirror no está en él
-  if (view && active === view.contentDOM) {
-    view.dispatch({ effects: EditorView.scrollIntoView(view.state.selection.main.head) });
-  } else {
+  // CodeMirror se importa aquí y no arriba para no meterlo en la carga inicial (login);
+  // cuando hay una nota abierta ya está descargado
+  if (!active.closest('.cm-editor')) {
     active.scrollIntoView({ block: 'nearest' });
+    return;
   }
+  import('@codemirror/view').then(({ EditorView }) => {
+    const view = EditorView.findFromDOM(active);
+    // En el texto de la nota se muestra su cursor; en un campo (celda de tabla, propiedad,
+    // título...) el propio campo, porque el cursor de CodeMirror no está en él
+    if (view && active === view.contentDOM) {
+      view.dispatch({ effects: EditorView.scrollIntoView(view.state.selection.main.head) });
+    } else {
+      active.scrollIntoView({ block: 'nearest' });
+    }
+  });
 }
 
 export function fitToVisualViewport() {

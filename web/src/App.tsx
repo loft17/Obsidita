@@ -1,10 +1,14 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { setupApi, authApi, filesApi } from './api';
 import Setup from './components/Setup';
 import Login from './components/Login';
-import MainLayout from './components/MainLayout';
 import { useStore } from './store';
 import { t, useT } from './i18n';
+
+// La pantalla principal (editor, CodeMirror, markdown-it...) va en su propio archivo: el login
+// y el setup cargan sin ella. Se empieza a descargar en cuanto se sabe que el vault está configurado
+const loadMainLayout = () => import('./components/MainLayout');
+const MainLayout = lazy(loadMainLayout);
 
 type AppState = 'setup' | 'login' | 'main';
 
@@ -23,6 +27,7 @@ export default function App() {
         console.log('Setup status:', status);
         setSiteTitle(status.siteTitle || '');
         if (status.configured) {
+          loadMainLayout().catch(() => {});
           // Si la cookie de sesión sigue siendo válida (p. ej. al recargar), entrar directamente
           try {
             const tree = await filesApi.getTree();
@@ -87,7 +92,11 @@ export default function App() {
     <>
       {appState === 'setup' && <Setup onComplete={handleSetupComplete} />}
       {appState === 'login' && <Login onComplete={handleLoginComplete} />}
-      {appState === 'main' && <MainLayout />}
+      {appState === 'main' && (
+        <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>{tr('common.loading')}</div>}>
+          <MainLayout />
+        </Suspense>
+      )}
     </>
   );
 }

@@ -2,8 +2,8 @@ import './env.js';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import { readFileSync, existsSync, writeFileSync, mkdirSync, readdirSync, chmodSync } from 'fs';
+import { dirname, join, extname } from 'path';
+import { readFileSync, existsSync, writeFileSync, mkdirSync, readdirSync, chmodSync, statSync } from 'fs';
 import crypto from 'crypto';
 import setupRoutes from './routes/setup.js';
 import authRoutes from './routes/auth.js';
@@ -67,22 +67,62 @@ app.use((req, res, next) => (isFilesApi(req) ? next() : smallJson(req, res, next
 app.use(cookieParser(cookieSecret));
 
 // Check if configured
+// Se consulta en cada petición: solo se vuelve a leer y parsear config.json cuando cambia
+// (fecha de modificación, tamaño o inodo), así que los cambios se siguen aplicando al instante
+const configPath = join(dataDir, 'config.json');
+let configCache = { key: null, value: null };
 const getConfig = () => {
-  const configPath = join(dataDir, 'config.json');
-  if (existsSync(configPath)) {
-    try {
-      return JSON.parse(readFileSync(configPath, 'utf8'));
-    } catch (e) {
-      console.error('Error reading config:', e);
-      return null;
-    }
+  let st;
+  try {
+    st = statSync(configPath, { bigint: true });
+  } catch {
+    configCache = { key: null, value: null };
+    return null;
   }
-  return null;
+  const key = `${st.ino}:${st.size}:${st.mtimeNs}`;
+  if (configCache.key === key) return configCache.value;
+  let value = null;
+  try {
+    value = JSON.parse(readFileSync(configPath, 'utf8'));
+  } catch (e) {
+    console.error('Error reading config:', e);
+  }
+  configCache = { key, value };
+  return value;
 };
 
 // Serve static web files (before auth middleware so they're always accessible)
+// Los archivos de assets/ llevan un hash en el nombre: el navegador los guarda un año sin
+// volver a preguntar. index.html se revalida siempre para recoger cada build nueva.
+// Si el build dejó una versión comprimida (.br / .gz, ver vite.config.ts) se envía esa
+const ENCODINGS = [
+  ['br', '.br'],
+  ['gzip', '.gz'],
+];
+const precompressed = (req, res, next) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+  if (!/\.(js|css|svg)$/.test(req.path) || req.path.includes('..')) return next();
+  const accepted = req.get('Accept-Encoding') || '';
+  for (const [encoding, ext] of ENCODINGS) {
+    if (!accepted.includes(encoding)) continue;
+    const file = join(distPath, 'assets', req.path + ext);
+    if (!existsSync(file)) continue;
+    res.set({ 'Content-Encoding': encoding, Vary: 'Accept-Encoding', 'Cache-Control': 'public, max-age=31536000, immutable' });
+    res.type(extname(req.path));
+    return res.sendFile(file, { maxAge: '1y', immutable: true }, (err) => err && next(err));
+  }
+  next();
+};
 if (existsSync(distPath)) {
-  app.use(express.static(distPath));
+  app.use('/assets', precompressed);
+  app.use('/assets', express.static(join(distPath, 'assets'), { immutable: true, maxAge: '1y', index: false }));
+  app.use(
+    express.static(distPath, {
+      setHeaders: (res, path) => {
+        if (path.endsWith('.html')) res.set('Cache-Control', 'no-cache');
+      },
+    })
+  );
 }
 
 // Routes
@@ -112,6 +152,7 @@ app.use('/api/fonts', fontsRoutes());
 // SPA fallback (serve index.html for client-side routing)
 if (existsSync(distPath)) {
   app.get('*', (req, res) => {
+    res.set('Cache-Control', 'no-cache');
     res.sendFile(join(distPath, 'index.html'));
   });
 }

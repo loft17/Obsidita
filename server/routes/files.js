@@ -1,14 +1,11 @@
 import express, { Router } from 'express';
-import MarkdownIt from 'markdown-it';
-import { ZipArchive } from 'archiver';
 import { statSync, readdirSync } from 'fs';
 import { join } from 'path';
 import * as vault from '../vault.js';
 import { prepareLinkUpdate } from '../links.js';
 import { publicError, scriptHash } from '../security.js';
 import { MAX_UPLOAD_MB } from '../limits.js';
-
-const md = new MarkdownIt({ html: false, linkify: true, breaks: true });
+import { loadMarkdown, loadZipArchive, ZIP_LEVEL } from '../lazy.js';
 
 // Frontmatter YAML al inicio de la nota (se omite en la exportación)
 const FRONTMATTER = /^---[ \t]*\r?\n(?:[\s\S]*?\r?\n)?---[ \t]*(?:\r?\n|$)/;
@@ -30,7 +27,7 @@ const PRINT_STYLES = `
   @media print { body { padding: 0; } }
 `;
 
-const escapeHtml = (s) => md.utils.escapeHtml(s);
+const escapeHtml = (md, s) => md.utils.escapeHtml(s);
 
 // Archivos que se pueden soltar en el explorador: notas e imágenes
 const UPLOADABLE = /\.(md|png|jpe?g|gif|webp|svg|bmp|avif|ico)$/i;
@@ -43,11 +40,11 @@ export default (dataDir, getConfig) => {
   const router = Router();
 
   // Ejecuta una operación sobre la bóveda configurada y responde JSON
-  const withVault = (handler) => (req, res) => {
+  const withVault = (handler) => async (req, res) => {
     try {
       const cfg = getConfig();
       if (!cfg) return res.status(400).json({ error: 'Not configured' });
-      handler(cfg, req, res);
+      await handler(cfg, req, res);
     } catch (err) {
       res.status(400).json({ error: publicError(err) });
     }
@@ -73,10 +70,11 @@ export default (dataDir, getConfig) => {
     });
   }));
 
-  router.get('/export-pdf/:filePath',withVault((cfg, req, res) => {
+  router.get('/export-pdf/:filePath',withVault(async (cfg, req, res) => {
+    const md = await loadMarkdown();
     const raw = vault.readFile(cfg.vaultPath, req.params.filePath);
     const body = raw.replace(FRONTMATTER, '');
-    const title = escapeHtml(req.params.filePath.split('/').pop().replace(/\.md$/i, ''));
+    const title = escapeHtml(md, req.params.filePath.split('/').pop().replace(/\.md$/i, ''));
     res.set('Content-Security-Policy', PRINT_CSP);
     res.type('html').send(`<!DOCTYPE html>
 <html>
@@ -174,7 +172,8 @@ ${md.render(body)}
   }));
 
   // Descargar carpeta como ZIP
-  router.get('/download-folder/:folderPath', withVault((cfg, req, res) => {
+  router.get('/download-folder/:folderPath', withVault(async (cfg, req, res) => {
+    const ZipArchive = await loadZipArchive();
     const folderPath = req.params.folderPath;
     const fullPath = vault.resolveFile(cfg.vaultPath, folderPath);
     const stat = statSync(fullPath);
@@ -190,7 +189,7 @@ ${md.render(body)}
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
-    const archive = new ZipArchive({ zlib: { level: 9 } });
+    const archive = new ZipArchive({ zlib: { level: ZIP_LEVEL } });
 
     archive.on('error', (err) => {
       console.error('Archiver error:', err);

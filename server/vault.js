@@ -353,18 +353,23 @@ export const createFolder = (vaultPath, folderPath) => {
 export const listTree = (vaultPath) => {
   const tree = [];
   const walk = (dir, parentPath = '') => {
-    const items = readdirSync(dir).sort();
-    for (const item of items) {
+    // El tipo de cada entrada sale de readdir (sin un lstat por archivo); solo las notas
+    // necesitan un stat (tamaño y fecha). Si el sistema de archivos no informa del tipo, se pide
+    const items = readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+    for (const entry of items) {
+      const item = entry.name;
       if (item === '.trash' || item.startsWith('.')) continue;
       const fullPath = join(dir, item);
+      const known = entry.isFile() || entry.isDirectory() || entry.isSymbolicLink();
+      const type = known ? entry : lstatSync(fullPath);
       // Los enlaces simbólicos no se muestran: podrían apuntar fuera de la bóveda o crear ciclos
-      if (lstatSync(fullPath).isSymbolicLink()) continue;
-      const stat = statSync(fullPath);
+      if (type.isSymbolicLink()) continue;
       const path = parentPath ? `${parentPath}/${item}` : item;
-      if (stat.isDirectory()) {
+      if (type.isDirectory()) {
         tree.push({ type: 'folder', path, name: item });
         walk(fullPath, path);
       } else if (item.endsWith('.md')) {
+        const stat = statSync(fullPath);
         tree.push({ type: 'file', path, name: item, size: stat.size, mtime: stat.mtimeMs });
       } else {
         tree.push({ type: 'other', path, name: item });

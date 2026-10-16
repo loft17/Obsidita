@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { writeFileSync, mkdirSync, existsSync, statSync, readdirSync } from 'fs';
 import { join } from 'path';
-import { ZipArchive } from 'archiver';
 import * as vault from '../vault.js';
 import { publicError } from '../security.js';
 import { verifyPassword, hashPassword, MIN_PASSWORD_LENGTH } from '../password.js';
 import { sessionCookie } from '../sessions.js';
 import * as limits from '../limits.js';
+import { loadZipArchive, ZIP_LEVEL } from '../lazy.js';
 import { getUpdateStatus } from '../updates.js';
 
 export default (dataDir, getConfig, limiter, sessions) => {
@@ -221,7 +221,7 @@ export default (dataDir, getConfig, limiter, sessions) => {
 
   // Descargar el vault completo como ZIP. Se envía por streaming: el navegador lo guarda
   // directamente sin cargarlo en memoria. .git y .trash se excluyen salvo ?git=1 / ?trash=1
-  router.get('/download-vault', (req, res) => {
+  router.get('/download-vault', async (req, res) => {
     const cfg = getConfig();
     if (!cfg) return res.status(400).json({ error: 'Not configured' });
 
@@ -230,6 +230,7 @@ export default (dataDir, getConfig, limiter, sessions) => {
     if (req.query.trash !== '1') excluded.add('.trash');
 
     try {
+      const ZipArchive = await loadZipArchive();
       const vaultPath = cfg.vaultPath;
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
       const filename = `vault-${timestamp}.zip`;
@@ -237,7 +238,7 @@ export default (dataDir, getConfig, limiter, sessions) => {
       res.setHeader('Content-Type', 'application/zip');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
-      const archive = new ZipArchive({ zlib: { level: 9 } });
+      const archive = new ZipArchive({ zlib: { level: ZIP_LEVEL } });
 
       archive.on('error', (err) => {
         console.error('Archiver error:', err);

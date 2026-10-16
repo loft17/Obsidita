@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { snapshot } from '../searchIndex.js';
+import { snapshot, noteLines } from '../searchIndex.js';
 import { publicError } from '../security.js';
 import {
   SEARCH_MAX_RESULTS as MAX_RESULTS,
@@ -85,7 +85,7 @@ function findTags(lines) {
 }
 
 // Etiquetas de una nota del índice: se calculan una vez por cada versión de la nota
-const noteTags = (note) => (note.tags ??= findTags(note.lines));
+const noteTags = (note) => (note.tags ??= findTags(noteLines(note)));
 
 // Todas las etiquetas del vault con las notas en las que aparecen. Sin distinguir
 // mayúsculas, como Obsidian: se muestra la forma de la primera aparición
@@ -115,9 +115,10 @@ function searchTag(cfg, tag) {
       return t === needle || t.startsWith(needle + '/');
     });
     if (hits.length === 0) continue;
+    const lines = noteLines(note);
     const matches = hits
       .slice(0, MAX_MATCHES_PER_FILE)
-      .map((h) => ({ line: h.line + 1, ...snippet(note.lines[h.line], Math.max(h.idx, 0), h.text.length) }));
+      .map((h) => ({ line: h.line + 1, ...snippet(lines[h.line], Math.max(h.idx, 0), h.text.length) }));
     results.push({ path: file.path, name: file.name, nameMatch: false, total: hits.length, matches });
   }
   results.sort((a, b) => b.total - a.total || a.path.localeCompare(b.path));
@@ -171,7 +172,7 @@ export default (dataDir, getConfig) => {
 
         // Solo se busca dentro de las notas markdown. Las que no contienen el texto
         // se descartan con una sola búsqueda sobre el contenido entero
-        if (note?.lower.includes(needle)) note.lines.forEach((line, i) => {
+        if (note?.lower.includes(needle)) noteLines(note).forEach((line, i) => {
           const lower = line.toLowerCase();
           let idx = lower.indexOf(needle);
           while (idx >= 0) {

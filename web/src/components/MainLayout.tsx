@@ -1,8 +1,7 @@
-import { useState, useEffect, type PointerEvent as ReactPointerEvent } from 'react';
+import { lazy, Suspense, useState, useEffect, type PointerEvent as ReactPointerEvent } from 'react';
 import { useStore, DEFAULT_SIDEBAR_WIDTH } from '../store';
 import { filesApi } from '../api';
 import Ribbon, { SidebarFooter } from './Ribbon';
-import SettingsModal from './SettingsModal';
 import FileExplorer from './FileExplorer';
 import SearchPanel from './SearchPanel';
 import TagsPanel from './TagsPanel';
@@ -23,6 +22,9 @@ import { useSyncNotifications } from '../syncNotify';
 import { useUpdateNotification } from '../updateNotify';
 import { loadServerFonts } from '../serverFonts';
 import { useIsMobile } from '../mobile';
+
+// Los ajustes solo se descargan la primera vez que se abren
+const SettingsModal = lazy(() => import('./SettingsModal'));
 
 // Borde arrastrable entre la barra lateral y la nota; doble clic vuelve al ancho por defecto
 function SidebarResizer() {
@@ -333,7 +335,11 @@ export default function MainLayout() {
         </div>
       </div>
       <Toasts />
-      {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
+      {settingsOpen && (
+        <Suspense fallback={null}>
+          <SettingsModal onClose={() => setSettingsOpen(false)} />
+        </Suspense>
+      )}
       {conflict && (
         <ConflictDialog
           key={conflict.path}
