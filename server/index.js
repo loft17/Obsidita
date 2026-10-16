@@ -4,7 +4,6 @@ import cookieParser from 'cookie-parser';
 import { fileURLToPath } from 'url';
 import { dirname, join, extname } from 'path';
 import { readFileSync, existsSync, writeFileSync, mkdirSync, readdirSync, chmodSync, statSync, lstatSync } from 'fs';
-import crypto from 'crypto';
 import setupRoutes from './routes/setup.js';
 import authRoutes from './routes/auth.js';
 import filesRoutes from './routes/files.js';
@@ -15,6 +14,7 @@ import fontsRoutes from './routes/fonts.js';
 import { createSyncManager } from './sync.js';
 import { invalidateSnapshot } from './searchIndex.js';
 import { createSessionStore, createLoginLimiter } from './sessions.js';
+import { loadCookieSecret } from './cookieSecret.js';
 import { securityHeaders, csrfGuard } from './security.js';
 import { MAX_NOTE_MB, MAX_UPLOAD_MB } from './limits.js';
 
@@ -22,7 +22,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 const dataDir = join(__dirname, '..', 'data');
 
-// Generate or load cookie secret
 // data/ guarda el hash de la contraseña, el secreto de las cookies y las sesiones:
 // solo el usuario que ejecuta la app puede leerla (también corrige instalaciones antiguas)
 mkdirSync(dataDir, { recursive: true, mode: 0o700 });
@@ -37,14 +36,10 @@ try {
 } catch (err) {
   console.warn('[Security] No se pudieron ajustar los permisos de data/:', err.message);
 }
-const secretPath = join(dataDir, '.secret');
-let cookieSecret;
-if (existsSync(secretPath)) {
-  cookieSecret = readFileSync(secretPath, 'utf8').trim();
-} else {
-  cookieSecret = crypto.randomBytes(32).toString('hex');
-  writeFileSync(secretPath, cookieSecret, { mode: 0o600 });
-}
+// COOKIE_SECRET tiene prioridad sobre data/.secret (ver server/cookieSecret.js). Un archivo
+// vacío, truncado o corrupto se regenera: aceptarlo tal cual rompía el login (secreto vacío)
+// o dejaba la firma de la cookie al alcance de cualquiera (secreto débil)
+const cookieSecret = loadCookieSecret(join(dataDir, '.secret'));
 
 const sessions = createSessionStore(dataDir);
 // Sincronización con GitHub / Dropbox / Google Drive (también la periódica)
