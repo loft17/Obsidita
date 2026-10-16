@@ -3,7 +3,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import { fileURLToPath } from 'url';
 import { dirname, join, extname } from 'path';
-import { readFileSync, existsSync, writeFileSync, mkdirSync, readdirSync, chmodSync, statSync } from 'fs';
+import { readFileSync, existsSync, writeFileSync, mkdirSync, readdirSync, chmodSync, statSync, lstatSync } from 'fs';
 import crypto from 'crypto';
 import setupRoutes from './routes/setup.js';
 import authRoutes from './routes/auth.js';
@@ -28,7 +28,12 @@ const dataDir = join(__dirname, '..', 'data');
 mkdirSync(dataDir, { recursive: true, mode: 0o700 });
 try {
   chmodSync(dataDir, 0o700);
-  for (const f of readdirSync(dataDir)) chmodSync(join(dataDir, f), 0o600);
+  // Solo los archivos: quitarle los permisos de directorio a una subcarpeta de data/ la dejaría
+  // inaccesible (el bit de ejecución es el que permite recorrerla)
+  for (const f of readdirSync(dataDir)) {
+    const file = join(dataDir, f);
+    if (lstatSync(file).isFile()) chmodSync(file, 0o600);
+  }
 } catch (err) {
   console.warn('[Security] No se pudieron ajustar los permisos de data/:', err.message);
 }
@@ -100,12 +105,29 @@ const ENCODINGS = [
   ['br', '.br'],
   ['gzip', '.gz'],
 ];
+
+// ¿Acepta el cliente esta codificación? Un `br;q=0` significa "no acepto brotli": con un
+// `includes('br')` a secas se le enviaría igualmente y no podría descomprimirlo
+const acceptsEncoding = (header, encoding) => {
+  let wildcard = null;
+  for (const part of header.split(',')) {
+    const [rawName, ...params] = part.split(';');
+    const name = rawName.trim().toLowerCase();
+    if (!name) continue;
+    const q = params.map((p) => p.trim().toLowerCase()).find((p) => p.startsWith('q='));
+    const quality = q ? Number(q.slice(2)) : 1;
+    if (name === encoding) return quality > 0;
+    if (name === '*') wildcard = quality;
+  }
+  return wildcard !== null && wildcard > 0;
+};
+
 const precompressed = (req, res, next) => {
   if (req.method !== 'GET' && req.method !== 'HEAD') return next();
   if (!/\.(js|css|svg)$/.test(req.path) || req.path.includes('..')) return next();
   const accepted = req.get('Accept-Encoding') || '';
   for (const [encoding, ext] of ENCODINGS) {
-    if (!accepted.includes(encoding)) continue;
+    if (!acceptsEncoding(accepted, encoding)) continue;
     const file = join(distPath, 'assets', req.path + ext);
     if (!existsSync(file)) continue;
     res.set({ 'Content-Encoding': encoding, Vary: 'Accept-Encoding', 'Cache-Control': 'public, max-age=31536000, immutable' });
@@ -156,10 +178,22 @@ app.use('/api', (req, res, next) => {
 });
 
 app.use('/api/settings', settingsRoutes(dataDir, getConfig, loginLimiter, sessions));
-app.use('/api/files', express.json({ limit: MAX_NOTE_MB * 1024 * 1024 }), filesRoutes(dataDir, getConfig));
+// Al guardar una nota el cuerpo es JSON, pero /api/files/upload lo recibe en crudo: si el
+// archivo subido llega con Content-Type: application/json, el parser de aquí se lo comería
+// antes de que la ruta lo vea y la subida fallaría con "Archivo vacío"
+const noteJson = express.json({ limit: MAX_NOTE_MB * 1024 * 1024 });
+app.use(
+  '/api/files',
+  (req, res, next) => (req.path.toLowerCase() === '/upload' ? next() : noteJson(req, res, next)),
+  filesRoutes(dataDir, getConfig)
+);
 app.use('/api/search', searchRoutes(dataDir, getConfig));
 app.use('/api/sync', syncRoutes(syncManager, getConfig));
 app.use('/api/fonts', fontsRoutes());
+
+// Cualquier /api que no haya casado es un 404 en JSON. Si cayera en el fallback del SPA
+// devolvería index.html con un 200 y el cliente fallaría al leer el mensaje de error
+app.use('/api', (req, res) => res.status(404).json({ error: 'No encontrado' }));
 
 // SPA fallback (serve index.html for client-side routing)
 if (existsSync(distPath)) {

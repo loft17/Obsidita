@@ -54,6 +54,19 @@ function splitInline(text: string): string[] {
   return parts;
 }
 
+// Clave del frontmatter: normal (`titulo`) o entrecomillada, que es como se escriben las que
+// YAML no admite tal cual (con ":", empezando por "-"/"#", con espacios alrededor...).
+// Sin esto, una propiedad llamada `#tag` se guardaba como comentario y desaparecía al releer la nota
+const KEY_RE = /^(?:"((?:\\.|[^"\\])*)"|([^\s#\-][^:]*?)):(?:[ \t]+(.*))?$/;
+
+const unquoteKey = (raw: string) => {
+  try {
+    return JSON.parse(`"${raw}"`);
+  } catch {
+    return raw;
+  }
+};
+
 // Parser mínimo del YAML habitual de Obsidian: `clave: valor`, listas con guiones y listas en línea.
 // Devuelve null si encuentra algo que no sabe representar (mapas anidados, bloques multilínea...)
 function parseYaml(text: string): FrontmatterData | null {
@@ -64,10 +77,11 @@ function parseYaml(text: string): FrontmatterData | null {
     const line = lines[i];
     i++;
     if (line.trim() === '' || line.trim().startsWith('#')) continue;
-    const m = /^([^\s#\-][^:]*?):(?:[ \t]+(.*))?$/.exec(line);
+    const m = KEY_RE.exec(line);
     if (!m) return null;
-    const key = m[1].trim();
-    let rest = (m[2] ?? '').trim();
+    // Grupo 1: clave entrecomillada; grupo 2: clave normal; grupo 3: valor
+    const key = m[1] !== undefined ? unquoteKey(m[1]) : m[2].trim();
+    let rest = (m[3] ?? '').trim();
     if (!/^["']/.test(rest)) rest = rest.replace(/\s+#.*$/, '');
 
     if (rest === '') {
@@ -115,19 +129,26 @@ function scalar(value: unknown): string {
   return JSON.stringify(value);
 }
 
+// Una clave que YAML no admite tal cual se escribe entrecomillada, para que al volver a leer
+// la nota se recupere igual (ver KEY_RE, que sí entiende las claves entrecomilladas)
+const needsQuotedKey = (key: string) =>
+  !key || key !== key.trim() || key.includes(':') || !/^[^\s#\-"]/.test(key);
+const keyText = (key: string) => (needsQuotedKey(key) ? JSON.stringify(key) : key);
+
 export function stringifyFrontmatter(data: FrontmatterData): string {
   const lines: string[] = [];
   for (const [key, value] of Object.entries(data)) {
+    const k = keyText(key);
     if (Array.isArray(value)) {
       if (value.length === 0) {
-        lines.push(`${key}: []`);
+        lines.push(`${k}: []`);
       } else {
-        lines.push(`${key}:`);
+        lines.push(`${k}:`);
         for (const item of value) lines.push(`  - ${scalar(item)}`);
       }
     } else {
       const text = scalar(value);
-      lines.push(text === '' && value == null ? `${key}:` : `${key}: ${text}`);
+      lines.push(text === '' && value == null ? `${k}:` : `${k}: ${text}`);
     }
   }
   return lines.join('\n');

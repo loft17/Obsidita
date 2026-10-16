@@ -346,7 +346,11 @@ function SearchBar({ onClose }: { onClose: () => void }) {
     const hl = (CSS as any).highlights;
     const HighlightCtor = (window as any).Highlight;
     if (hl && HighlightCtor && ranges.length) {
-      hl.set(HL_ALL, new HighlightCtor(...ranges));
+      // `new Highlight(...ranges)` revienta la pila con una nota grande y una búsqueda de una
+      // sola letra (miles de coincidencias), así que se añaden una a una
+      const all = new HighlightCtor();
+      for (const range of ranges) all.add(range);
+      hl.set(HL_ALL, all);
       show(0, false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

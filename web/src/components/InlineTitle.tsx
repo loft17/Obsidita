@@ -6,6 +6,10 @@ import { useT } from '../i18n';
 
 const INVALID_CHARS = /[\\/:*?"<>|]/;
 
+// Los archivos ocultos no se listan en el explorador (el servidor los omite): crearlos desde
+// aquí dejaría la nota abierta en una pestaña pero invisible en el árbol
+const isValidName = (name: string) => !INVALID_CHARS.test(name) && !name.startsWith('.');
+
 const baseName = (path: string) => (path.split('/').pop() || '').replace(/\.md$/i, '');
 const parentFolder = (path: string) => (path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '');
 
@@ -34,12 +38,13 @@ export default function InlineTitle({ filePath, onEnter }: { filePath: string; o
       setError(t('name.empty'));
       return restore();
     }
-    if (INVALID_CHARS.test(newName)) {
+    if (!isValidName(newName)) {
       setError(t('name.invalid'));
       return restore();
     }
     const folder = parentFolder(filePath);
-    const ext = /\.md$/i.test(filePath) ? '.md' : '';
+    // Sin esta comprobación, escribir "Nota.md" como título renombraría a "Nota.md.md"
+    const ext = /\.md$/i.test(filePath) && !/\.md$/i.test(newName) ? '.md' : '';
     const newPath = `${folder ? folder + '/' : ''}${newName}${ext}`;
     try {
       await changeNotePath(filePath, newPath);

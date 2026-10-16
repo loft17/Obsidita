@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useStore, isUnder, hiddenMatchers, isHiddenPath } from '../store';
 import { filesApi } from '../api';
-import { flushPendingSave, cancelPendingSave, changeNotePath } from './Editor';
+import { flushPendingSave, changeNotePath } from './Editor';
 import { RenameDialog, MoveDialog, DeleteFileDialog } from './FileDialogs';
 import { useT } from '../i18n';
 import { IconChevronRight, IconChevronDown, IconCollapseAll, IconFileNew, IconFolderNew } from './Icons';
@@ -248,7 +248,9 @@ export default function FileExplorer() {
     changePath(oldPath, `${folder ? folder + '/' : ''}${fileName(oldPath)}`);
 
   const handleDelete = async (path: string, images: string[]) => {
-    cancelPendingSave(path);
+    // Lo que esté a medio guardar dentro de la carpeta se escribe antes de moverla a la papelera:
+    // cancelarlo perdería hasta 2 s de edición en cada nota que contuviera
+    await flushPendingSave(path);
     await filesApi.deleteFile(path);
     removeTab(path);
     for (const image of images) {
@@ -282,14 +284,21 @@ export default function FileExplorer() {
     e.preventDefault();
     e.stopPropagation();
     endDrag();
+    // Se leen las entradas antes del primer `await`: el navegador vacía el dataTransfer al salir del evento
     const dropped = droppedEntries(e.dataTransfer);
     notify('upload', t('file.uploading'), 'info', 0);
-    const { uploaded, errors } = await uploadDropped(folder, dropped);
-    await refreshTree();
-    if (folder && uploaded) expandFolder(folder);
-    if (errors.length) notify('upload', t('file.uploadError', { error: errors.join('; ') }), 'error');
-    else if (uploaded) notify('upload', t('file.uploaded', { count: uploaded }));
-    else notify('upload', t('file.uploadNothing'), 'info');
+    try {
+      const { uploaded, errors } = await uploadDropped(folder, dropped);
+      await refreshTree();
+      if (folder && uploaded) expandFolder(folder);
+      if (errors.length) notify('upload', t('file.uploadError', { error: errors.join('; ') }), 'error');
+      else if (uploaded) notify('upload', t('file.uploaded', { count: uploaded }));
+      else notify('upload', t('file.uploadNothing'), 'info');
+    } catch (err) {
+      // Si falla al leer una carpeta o al refrescar el árbol, el aviso de "subiendo" (que no
+      // caduca solo) tiene que sustituirse igualmente y el error no puede quedar sin gestionar
+      notify('upload', t('file.uploadError', { error: (err as Error).message }), 'error');
+    }
   };
 
   // No se mueve a su misma carpeta ni una carpeta dentro de sí misma
@@ -326,7 +335,9 @@ export default function FileExplorer() {
     onDrop: async (e, folder) => {
       const from = dragPath.current;
       if (from === null) {
-        if (hasExternalFiles(e.dataTransfer)) handleExternalDrop(e, folder);
+        // Sin esperar: el evento de soltar debe terminar ya (y `handleExternalDrop` ya informa
+        // de sus propios errores)
+        if (hasExternalFiles(e.dataTransfer)) void handleExternalDrop(e, folder);
         return;
       }
       e.preventDefault();

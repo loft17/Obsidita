@@ -5,14 +5,17 @@ import { useStore, DEFAULT_SITE_TITLE } from '../store';
 
 interface Props {
   onComplete: () => void;
+  // Error al arrancar (no se pudo conectar, fallo al cargar el árbol): se muestra aquí
+  startupError?: string;
 }
 
-export default function Login({ onComplete }: Props) {
+export default function Login({ onComplete, startupError }: Props) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const t = useT();
   const siteTitle = useStore((s) => s.siteTitle);
+  const message = error || startupError || '';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,12 +45,13 @@ export default function Login({ onComplete }: Props) {
           {t('login.prompt')}
         </p>
 
-        {error && <div className="error">{error}</div>}
+        {message && <div className="error">{message}</div>}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <input
             type="password"
             placeholder={t('common.password')}
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}

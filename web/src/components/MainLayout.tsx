@@ -67,6 +67,10 @@ function SidebarResizer() {
 // Cada cuánto se comprueba si la nota abierta ha cambiado en el servidor (ms)
 const EXTERNAL_CHECK_INTERVAL = 15000;
 
+// Solo el markdown se edita como texto: cualquier otro archivo se leería en UTF-8 y al
+// autoguardarlo se reescribiría corrompido (un PDF, un ZIP...)
+const isNote = (path: string) => /\.md$/i.test(path);
+
 export default function MainLayout() {
   const activeTab = useStore((s) => s.activeTab);
   const editMode = useStore((s) => s.editMode);
@@ -158,33 +162,59 @@ export default function MainLayout() {
   // En el móvil la barra lateral tapa la nota: al abrir una se cierra
   useEffect(() => {
     if (mobile && activeTab) useStore.setState({ sidebarOpen: false });
-  }, [activeTab]);
+  }, [activeTab, mobile]);
 
   useEffect(() => {
     if (!activeTab) return;
-    // Las imágenes las carga el visor; leerlas como texto las corrompería al autoguardar
-    if (isImage(activeTab)) {
+    // Solo las notas markdown se leen como texto. Las imágenes las carga el visor y el resto de
+    // archivos (PDF, ZIP...) se leerían en UTF-8 y el autoguardado los reescribiría corrompidos
+    if (!isNote(activeTab)) {
       setFileContent('');
+      setLoading(false);
       return;
     }
+
+    const path = activeTab;
+    // Cambiar de pestaña mientras esta carga está en curso no debe pisar la nota nueva:
+    // el efecto se limpia al cambiar `activeTab`, así que a partir de ahí el resultado se ignora
+    let cancelled = false;
 
     const loadFile = async () => {
       setLoading(true);
       try {
         // Un guardado aún en curso de esta nota se leería a medias
-        await flushPendingSave(activeTab);
-        const data = await filesApi.readFile(activeTab);
-        noteVersions.set(activeTab, data.version);
+        await flushPendingSave(path);
+        const data = await filesApi.readFile(path);
+        if (cancelled || useStore.getState().activeTab !== path) return;
+        noteVersions.set(path, data.version);
         setFileContent(data.content);
       } catch (err) {
         console.error('Error loading file:', err);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     loadFile();
+    return () => {
+      cancelled = true;
+    };
   }, [activeTab]);
+
+  // Al ocultar o cerrar la pestaña se guardan ya los autoguardados que estén esperando al
+  // temporizador (hasta 2 s de lo escrito se perderían si no). pagehide cubre el cierre/recarga
+  // y visibilitychange el cambio de app en el móvil
+  useEffect(() => {
+    const flush = () => {
+      if (document.visibilityState === 'hidden') flushPendingSave(null);
+    };
+    window.addEventListener('pagehide', flush);
+    document.addEventListener('visibilitychange', flush);
+    return () => {
+      window.removeEventListener('pagehide', flush);
+      document.removeEventListener('visibilitychange', flush);
+    };
+  }, []);
 
   // La nota abierta puede cambiar fuera de esta pestaña: otro dispositivo, la sincronización
   // con GitHub, Obsidian de escritorio... Se comprueba al volver a la pestaña, cada poco
@@ -197,7 +227,7 @@ export default function MainLayout() {
 
     const check = async () => {
       const { activeTab: path, conflicts } = useStore.getState();
-      if (checking || !path || isImage(path) || conflicts.length || busy(path)) return;
+      if (checking || !path || !isNote(path) || conflicts.length || busy(path)) return;
       if (document.visibilityState !== 'visible') return;
       checking = true;
       try {
@@ -229,6 +259,9 @@ export default function MainLayout() {
   // Conflicto: conservar lo escrito aquí (sobrescribe la versión del servidor)…
   const keepMine = async () => {
     if (!conflict) return;
+    // Un autoguardado pendiente de esta nota es más viejo que `conflict.mine`: si se dejara
+    // programado, al dispararse revertiría lo que se acaba de decidir
+    cancelPendingSave(conflict.path);
     noteVersions.set(conflict.path, conflict.version);
     await saveNote(conflict.path, conflict.mine);
   };
@@ -319,11 +352,18 @@ export default function MainLayout() {
               </div>
             ) : activeTab ? (
               activeIsImage ? (
-                <ImageViewer filePath={activeTab} />
+                <ImageViewer key={activeTab} filePath={activeTab} />
+              ) : !isNote(activeTab) ? (
+                <div className="unsupported-file">
+                  <div>{t('main.notEditable')}</div>
+                  <a href={`/api/files/raw/${encodeURIComponent(activeTab)}`} download>
+                    {t('common.download')}
+                  </a>
+                </div>
               ) : editMode ? (
-                <Editor filePath={activeTab} content={fileContent} onContentChange={setFileContent} />
+                <Editor key={activeTab} filePath={activeTab} content={fileContent} onContentChange={setFileContent} />
               ) : (
-                <ReadingView content={fileContent} filePath={activeTab} onContentChange={setFileContent} />
+                <ReadingView key={activeTab} content={fileContent} filePath={activeTab} onContentChange={setFileContent} />
               )
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, color: 'var(--text-faint)' }}>

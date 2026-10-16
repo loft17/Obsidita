@@ -50,7 +50,9 @@ export default function Setup({ onComplete }: Props) {
     setLoading(true);
     try {
       const result = await setupApi.init(setupToken, vaultPath, password, parseInt(port));
-      if (result.success || result.error === undefined) {
+      // Solo es un éxito si el servidor lo dice: dar por bueno cualquier respuesta sin `error`
+      // hacía recargar la página ante un fallo, volviendo a la pantalla de configuración
+      if (result.success === true) {
         // Setup completado exitosamente
         // Recarga la página para que App.tsx refresque el estado
         setTimeout(() => {
@@ -58,10 +60,10 @@ export default function Setup({ onComplete }: Props) {
         }, 500);
       } else {
         setError(result.error || t('setup.error'));
+        setLoading(false);
       }
     } catch (err: any) {
-      setError(err?.error || t('setup.error'));
-    } finally {
+      setError(err?.error || err?.message || t('setup.error'));
       setLoading(false);
     }
   };

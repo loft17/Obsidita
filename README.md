@@ -44,3 +44,35 @@ la propia web.
 
 ---
 
+## 🧩 Variables de entorno
+Que esta explicado extensamente en la carpeta DOC en el ficher
+
+## 📚 Atajos de teclado
+## 📚 Documentación técnica
+
+
+🔄 Sincronización con GitHub
+
+---
+
+## 🤖 Desarrollado con IA
+
+Obsidita se ha desarrollado con ayuda de **[Claude](https://claude.com/claude-code)**, la IA de Anthropic, usando Claude Code: tanto el código como la documentación se han escrito y revisado en colaboración con ella.
+
+---
+
+## 📄 Licencia
+
+Distribuido bajo la licencia [MIT](https://opensource.org/licenses/MIT).
+
+Obsidita es un proyecto independiente y no está afiliado, patrocinado ni respaldado por Obsidian ni por Dynalist Inc. «Obsidian» es una marca de sus respectivos propietarios y se menciona aquí solo para indicar compatibilidad.
+
+<div align="center">
+
+<br>
+
+Hecho con 💜 para quienes viven en su vault de Obsidian.
+
+**[⬆ Volver arriba](#-obsidita)**
+
+</div>

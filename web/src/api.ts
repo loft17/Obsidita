@@ -21,15 +21,20 @@ export const setupApi = {
   // siteTitle: título de la web elegido en Preferencias (vacío = el predeterminado)
   checkStatus: async (): Promise<{ configured: boolean; minPasswordLength?: number; siteTitle?: string }> => {
     const res = await fetch(`${API_URL}/setup/status`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   },
+  // Lanza si el servidor rechaza la configuración: sin comprobar res.ok, una respuesta de error
+  // (403 del token, 400 del puerto...) podría darse por buena
   init: async (setupToken: string, vaultPath: string, password: string, port: number = 3000) => {
     const res = await fetch(`${API_URL}/setup/init`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ setupToken, vaultPath, password, port }),
     });
-    return res.json();
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    return data;
   },
 };
 
@@ -48,6 +53,7 @@ export const authApi = {
     const res = await fetch(`${API_URL}/auth/logout`, {
       method: 'POST',
     });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   },
 };

@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   /* Fuentes por defecto; Ajustes > Apariencia antepone la elegida por el usuario */
   --font-interface-default: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-monospace-default: 'Consolas', 'Menlo', monospace;
@@ -2873,4 +2873,17 @@ body.is-resizing {
     flex: 1 1 180px;
     min-width: 0;
   }
+}
+
+/* Archivos que no son notas markdown ni imágenes: no se editan, solo se descargan */
+.unsupported-file {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
 }

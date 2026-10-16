@@ -21,6 +21,7 @@ export const en: Messages = {
 
   'app.connectError': 'Could not connect to the server',
   'main.empty': 'Select a file to get started',
+  'main.notEditable': 'This file is not edited here: only Markdown (.md) notes. You can download it.',
 
   // Setup and login
   'setup.title': 'Set up Obsidita',

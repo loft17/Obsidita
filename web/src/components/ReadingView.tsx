@@ -9,7 +9,7 @@ import {
   followWikilink, isResolved, parseWikilink, resolveWikilink, scrollToHeading, takePendingHeading, wikilinkLabel,
 } from '../wikilinks';
 import { embedSection, getEmbedContent, getEmbedsVersion, refreshEmbeds, subscribeEmbeds } from '../noteEmbeds';
-import { NOTES_CHANGED, saveNote } from './Editor';
+import { cancelPendingSave, NOTES_CHANGED, saveNote } from './Editor';
 import { highlightCodeBlocks } from '../codeHighlight';
 import { cachedDiagram, currentDiagramTheme, renderMermaidDiagrams } from '../mermaidDiagrams';
 import { t, useI18n } from '../i18n';
@@ -479,6 +479,8 @@ export default function ReadingView({ content, filePath, onContentChange }: Prop
     const body = toggleTask(markdownContent, line, checked);
     if (body === null || !filePath) return;
     const next = head + body;
+    // Un autoguardado programado llevaría el texto anterior: pisaría este cambio al dispararse
+    cancelPendingSave(filePath);
     onContentChange?.(next);
     saveNote(filePath, next);
   };

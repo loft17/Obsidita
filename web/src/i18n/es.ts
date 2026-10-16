@@ -20,6 +20,7 @@ export const es = {
 
   'app.connectError': 'No se pudo conectar al servidor',
   'main.empty': 'Selecciona un archivo para comenzar',
+  'main.notEditable': 'Este archivo no se edita aquí: solo las notas Markdown (.md). Puedes descargarlo.',
 
   // Configuración inicial e inicio de sesión
   'setup.title': 'Configurar Obsidita',

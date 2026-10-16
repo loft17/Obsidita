@@ -27,7 +27,8 @@ type Kind = 'tags' | 'list' | 'date' | 'number' | 'checkbox' | 'text';
 function kindOf(key: string, value: unknown): Kind {
   // Como en el índice del servidor: `tags`, `tag`, `Tags`...
   if (/^tags?$/i.test(key)) return 'tags';
-  if (key === 'aliases' || Array.isArray(value)) return 'list';
+  // cssclasses también es una lista en Obsidian, no una cadena
+  if (key === 'aliases' || key === 'cssclasses' || Array.isArray(value)) return 'list';
   if (typeof value === 'number') return 'number';
   if (typeof value === 'boolean') return 'checkbox';
   if (isDateString(value)) return 'date';
@@ -218,7 +219,9 @@ export default function Properties({ data, editable = false, onChange, onTagClic
     setAdding(false);
     setNewKey('');
     if (!key || Object.keys(data).some((k) => k.toLowerCase() === key.toLowerCase())) return;
-    onChange?.({ ...data, [key]: kindOf(key, '') === 'tags' || key === 'aliases' ? [] : '' });
+    // Las propiedades de tipo lista (tags, aliases, cssclasses) empiezan vacías
+    const kind = kindOf(key, undefined);
+    onChange?.({ ...data, [key]: kind === 'tags' || kind === 'list' ? [] : '' });
   };
 
   return (

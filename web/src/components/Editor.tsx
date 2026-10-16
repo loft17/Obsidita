@@ -33,8 +33,10 @@ export const noteVersions = new Map<string, string>();
 // Autoguardados pendientes por ruta, para poder forzarlos o cancelarlos
 // antes de renombrar, mover o borrar un archivo (o una carpeta entera)
 const pendingSaves = new Map<string, { timer: number; run: () => Promise<void> }>();
-// Guardados ya enviados al servidor que aún no han terminado
-const inFlightSaves = new Map<string, Promise<void>>();
+// Guardados ya enviados al servidor que aún no han terminado. Puede haber más de uno por ruta
+// (p. ej. un guardado lento al que le sigue otro): se guardan todos, porque esperar solo al
+// último dejaría escribir al anterior después de un renombrado o borrado y resucitaría el archivo
+const inFlightSaves = new Map<string, Set<Promise<void>>>();
 
 // `path` null: todas las notas
 const under = <T,>(map: Map<string, T>, path: string | null) =>
@@ -49,7 +51,7 @@ export async function flushPendingSave(path: string | null) {
       clearTimeout(pending.timer);
       return pending.run();
     }),
-    ...under(inFlightSaves, path).map(([, saving]) => saving),
+    ...under(inFlightSaves, path).flatMap(([, saving]) => [...saving]),
   ]);
 }
 
@@ -83,9 +85,12 @@ export function saveNote(path: string, content: string): Promise<void> {
       }
     }
   })();
-  inFlightSaves.set(path, save);
+  const set = inFlightSaves.get(path) ?? new Set<Promise<void>>();
+  set.add(save);
+  inFlightSaves.set(path, set);
   return save.finally(() => {
-    if (inFlightSaves.get(path) === save) inFlightSaves.delete(path);
+    set.delete(save);
+    if (!set.size && inFlightSaves.get(path) === set) inFlightSaves.delete(path);
   });
 }
 
@@ -97,6 +102,13 @@ export const NOTES_CHANGED = 'notes-changed';
 export async function changeNotePath(oldPath: string, newPath: string) {
   await flushPendingSave(null);
   const { updated } = await filesApi.renameFile(oldPath, newPath);
+  // La versión conocida viaja con el archivo. Sin ella, el primer guardado en la ruta nueva
+  // iría sin `baseVersion` y el servidor no detectaría cambios hechos en otro sitio
+  for (const [path, version] of [...noteVersions]) {
+    if (!isUnder(path, oldPath)) continue;
+    noteVersions.delete(path);
+    noteVersions.set(newPath + path.slice(oldPath.length), version);
+  }
   useStore.getState().renameTab(oldPath, newPath);
   if (updated.length) window.dispatchEvent(new Event(NOTES_CHANGED));
 }

@@ -24,7 +24,6 @@ export default function App() {
     const init = async () => {
       try {
         const status = await setupApi.checkStatus();
-        console.log('Setup status:', status);
         setSiteTitle(status.siteTitle || '');
         if (status.configured) {
           loadMainLayout().catch(() => {});
@@ -58,6 +57,7 @@ export default function App() {
         try {
           const tree = await filesApi.getTree();
           setTree(tree);
+          setError('');
           setAppState('main');
         } catch (err) {
           console.log('Entrando a login después de setup');
@@ -73,9 +73,12 @@ export default function App() {
     try {
       const tree = await filesApi.getTree();
       setTree(tree);
+      setError('');
       setAppState('main');
-    } catch (err) {
+    } catch (err: any) {
+      // Sin esto, un fallo al cargar el árbol dejaba al usuario en el login sin explicación
       console.error('Failed to load tree:', err);
+      setError(`Error: ${err?.message || t('app.connectError')}`);
     }
   };
 
@@ -90,8 +93,15 @@ export default function App() {
 
   return (
     <>
+      {/* El error se muestra también fuera de la carga: si no, cualquier fallo al arrancar
+          (o al entrar) dejaba al usuario en la pantalla de configuración sin saber por qué */}
+      {error && appState !== 'login' && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, background: 'var(--color-red, #e5484d)', color: '#fff', padding: '8px 12px', fontSize: '13px', textAlign: 'center' }}>
+          {error}
+        </div>
+      )}
       {appState === 'setup' && <Setup onComplete={handleSetupComplete} />}
-      {appState === 'login' && <Login onComplete={handleLoginComplete} />}
+      {appState === 'login' && <Login onComplete={handleLoginComplete} startupError={error} />}
       {appState === 'main' && (
         <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>{tr('common.loading')}</div>}>
           <MainLayout />

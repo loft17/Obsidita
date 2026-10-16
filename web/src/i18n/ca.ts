@@ -21,6 +21,7 @@ export const ca: Messages = {
 
   'app.connectError': "No s'ha pogut connectar al servidor",
   'main.empty': 'Selecciona un fitxer per començar',
+  'main.notEditable': 'Aquest fitxer no es edita aquí: només les notes Markdown (.md). El pots descarregar.',
 
   // Configuració inicial i inici de sessió
   'setup.title': 'Configura Obsidita',

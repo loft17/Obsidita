@@ -91,7 +91,9 @@ export function RenameDialog({
     e.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) return setError(t('name.empty'));
-    if (/[\\/:*?"<>|]/.test(trimmed)) return setError(t('name.invalid'));
+    // Los nombres ocultos no se listan en el explorador (el servidor omite los archivos que
+    // empiezan por punto), así que el archivo quedaría creado pero invisible
+    if (/[\\/:*?"<>|]/.test(trimmed) || trimmed.startsWith('.')) return setError(t('name.invalid'));
     if (trimmed === initialName) return onClose();
     setBusy(true);
     try {
