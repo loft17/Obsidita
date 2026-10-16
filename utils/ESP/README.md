@@ -80,6 +80,26 @@ Bienvenido a la documentación completa de **Obsidita** (Obsidian Web). Aquí en
 
 ---
 
+### 5. **ERRORES_Y_SOLUCIONES.md** 🚨
+- **Tamaño:** 700+ líneas (~20 KB)
+- **Tiempo de lectura:** Consultar según necesidad
+- **Para quién:** Todos (cuando algo falla)
+- **Contenido:**
+  - ✅ Errores de instalación (Node, npm, Git)
+  - ✅ Errores de ejecución (puertos, conexión)
+  - ✅ Errores de memoria (OOM, lentitud)
+  - ✅ Errores de Nginx (502, timeouts, SSL)
+  - ✅ Errores de autenticación (sesiones, contraseña)
+  - ✅ Errores de búsqueda (lentitud, corrupción)
+  - ✅ Errores de permisos (EACCES)
+  - ✅ Errores de base de datos (lectura/escritura)
+  - ✅ Errores de rendimiento (CPU, disco)
+  - ✅ Checklist de troubleshooting
+
+👉 **LEER SI:** Algo no funciona como debería.
+
+---
+
 ## 🎯 Guía de Lectura Recomendada
 
 ### Escenario 1: Primera Instalación en Producción
@@ -144,11 +164,12 @@ Bienvenido a la documentación completa de **Obsidita** (Obsidian Web). Aquí en
 ## 📊 Estadísticas de Documentación
 
 ```
-Total de documentos:    4
-Líneas totales:         2,320
-Tamaño total:           49 KB
-Tiempo total lectura:   ~60-90 minutos (leyendo TODO)
+Total de documentos:    6
+Líneas totales:         3,704
+Tamaño total:           80 KB
+Tiempo total lectura:   ~90-120 minutos (leyendo TODO)
 Tiempo instalación:     30 minutos (script automático)
+Troubleshooting:        Instantáneo (buscar error con Ctrl+F)
 ```
 
 ---
@@ -180,6 +201,18 @@ Tiempo instalación:     30 minutos (script automático)
 - **Seguridad:** INSTALACION_Y_CONFIGURACION.md → Seguridad
 - **Firewall:** INSTALACION_Y_CONFIGURACION.md → Seguridad → Firewall
 - **SSL/HTTPS:** INSTALACION_Y_CONFIGURACION.md → Configuración HTTPS
+
+### Troubleshooting y Errores
+
+- **Errores generales:** ERRORES_Y_SOLUCIONES.md (buscar con Ctrl+F)
+- **Instalación:** ERRORES_Y_SOLUCIONES.md → Errores de Instalación
+- **Ejecución:** ERRORES_Y_SOLUCIONES.md → Errores de Ejecución
+- **Memoria:** ERRORES_Y_SOLUCIONES.md → Errores de Memoria
+- **Nginx:** ERRORES_Y_SOLUCIONES.md → Errores de Nginx
+- **Autenticación:** ERRORES_Y_SOLUCIONES.md → Errores de Autenticación
+- **Búsqueda:** ERRORES_Y_SOLUCIONES.md → Errores de Búsqueda
+- **Permisos:** ERRORES_Y_SOLUCIONES.md → Errores de Permisos
+- **SSL/HTTPS:** ERRORES_Y_SOLUCIONES.md → Errores de SSL/HTTPS
 
 ### Monitoreo
 
@@ -244,23 +277,38 @@ Tiempo instalación:     30 minutos (script automático)
 
 ## 🆘 Necesito Ayuda
 
+### ¿Algo no funciona?
+→ Ve a **ERRORES_Y_SOLUCIONES.md** (busca tu error con Ctrl+F)
+
 ### Error durante instalación
-→ Ve a INSTALACION_Y_CONFIGURACION.md → Troubleshooting
+→ ERRORES_Y_SOLUCIONES.md → Errores de Instalación
+→ O INSTALACION_Y_CONFIGURACION.md → Troubleshooting
 
 ### VPS con poca memoria
-→ Ve a OPTIMIZACION_RECURSOS_LIMITADOS.md
+→ OPTIMIZACION_RECURSOS_LIMITADOS.md → Troubleshooting para Poca Memoria
+→ O ERRORES_Y_SOLUCIONES.md → Errores de Memoria
 
 ### La aplicación no inicia
-→ Ve a SCRIPTS_LISTOS.md → Comandos Útiles Rápidos
+→ ERRORES_Y_SOLUCIONES.md → Errores de Ejecución
+→ O SCRIPTS_LISTOS.md → Comandos Útiles Rápidos
+
+### 502 Bad Gateway en Nginx
+→ ERRORES_Y_SOLUCIONES.md → Errores de Nginx → 502 Bad Gateway
+
+### Búsqueda lenta / no funciona
+→ ERRORES_Y_SOLUCIONES.md → Errores de Búsqueda
 
 ### ¿Cómo veo los logs?
-→ Ve a INSTALACION_Y_CONFIGURACION.md → Monitoreo y Logs
+→ INSTALACION_Y_CONFIGURACION.md → Monitoreo y Logs
 
 ### ¿Cómo actualizo?
-→ Ve a SCRIPTS_LISTOS.md → Script de Actualización
+→ SCRIPTS_LISTOS.md → Script de Actualización
 
 ### ¿Cómo respaldar?
-→ Ve a INSTALACION_Y_CONFIGURACION.md → Respaldo y Recuperación
+→ INSTALACION_Y_CONFIGURACION.md → Respaldo y Recuperación
+
+### ¿Olvidé la contraseña?
+→ ERRORES_Y_SOLUCIONES.md → Errores de Autenticación → Lost password
 
 ---
 
