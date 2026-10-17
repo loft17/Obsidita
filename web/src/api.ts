@@ -71,9 +71,13 @@ export const filesApi = {
     if (!res.ok) throw new Error((await res.json()).error);
     return res.json();
   },
-  // `version` identifica el contenido leído; se pasa al guardar para detectar conflictos
-  readFile: async (filePath: string): Promise<{ content: string; version: string }> => {
-    const res = await fetch(`${API_URL}/files/read/${encodeURIComponent(filePath)}`);
+  // `version` identifica el contenido leído; se pasa al guardar para detectar conflictos.
+  // Con `knownVersion` (ya se tiene la nota), el servidor responde `unchanged` si sigue igual,
+  // sin devolver el contenido
+  readFile: async (filePath: string, knownVersion?: string): Promise<{ content: string; version: string; unchanged?: boolean }> => {
+    const query = knownVersion ? `?version=${encodeURIComponent(knownVersion)}` : '';
+    const res = await fetch(`${API_URL}/files/read/${encodeURIComponent(filePath)}${query}`);
+    if (res.status === 304) return { content: '', version: knownVersion!, unchanged: true };
     if (!res.ok) throw new Error((await res.json()).error);
     return res.json();
   },

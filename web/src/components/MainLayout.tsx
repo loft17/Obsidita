@@ -218,8 +218,9 @@ export default function MainLayout() {
 
   // La nota abierta puede cambiar fuera de esta pestaña: otro dispositivo, la sincronización
   // con GitHub, Obsidian de escritorio... Se comprueba al volver a la pestaña, cada poco
-  // mientras está visible y cuando el servidor reescribe enlaces. Si hay cambios sin guardar
-  // no se toca nada: el guardado detectará el conflicto
+  // mientras está visible y cuando el servidor reescribe enlaces. Solo se pide la nota si su
+  // versión en el servidor es otra (ver más abajo). Si hay cambios sin guardar no se toca
+  // nada: el guardado detectará el conflicto
   useEffect(() => {
     let checking = false;
     const busy = (path: string) =>
@@ -232,7 +233,10 @@ export default function MainLayout() {
       checking = true;
       try {
         const known = noteVersions.get(path);
-        const data = await filesApi.readFile(path);
+        // Con la versión conocida el servidor responde 304 y no se descarga la nota: solo
+        // viaja el hash, así que el sondeo cada 15 s no reenvía notas grandes sin cambios
+        const data = known ? await filesApi.readFile(path, known) : await filesApi.readFile(path);
+        if (data.unchanged) return;
         const unchanged = useStore.getState().activeTab === path && !busy(path) && noteVersions.get(path) === known;
         if (!unchanged || data.version === known) return;
         noteVersions.set(path, data.version);

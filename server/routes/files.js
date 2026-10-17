@@ -52,9 +52,15 @@ export default (dataDir, getConfig) => {
 
   router.get('/tree', withVault((cfg, req, res) => res.json(vault.listTree(cfg.vaultPath))));
 
+  // El sondeo de cambios externos de la web (cada 15 s) lee la nota abierta entera para saber si
+  // sigue igual. Con la versión conocida (?version=) se compara contra la del servidor y, si
+  // coincide, se responde 304 sin contenido: solo viaja el hash, no la nota
   router.get('/read/:filePath', withVault((cfg, req, res) => {
+    res.set('Cache-Control', 'no-store');
     const content = vault.readFile(cfg.vaultPath, req.params.filePath);
-    res.json({ content, version: vault.contentVersion(content) });
+    const version = vault.contentVersion(content);
+    if (req.query.version === version) return res.status(304).end();
+    res.json({ content, version });
   }));
 
   // Archivos binarios del vault (imágenes adjuntas a las notas)
