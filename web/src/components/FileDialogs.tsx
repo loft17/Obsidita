@@ -134,6 +134,9 @@ export function MoveDialog({
   onClose: () => void;
 }) {
   const [filter, setFilter] = useState('');
+  // Sin destino preseleccionado: Intro solo mueve a lo que se haya elegido con las flechas
+  // o con el ratón (antes movía al primero de la lista, p. ej. la raíz con el filtro vacío)
+  const [selected, setSelected] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const t = useT();
@@ -142,6 +145,7 @@ export function MoveDialog({
   const options = ['', ...folders]
     .filter((f) => f !== currentFolder)
     .filter((f) => (f || '/').toLowerCase().includes(filter.toLowerCase()));
+  const current = selected !== null && selected < options.length ? selected : null;
 
   const choose = async (folder: string) => {
     setBusy(true);
@@ -153,12 +157,19 @@ export function MoveDialog({
     }
   };
 
+  const move = (step: number) => {
+    if (options.length === 0) return;
+    setSelected(
+      current === null ? (step > 0 ? 0 : options.length - 1) : Math.min(Math.max(current + step, 0), options.length - 1)
+    );
+  };
+
   return (
     <DialogShell title={title ?? t('file.moveFile')} error={error} onClose={onClose}>
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          if (options.length > 0 && !busy) choose(options[0]);
+          if (current !== null && !busy) choose(options[current]);
         }}
       >
         <input
@@ -166,15 +177,29 @@ export function MoveDialog({
           className="file-dialog-input"
           placeholder={t('move.search')}
           value={filter}
-          onChange={(e) => setFilter(e.target.value)}
+          onChange={(e) => {
+            setFilter(e.target.value);
+            setSelected(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowDown') {
+              e.preventDefault();
+              move(1);
+            } else if (e.key === 'ArrowUp') {
+              e.preventDefault();
+              move(-1);
+            }
+          }}
         />
       </form>
       <div className="file-dialog-list">
         {options.length === 0 && <div className="dropdown-empty">{t('move.noMatch')}</div>}
-        {options.map((folder) => (
+        {options.map((folder, i) => (
           <div
             key={folder || '/'}
+            ref={(el) => i === current && el?.scrollIntoView({ block: 'nearest' })}
             className={`dropdown-item ${busy ? 'disabled' : ''}`}
+            style={i === current ? { background: 'var(--interactive-hover)' } : undefined}
             onClick={() => !busy && choose(folder)}
           >
             {folder || t('move.root')}
