@@ -62,6 +62,7 @@ export const ca: Messages = {
   'tabs.closeUnsaved': 'Tancar pestanya amb canvis sense desar?',
   'tabs.closeUnsavedMessage': 'Aquesta pestanya té canvis sense desar. Es perdran si la tanques.',
   'tabs.closeWithoutSaving': 'Tanca sense desar',
+  'tabs.saveAndClose': 'Desa i tanca',
   'daily.open': "Obre la nota diària d'avui",
   'daily.openError': "No s'ha pogut obrir la nota diària: {error}",
   'daily.templateMissing': "No s'ha trobat la plantilla \"{template}\": la nota s'ha creat buida.",

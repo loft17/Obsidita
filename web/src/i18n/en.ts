@@ -62,6 +62,7 @@ export const en: Messages = {
   'tabs.closeUnsaved': 'Close tab with unsaved changes?',
   'tabs.closeUnsavedMessage': 'This tab has unsaved changes. They will be lost if you close it.',
   'tabs.closeWithoutSaving': 'Close without saving',
+  'tabs.saveAndClose': 'Save and close',
   'daily.open': "Open today's daily note",
   'daily.openError': 'Could not open the daily note: {error}',
   'daily.templateMissing': 'Template "{template}" was not found: the note was created empty.',

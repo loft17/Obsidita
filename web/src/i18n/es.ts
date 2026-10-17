@@ -61,6 +61,7 @@ export const es = {
   'tabs.closeUnsaved': '¿Cerrar pestaña con cambios sin guardar?',
   'tabs.closeUnsavedMessage': 'Esta pestaña tiene cambios sin guardar. Se perderán si la cierras.',
   'tabs.closeWithoutSaving': 'Cerrar sin guardar',
+  'tabs.saveAndClose': 'Guardar y cerrar',
   'daily.open': 'Abrir la nota diaria de hoy',
   'daily.openError': 'No se pudo abrir la nota diaria: {error}',
   'daily.templateMissing': 'No se encontró la plantilla "{template}": la nota se ha creado vacía.',

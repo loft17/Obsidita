@@ -1,9 +1,63 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useStore } from '../store';
 import { useT } from '../i18n';
 import { IconClose, IconPlus, IconSidebar } from './Icons';
 import { useIsMobile } from '../mobile';
-import { ConfirmDialog } from './FileDialogs';
+import { flushPendingSave } from './Editor';
+
+function CloseUnsavedDialog({
+  path,
+  onClose,
+  onRemove,
+}: {
+  path: string;
+  onClose: () => void;
+  onRemove: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const t = useT();
+
+  const handleSaveAndClose = async () => {
+    setBusy(true);
+    try {
+      await flushPendingSave(path);
+      onRemove();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return createPortal(
+    <div className="modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && !busy && onClose()}>
+      <div className="modal file-dialog">
+        <div className="file-dialog-title">{t('tabs.closeUnsaved')}</div>
+        <p className="file-dialog-message">{t('tabs.closeUnsavedMessage')}</p>
+        <div className="file-dialog-buttons">
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => {
+              setBusy(true);
+              onRemove();
+            }}
+            disabled={busy}
+          >
+            {t('tabs.closeWithoutSaving')}
+          </button>
+          <button
+            type="button"
+            onClick={handleSaveAndClose}
+            disabled={busy}
+          >
+            {t('tabs.saveAndClose')}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
 
 export default function Tabs() {
   const tabs = useStore((s) => s.tabs);
@@ -52,15 +106,13 @@ export default function Tabs() {
         <IconPlus size={16} />
       </div>
       {pathToClose && (
-        <ConfirmDialog
-          title={t('tabs.closeUnsaved')}
-          message={t('tabs.closeUnsavedMessage')}
-          confirmLabel={t('tabs.closeWithoutSaving')}
-          onConfirm={async () => {
+        <CloseUnsavedDialog
+          path={pathToClose}
+          onClose={() => setPathToClose(null)}
+          onRemove={() => {
             removeTab(pathToClose);
             setPathToClose(null);
           }}
-          onClose={() => setPathToClose(null)}
         />
       )}
     </div>
