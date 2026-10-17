@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useStore, hiddenMatchers, isHiddenPath } from '../store';
 import { searchApi, SearchResult, SearchMatch } from '../api';
 import { useT } from '../i18n';
+import { setPendingLine } from '../wikilinks';
 import { IconChevronRight, IconChevronDown, IconClose, IconSearch } from './Icons';
 
 // Segundos exagerados no se anuncian (p. ej. 3600); el aviso pasa a ser genérico
@@ -159,7 +160,10 @@ export default function SearchPanel() {
                 className={`tree-item file ${activeTab === r.path ? 'active' : ''}`}
                 style={{ paddingLeft: hasMatches ? '0' : '16px' }}
                 title={r.path}
-                onClick={() => openFile(r.path, r.name)}
+                onClick={() => {
+                  if (r.matches.length > 0) setPendingLine(r.path, r.matches[0].line);
+                  openFile(r.path, r.name);
+                }}
               >
                 {hasMatches && (
                   <span
@@ -187,7 +191,10 @@ export default function SearchPanel() {
                       key={i}
                       className="search-match"
                       title={t('search.line', { n: m.line })}
-                      onClick={() => openFile(r.path, r.name)}
+                      onClick={() => {
+                        setPendingLine(r.path, m.line);
+                        openFile(r.path, r.name);
+                      }}
                     >
                       <Highlighted text={m.text} start={m.start} length={m.length} />
                     </div>

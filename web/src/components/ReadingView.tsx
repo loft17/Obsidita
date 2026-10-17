@@ -6,7 +6,7 @@ import InlineTitle from './InlineTitle';
 import { useStore } from '../store';
 import { attachmentUrl, isImage, parseSize } from '../attachments';
 import {
-  followWikilink, isResolved, parseWikilink, resolveWikilink, scrollToHeading, takePendingHeading, wikilinkLabel,
+  followWikilink, isResolved, parseWikilink, resolveWikilink, scrollToHeading, scrollToLine, takePendingHeading, takePendingLine, wikilinkLabel,
 } from '../wikilinks';
 import { embedSection, getEmbedContent, getEmbedsVersion, refreshEmbeds, subscribeEmbeds } from '../noteEmbeds';
 import { cancelPendingSave, NOTES_CHANGED, saveNote } from './Editor';
@@ -462,10 +462,12 @@ export default function ReadingView({ content, filePath, onContentChange }: Prop
     };
   }, []);
 
-  // Llegada desde [[nota#encabezado]]
+  // Llegada desde [[nota#encabezado]] o desde resultados de búsqueda
   useEffect(() => {
     const heading = takePendingHeading(notePath);
+    const line = takePendingLine(notePath);
     if (heading && contentRef.current) scrollToHeading(contentRef.current, heading);
+    else if (line && contentRef.current) scrollToLine(contentRef.current, line);
   }, [html, notePath]);
 
   useEffect(() => {

@@ -53,14 +53,26 @@ export function resolveWikilink(target: string, notePath: string): string | null
 export const isResolved = (inner: string, notePath: string) =>
   resolveWikilink(parseWikilink(inner).target, notePath) !== null;
 
-// Encabezado al que desplazarse cuando la vista de lectura termine de pintar la nota
-let pendingHeading: { path: string; heading: string } | null = null;
+// Encabezado o línea al que desplazarse cuando la vista de lectura termine de pintar la nota
+let pendingScroll: { path: string; heading?: string; line?: number } | null = null;
 
 export function takePendingHeading(path: string) {
-  if (pendingHeading?.path !== path) return '';
-  const { heading } = pendingHeading;
-  pendingHeading = null;
-  return heading;
+  if (pendingScroll?.path !== path) return '';
+  const { heading } = pendingScroll;
+  pendingScroll = null;
+  return heading ?? '';
+}
+
+export function takePendingLine(path: string) {
+  if (pendingScroll?.path !== path) return null;
+  const { line } = pendingScroll;
+  pendingScroll = null;
+  return line ?? null;
+}
+
+// Setea la línea a la que desplazarse cuando la vista de lectura termine de pintar la nota
+export function setPendingLine(path: string, line: number) {
+  pendingScroll = { path, line };
 }
 
 // Desplaza `container` hasta el encabezado cuyo texto coincide (sin distinguir mayúsculas)
@@ -69,6 +81,14 @@ export function scrollToHeading(container: HTMLElement, heading: string) {
   const el = [...container.querySelectorAll<HTMLElement>('h1, h2, h3, h4, h5, h6')].find(
     (h) => lower(h.textContent?.trim() ?? '') === wanted
   );
+  el?.scrollIntoView({ block: 'start' });
+}
+
+// Desplaza `container` hasta la línea especificada (1-indexed)
+export function scrollToLine(container: HTMLElement, lineNum: number) {
+  if (lineNum <= 0) return;
+  const els = [...container.querySelectorAll<HTMLElement>('[data-line]')];
+  const el = els.find((e) => Number(e.dataset.line) === lineNum - 1);
   el?.scrollIntoView({ block: 'start' });
 }
 
@@ -87,7 +107,7 @@ export async function followWikilink(inner: string, notePath: string, newTab = f
       return;
     }
   }
-  pendingHeading = heading ? { path, heading } : null;
+  pendingScroll = heading ? { path, heading } : null;
   const name = path.split('/').pop() || path;
   const { addTab, setActiveTab, openFile, setEditMode } = useStore.getState();
   if (newTab) {
