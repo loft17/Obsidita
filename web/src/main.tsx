@@ -4,6 +4,7 @@ import App from './App';
 import './styles/obsidian.css';
 import { fitToVisualViewport } from './mobile';
 import { i18nReady } from './i18n';
+import { useStore } from './store';
 
 fitToVisualViewport();
 
@@ -13,6 +14,17 @@ for (const type of ['dragover', 'drop'] as const) {
     if (e.dataTransfer?.types.includes('Files')) e.preventDefault();
   });
 }
+
+// Advertir si el usuario intenta cerrar la ventana con cambios sin guardar
+window.addEventListener('beforeunload', (e) => {
+  const tabs = useStore.getState().tabs;
+  const hasUnsavedChanges = tabs.some((t) => t.isDirty);
+  if (hasUnsavedChanges) {
+    e.preventDefault();
+    e.returnValue = '';
+    return '';
+  }
+});
 
 // Se pinta cuando el idioma de la interfaz está disponible
 i18nReady.then(() => {

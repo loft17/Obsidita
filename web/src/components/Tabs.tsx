@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { useStore } from '../store';
 import { useT } from '../i18n';
 import { IconClose, IconPlus, IconSidebar } from './Icons';
 import { useIsMobile } from '../mobile';
+import { ConfirmDialog } from './FileDialogs';
 
 export default function Tabs() {
   const tabs = useStore((s) => s.tabs);
@@ -12,6 +14,7 @@ export default function Tabs() {
   const toggleSidebar = useStore((s) => s.toggleSidebar);
   const mobile = useIsMobile();
   const t = useT();
+  const [pathToClose, setPathToClose] = useState<string | null>(null);
 
   return (
     <div className="tabs">
@@ -33,7 +36,11 @@ export default function Tabs() {
             className="tab-close"
             onClick={(e) => {
               e.stopPropagation();
-              removeTab(tab.path);
+              if (tab.isDirty) {
+                setPathToClose(tab.path);
+              } else {
+                removeTab(tab.path);
+              }
             }}
             title={t('common.close')}
           >
@@ -44,6 +51,18 @@ export default function Tabs() {
       <div className="tab-new" title={t('tabs.new')}>
         <IconPlus size={16} />
       </div>
+      {pathToClose && (
+        <ConfirmDialog
+          title={t('tabs.closeUnsaved')}
+          message={t('tabs.closeUnsavedMessage')}
+          confirmLabel={t('tabs.closeWithoutSaving')}
+          onConfirm={async () => {
+            removeTab(pathToClose);
+            setPathToClose(null);
+          }}
+          onClose={() => setPathToClose(null)}
+        />
+      )}
     </div>
   );
 }
