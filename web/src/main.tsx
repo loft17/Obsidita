@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './styles/obsidian.css';
-import './fonts';
 import { fitToVisualViewport } from './mobile';
 import { i18nReady } from './i18n';
 

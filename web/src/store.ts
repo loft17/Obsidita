@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { isMobile } from './mobile';
+import { loadBundledFont } from './fonts';
 
 interface TreeItem {
   type: 'folder' | 'file' | 'other';
@@ -181,7 +182,11 @@ const applyFont = (kind: FontKind, name: string) => {
   else style.removeProperty(`--font-${kind}`);
 };
 
-(Object.keys(initialFonts) as FontKind[]).forEach((kind) => applyFont(kind, initialFonts[kind]));
+(Object.keys(initialFonts) as FontKind[]).forEach((kind) => {
+  applyFont(kind, initialFonts[kind]);
+  // La fuente guardada de una visita anterior también se carga bajo demanda al arrancar
+  void loadBundledFont(initialFonts[kind]);
+});
 
 // Ctrl + rueda del ratón (o pellizcar en el trackpad) sobre la nota cambia el tamaño de fuente
 const QUICK_FONT_SIZE_KEY = 'quickFontSize';
@@ -375,6 +380,8 @@ export const useStore =create<AppStore>((set) => ({
       // almacenamiento no disponible: la preferencia solo dura la sesión
     }
     applyFont(kind, value);
+    // Las fuentes incluidas se cargan bajo demanda: solo las variantes de la familia elegida
+    void loadBundledFont(value);
     set((state) => ({ fonts: { ...state.fonts, [kind]: value } }));
   },
   quickFontSize: initialQuickFontSize,

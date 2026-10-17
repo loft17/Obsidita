@@ -36,7 +36,7 @@ Auditoría completa del código (servidor Express + cliente React · ~16 000 lí
 | Sección | Mejoras | 🔴 | 🟠 | 🟡 |
 |---------|:-------:|:--:|:--:|:--:|
 | [1. Seguridad y configuración](#1-seguridad-y-configuración) | 9 | — | 3 | 3 |
-| [2. Rendimiento y memoria](#2-rendimiento-y-memoria) | 11 | 1 | 5 | 3 |
+| [2. Rendimiento y memoria](#2-rendimiento-y-memoria) | 11 | 1 | 4 | 2 |
 | [3. Experiencia de usuario](#3-experiencia-de-usuario) | 11 | 2 | 4 | 5 |
 | [4. Accesibilidad](#4-accesibilidad) | 8 | — | 3 | 5 |
 | [5. Calidad de código y arquitectura](#5-calidad-de-código-y-arquitectura) | 12 | 2 | 5 | 5 |
@@ -44,7 +44,7 @@ Auditoría completa del código (servidor Express + cliente React · ~16 000 lí
 | [7. Operación y documentación](#7-operación-y-documentación) | 10 | 1 | 5 | 4 |
 | [8. Por dónde empezar](#8-por-dónde-empezar) | — | — | — | — |
 | [Lo que ya está corregido](#lo-que-ya-está-corregido) | 16 | — | — | — |
-| **Total** | **67** | **8** | **28** | **26** |
+| **Total** | **67** | **8** | **27** | **25** |
 
 ---
 
@@ -81,7 +81,7 @@ Auditoría completa del código (servidor Express + cliente React · ~16 000 lí
 | 17 | ✅ | M | El sondeo de cambios externos lee la nota **entera** cada 15 s (`MainLayout.tsx`) y el de sincronización consulta cada 30 s / 3 s (`syncNotify.ts:13-14`) | **Corregido (el sondeo de cambios):** `/api/files/read` acepta `?version=<hash>` y responde **304 sin cuerpo** si coincide, así que ya no se descarga la nota cada 15 s; lo que queda pendiente es solo revisar el intervalo del sondeo de sincronización |
 | 18 | 🟡 | S | El menú de nota reordena la lista de carpetas en cada render y pide `syncApi.get()` cada vez que se abre | `useMemo` para la lista y cachear el estado de sincronización en el store |
 | 19 | 🟡 | M | Chunks por encima de 500 kB: `MainLayout` 561 kB, mermaid 697 kB, cytoscape 444 kB, katex 261 kB | **Parcialmente corregido:** el `MainLayout` de 561 kB era sobre todo CodeMirror y `markdown-it`. Se separó `markdown-it` en su propio trozo con un `manualChunks` mínimo (`web/vite.config.ts`, 465 kB → 466 kB con 100 kB aparte) y la lista de lenguajes del editor pasó a `web/src/editorLanguages.ts`, que solo carga con el editor. Queda sin tocar cytoscape/katex (los carga mermaid dentro de su propia descarga) y los 674 kB de gramática Langium: el *chunk* sigue existiendo en `dist`, pero **ya no se descarga** al abrir un diagrama, porque `web/src/mermaidDiagrams.ts` registra solo los tipos habituales |
-| 20 | 🟡 | M | 21 familias de `@fontsource` entran en el build | Reducir a 4-6 o cargarlas bajo demanda (ya existe `FONTS_DIR` para las propias) |
+| 20 | ✅ | M | 21 familias de `@fontsource` entran en el build | **Corregido (carga bajo demanda):** `web/src/fonts.ts` ya no importa las 78 variantes en el arranque; cada familia se carga con un `import()` dinámico desde `loadBundledFont()` (al arrancar, al cambiar de fuente, y todas al abrir Ajustes para la vista previa). Resultado: el CSS principal pasa de 78 `@font-face` a **0** (56 kB → 44 kB) y las 78 variantes quedan en 78 trozos sueltos de 151 B cada uno. Las 21 familias siguen disponibles: no se quita funcionalidad. Nota: el woff2 no se reduce (1,8 MB), porque el navegador ya descargaba solo la fuente elegida; lo que se evita es declararlas todas de golpe |
 
 > [!note] Por qué importa el punto 10
 > Obsidita está pensada para VPS pequeños (`DOC/ESP/OPTIMIZACION_RECURSOS_LIMITADOS.md` habla de 512 MB - 2 GB). Un índice que puede llegar a 400 MB contradice ese objetivo.

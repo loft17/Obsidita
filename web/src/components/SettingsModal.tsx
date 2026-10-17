@@ -5,7 +5,7 @@ import { formatDate as formatMoment, DEFAULT_DAILY_FORMAT, DEFAULT_DATE_FORMAT, 
 import { getLang, LANGUAGES, Trans, useI18n, useT, type Lang, type MessageKey } from '../i18n';
 import { IconChevronLeft, IconClose, IconEdit, IconEye, IconFolderNew, IconList, IconLock, IconReset, IconSearch, IconSync, IconUserCircle } from './Icons';
 import { runSync } from '../syncNotify';
-import { BUNDLED_FONTS, isBundledFont, type FontCategory } from '../fonts';
+import { BUNDLED_FONTS, isBundledFont, loadBundledFont, type FontCategory } from '../fonts';
 import { useServerFonts } from '../serverFonts';
 import { useIsMobile } from '../mobile';
 
@@ -60,6 +60,11 @@ function FontSetting({ kind }: { kind: FontKind }) {
   const [text, setText] = useState(font);
   const t = useT();
   useEffect(() => setText(font), [font]);
+  // El desplegable muestra cada opción en su propia fuente: aquí sí hacen falta todas. Se cargan
+  // solo al abrir Ajustes (no en el arranque), porque fuera de aquí basta con la elegida
+  useEffect(() => {
+    for (const names of Object.values(BUNDLED_FONTS)) for (const name of names) void loadBundledFont(name);
+  }, []);
   const save = () => text.trim() !== font && setFont(kind, text);
 
   const choose = (value: string) => {
