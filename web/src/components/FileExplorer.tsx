@@ -1,7 +1,11 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useStore, isUnder, hiddenMatchers, isHiddenPath } from '../store';
 import { filesApi } from '../api';
-import { flushPendingSave, changeNotePath } from './Editor';
+import { flushPendingSave } from './Editor';
+import { applyPathChange, deletePath, filePathParent, fileName, movedPath, refreshTree, renamedPath } from './fileActions';
+
+// Nombre local para el nivel del archivo: dentro del componente `fileName` es otra cosa
+const parentOf = filePathParent;
 import { RenameDialog, MoveDialog, DeleteFileDialog } from './FileDialogs';
 import { useT } from '../i18n';
 import { IconChevronRight, IconChevronDown, IconCollapseAll, IconFileNew, IconFolderNew } from './Icons';
@@ -26,8 +30,6 @@ interface DragHandlers {
   onDrop: (e: React.DragEvent, folder: string) => void;
   onDragEnd: () => void;
 }
-
-const parentFolder = (path: string) => (path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '');
 
 const displayName = (item: TreeItem) =>
   item.type === 'file' ? item.name.replace(/\.md$/i, '') : item.name;
@@ -82,7 +84,7 @@ function FileTreeNode({
   const isFolder = item.type === 'folder';
   const isExpanded = expandedFolders.has(item.path);
   const children = grouped.get(item.path) ?? [];
-  const folder = isFolder ? item.path : parentFolder(item.path);
+  const folder = isFolder ? item.path : parentOf(item.path);
   const longPress = useLongPress((x, y) => onContextMenu({ x, y }, item.path, isFolder));
 
   return (
@@ -142,10 +144,8 @@ export default function FileExplorer() {
   const toggleFolder = useStore((s) => s.toggleFolder);
   const collapseAll = useStore((s) => s.collapseAll);
   const expandedFolders = useStore((s) => s.expandedFolders);
-  const setTree = useStore((s) => s.setTree);
   const addTab = useStore((s) => s.addTab);
   const openFile = useStore((s) => s.openFile);
-  const removeTab = useStore((s) => s.removeTab);
   const setActiveTab = useStore((s) => s.setActiveTab);
   const [menu, setMenu] = useState<{ x: number; y: number; path: string; isFolder: boolean } | null>(null);
   const [dialog, setDialog] = useState<{
@@ -155,10 +155,6 @@ export default function FileExplorer() {
   } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const t = useT();
-
-  const fileName = (path: string) => path.split('/').pop() || path;
-
-  const refreshTree = async () => setTree(await filesApi.getTree());
 
   const handleSelect = (path: string) => {
     openFile(path, fileName(path));
@@ -231,35 +227,17 @@ export default function FileExplorer() {
     document.body.removeChild(link);
   };
 
-  // Renombrar y mover son el mismo cambio de ruta en el servidor
-  const changePath = async (oldPath: string, newPath: string) => {
-    await changeNotePath(oldPath, newPath);
-    await refreshTree();
-    setDialog(null);
-  };
+  // Las operaciones viven en fileActions.ts, compartidas con los atajos de teclado
+  const closeDialog = () => setDialog(null);
 
-  const handleRename = (oldPath: string, newName: string, isFolder?: boolean) => {
-    const ext = !isFolder && /\.md$/i.test(oldPath) && !/\.md$/i.test(newName) ? '.md' : '';
-    const folder = parentFolder(oldPath);
-    return changePath(oldPath, `${folder ? folder + '/' : ''}${newName}${ext}`);
-  };
+  const handleRename = (oldPath: string, newName: string, isFolder?: boolean) =>
+    applyPathChange(oldPath, renamedPath(oldPath, newName, isFolder)).then(closeDialog);
 
   const handleMove = (oldPath: string, folder: string) =>
-    changePath(oldPath, `${folder ? folder + '/' : ''}${fileName(oldPath)}`);
+    applyPathChange(oldPath, movedPath(oldPath, folder)).then(closeDialog);
 
-  const handleDelete = async (path: string, images: string[]) => {
-    // Lo que esté a medio guardar dentro de la carpeta se escribe antes de moverla a la papelera:
-    // cancelarlo perdería hasta 2 s de edición en cada nota que contuviera
-    await flushPendingSave(path);
-    await filesApi.deleteFile(path);
-    removeTab(path);
-    for (const image of images) {
-      await filesApi.deleteFile(image);
-      removeTab(image);
-    }
-    await refreshTree();
-    setDialog(null);
-  };
+  const handleDelete = (path: string, images: string[]) =>
+    deletePath(path, images).finally(closeDialog);
 
   // Arrastrar y soltar. La ruta arrastrada se guarda aquí porque durante el arrastre
   // el navegador no deja leer los datos del dataTransfer
@@ -302,7 +280,7 @@ export default function FileExplorer() {
   };
 
   // No se mueve a su misma carpeta ni una carpeta dentro de sí misma
-  const canDrop = (from: string, folder: string) => parentFolder(from) !== folder && !isUnder(folder, from);
+  const canDrop = (from: string, folder: string) => parentOf(from) !== folder && !isUnder(folder, from);
 
   const drag: DragHandlers = {
     dropTarget,
@@ -487,7 +465,7 @@ export default function FileExplorer() {
             .filter((i) => i.type === 'folder' && !(dialog.isFolder && isUnder(i.path, dialog.path)))
             .map((i) => i.path)
             .sort((a, b) => a.localeCompare(b))}
-          currentFolder={parentFolder(dialog.path)}
+          currentFolder={parentOf(dialog.path)}
           onSubmit={(folder) => handleMove(dialog.path, folder)}
           onClose={() => setDialog(null)}
         />

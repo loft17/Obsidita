@@ -102,7 +102,7 @@ Auditoría completa del código (servidor Express + cliente React · ~16 000 lí
 | 28 | 🟡 | S | `Setup.onComplete` nunca se llama: `handleSetupComplete` es código muerto y el paso a la app depende de un `setTimeout(500)` + recarga | Emitir `onComplete` de verdad y eliminar el temporizador |
 | 29 | 🟡 | M | Los archivos que no son `.md` (txt, json, canvas) ahora solo se pueden descargar | Añadir vista de solo lectura para texto plano, sin autoguardado |
 | 30 | 🟡 | S | El ancho del input de etiquetas se calcula a mano con `size={draft.length}` (`Properties.tsx:158`) | Resolverlo con CSS |
-| 31 | 🟡 | M | No hay atajos para renombrar, mover o borrar, ni paleta de comandos | Añadir `F2`, `Ctrl+Shift+N`, etc. sobre la base de atajos que ya existe en `MainLayout.tsx` |
+| 31 | ✅ | M | No hay atajos para renombrar, mover o borrar, ni paleta de comandos | **Atajos añadidos** sobre el manejador de `MainLayout.tsx`: `F2` renombra, `Ctrl/Cmd+Shift+M` mueve y `Ctrl/Cmd+Shift+Backspace` borra la nota abierta (con los mismos diálogos que el menú; lista para `Ctrl+Shift+N`). La lógica de teclas y guardas está en `fileShortcuts.ts` (no dispara al escribir en un campo, ni en el editor para `F2`, ni con diálogos/menús abiertos) y las operaciones de archivo se comparten con el explorador en `fileActions.ts`/`filePaths.ts`. Documentados en Ajustes → Atajos. Pendiente: la paleta de comandos |
 
 ---
 

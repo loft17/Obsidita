@@ -14,6 +14,7 @@ import ImageViewer from './ImageViewer';
 import StatusBar from './StatusBar';
 import { isImage } from '../attachments';
 import NoteMenu from './NoteMenu';
+import NoteShortcuts, { useNoteOverlayStore } from './NoteShortcuts';
 import { IconBook, IconEdit, IconSidebar, IconSearch } from './Icons';
 import { useT, t as translate } from '../i18n';
 import Toasts from './Toasts';
@@ -22,6 +23,7 @@ import { useSyncNotifications } from '../syncNotify';
 import { useUpdateNotification } from '../updateNotify';
 import { loadServerFonts } from '../serverFonts';
 import { useIsMobile } from '../mobile';
+import { canRunFileShortcut, fileShortcutFor, hasOpenOverlay } from '../fileShortcuts';
 
 // Los ajustes solo se descargan la primera vez que se abren
 const SettingsModal = lazy(() => import('./SettingsModal'));
@@ -101,10 +103,26 @@ export default function MainLayout() {
     if (settingsOpen || !document.getElementById('server-fonts')) loadServerFonts();
   }, [settingsOpen]);
 
-  // Atajos globales: Ctrl/Cmd+P abrir nota, +S guardar, +E editar/leer, +B barra lateral, +Shift+F buscar
+  // Atajos globales. Con modificador: Ctrl/Cmd+P abrir nota, +S guardar, +E editar/leer,
+  // +B barra lateral, +Shift+F buscar. Para el archivo abierto: F2 renombrar, Ctrl/Cmd+Shift+M
+  // mover y Ctrl/Cmd+Shift+Retroceso borrar (ver SHORTCUT_GROUPS en Ajustes → Atajos)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+      const fileAction = fileShortcutFor(e);
+      if (fileAction) {
+        const { activeTab } = useStore.getState();
+        const target = e.target as Element | null;
+        // Sin archivo abierto no hay nada que renombrar, mover ni borrar
+        if (!activeTab || !canRunFileShortcut(fileAction, target, { overlayOpen: hasOpenOverlay() })) return;
+        // Con un botón enfocado Intro/Espacio lo activan; no hay motivo para saltar a un diálogo
+        if ((document.activeElement as HTMLElement | null)?.closest('button')) return;
+        e.preventDefault();
+        useNoteOverlayStore.getState().open(fileAction);
+        return;
+      }
+
+      const withMod = (e.ctrlKey || e.metaKey) && !e.altKey;
+      if (!withMod) return;
       if (e.shiftKey) {
         if (e.key.toLowerCase() === 'f') {
           e.preventDefault();
@@ -401,6 +419,8 @@ export default function MainLayout() {
           onClose={() => setQuickOpen(false)}
         />
       )}
+      {/* Diálogos de renombrar/mover/borrar que abren los atajos (F2, Ctrl+Shift+M, ...) */}
+      <NoteShortcuts />
     </div>
   );
 }

@@ -1150,6 +1150,14 @@ const SHORTCUT_GROUPS: { title: MessageKey; items: { keys: string[]; desc: Messa
     ],
   },
   {
+    title: 'shortcuts.file',
+    items: [
+      { keys: ['F2'], desc: 'shortcuts.rename' },
+      { keys: ['Ctrl', SHIFT, 'M'], desc: 'shortcuts.move' },
+      { keys: ['Ctrl', SHIFT, BACKSPACE], desc: 'shortcuts.delete' },
+    ],
+  },
+  {
     title: 'shortcuts.findInNote',
     items: [
       { keys: ['Ctrl', 'F'], desc: 'shortcuts.openFind' },
