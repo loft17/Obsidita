@@ -211,6 +211,8 @@ export const ca: Messages = {
   'search.match': '{n} coincidència al contingut',
   'search.matches': '{n} coincidències al contingut',
   'search.noResults': 'Sense resultats',
+  'search.rateLimitedWait': 'Límit de cerques assolit; reintentant en {s} s...',
+  'search.rateLimited': 'Massa cerques. Torna-ho a provar en {s} s; es mantenen els resultats anteriors.',
   'search.line': 'Línia {n}',
   'search.more': 'i {n} més...',
   'tags.sortByCount': 'Ordena per nombre de notes',

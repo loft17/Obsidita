@@ -24,7 +24,9 @@ export const MIN_PASSWORD_LENGTH = int('MIN_PASSWORD_LENGTH', 12);
 export const SEARCH_MAX_QUERY_LENGTH = int('SEARCH_MAX_QUERY_LENGTH', 200);
 export const SEARCH_MAX_FILE_BYTES = num('SEARCH_MAX_FILE_MB', 2) * MB; // las notas más grandes no se leen
 export const SEARCH_MAX_SCANNED_BYTES = num('SEARCH_MAX_SCANNED_MB', 200) * MB; // total de notas indexadas para la búsqueda
-export const SEARCH_RATE_MAX = int('SEARCH_RATE_MAX', 60); // búsquedas por IP y minuto
+// Búsquedas por IP y minuto. Cada una recorre el árbol del vault, así que no puede ser ilimitado;
+// 120 deja sitio a escribir seguido (el cliente espera 250 ms entre consultas) sin rozar el límite
+export const SEARCH_RATE_MAX = int('SEARCH_RATE_MAX', 120);
 export const SEARCH_MAX_RESULTS = int('SEARCH_MAX_RESULTS', 200);
 export const SEARCH_MAX_MATCHES_PER_FILE = int('SEARCH_MAX_MATCHES_PER_FILE', 5);
 

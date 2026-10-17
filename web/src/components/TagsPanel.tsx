@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore, hiddenMatchers, isHiddenPath } from '../store';
 import { searchApi, type VaultTag } from '../api';
 import { useT } from '../i18n';
@@ -92,9 +92,13 @@ export default function TagsPanel() {
   const hiddenFolders = useStore((s) => s.hiddenFolders);
   const [tags, setTags] = useState<VaultTag[] | null>(null);
   const [error, setError] = useState('');
+  // Aviso de reintento por el límite del servidor; si falla con el árbol ya cargado, el árbol
+  // se queda y el aviso va aparte (antes el error lo tapaba y además lo dejaba vacío)
+  const [notice, setNotice] = useState('');
   const [filter, setFilter] = useState('');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const t = useT();
+  const abortRef = useRef<AbortController | null>(null);
   const [sort, setSort] = useState<TagSort>(() => {
     try {
       return localStorage.getItem(SORT_KEY) === 'count' ? 'count' : 'name';
@@ -104,16 +108,39 @@ export default function TagsPanel() {
   });
 
   const load = async () => {
+    // Una nueva carga cancela la anterior (también una espera por `Retry-After`)
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+    setNotice('');
     try {
-      setTags(await searchApi.tags());
+      const list = await searchApi.tags({
+        signal: ctrl.signal,
+        onWait: (ms) => setNotice(t('search.rateLimitedWait', { s: Math.max(1, Math.ceil(ms / 1000)) })),
+      });
+      if (ctrl.signal.aborted) return;
+      setTags(list);
       setError('');
     } catch (err) {
-      setError((err as Error).message);
+      if ((err as Error).name === 'AbortError') return;
+      const rateLimited = (err as Error).name === 'RateLimitError';
+      // Con etiquetas ya cargadas se conservan: solo se avisa. Sin ellas, se muestra el error
+      setError(
+        rateLimited
+          ? t('search.rateLimited', {
+              s: Math.max(1, Math.ceil(((err as { retryAfterMs?: number }).retryAfterMs ?? 0) / 1000)),
+            })
+          : (err as Error).message
+      );
+      if (!rateLimited) setTags(null);
+    } finally {
+      if (!ctrl.signal.aborted) setNotice('');
     }
   };
 
   useEffect(() => {
     load();
+    return () => abortRef.current?.abort();
   }, []);
 
   const toggleSort = () => {
@@ -174,7 +201,9 @@ export default function TagsPanel() {
         )}
       </div>
       <div className="file-explorer">
-        {error ? (
+        {notice && <div className="search-summary-warning">{notice}</div>}
+        {/* El error solo sustituye a la lista si no hay etiquetas que mostrar */}
+        {error && tags === null ? (
           <div className="dropdown-empty">{error}</div>
         ) : tags === null ? (
           <div className="dropdown-empty">{t('common.loading')}</div>

@@ -382,16 +382,104 @@ export interface VaultTag {
   paths: string[];
 }
 
+// El servidor limita las búsquedas por minuto (SEARCH_RATE_MAX) y responde 429 con `Retry-After`
+// (segundos). Se distingue del resto de errores para no perder lo que ya se tenía en pantalla
+export class RateLimitError extends Error {
+  constructor(message: string, public retryAfterMs: number) {
+    super(message);
+    this.name = 'RateLimitError';
+  }
+}
+
+// `Retry-After` → milisegundos. Admite también la forma con fecha HTTP. Sin cabecera válida se
+// usa un minuto, que es la ventana del servidor
+export function parseRetryAfter(value: string | null, fallbackMs = 60_000): number {
+  if (value === null || value.trim() === '') return fallbackMs;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
+  const date = Date.parse(value);
+  return Number.isNaN(date) ? fallbackMs : Math.max(0, date - Date.now());
+}
+
+const isRateLimitError = (err: unknown) => (err as Error | null)?.name === 'RateLimitError';
+
+// Lanza el error del servidor: RateLimitError si fue un 429, Error normal si no
+const throwHttpError = async (res: Response) => {
+  const data = await res.json().catch(() => ({}));
+  const message = data.error || `HTTP ${res.status}`;
+  if (res.status === 429) throw new RateLimitError(message, parseRetryAfter(res.headers.get('Retry-After')));
+  throw new Error(message);
+};
+
+// Espera cancelable: se rechaza con AbortError si se aborta antes (al cambiar la consulta o
+// cerrar el panel), para no seguir reintentando en segundo plano
+const sleep = (ms: number, signal?: AbortSignal) =>
+  new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) return reject(new DOMException('Aborted', 'AbortError'));
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(new DOMException('Aborted', 'AbortError'));
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+
+// Ante un 429 espera lo que indique `Retry-After` (con algo de margen para el redondeo) y repite,
+// hasta `retries` veces: una ráfaga de búsquedas se resume sola en vez de dejar el panel en error
+async function withRetry<T>(
+  run: () => Promise<T>,
+  signal: AbortSignal | undefined,
+  retries: number,
+  onWait?: (ms: number) => void
+): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await run();
+    } catch (err) {
+      if (!isRateLimitError(err) || attempt >= retries) throw err;
+      const wait = Math.min((err as RateLimitError).retryAfterMs + 250, 5 * 60_000);
+      onWait?.(wait);
+      await sleep(wait, signal);
+    }
+  }
+}
+
 export const searchApi = {
-  search: async (q: string, signal?: AbortSignal): Promise<SearchResult[]> => {
-    const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(q)}`, { signal });
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
+  // `onWait` se llama antes de cada espera por el límite, para poder avisar al usuario
+  search: async (
+    q: string,
+    signal?: AbortSignal,
+    opts: { retries?: number; onWait?: (ms: number) => void } = {}
+  ): Promise<SearchResult[]> => {
+    const { retries = 1, onWait } = opts;
+    return withRetry(
+      async () => {
+        const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(q)}`, { signal });
+        if (!res.ok) await throwHttpError(res);
+        return res.json();
+      },
+      signal,
+      retries,
+      onWait
+    );
   },
   // Etiquetas del vault y notas en las que aparece cada una
-  tags: async (): Promise<VaultTag[]> => {
-    const res = await fetch(`${API_URL}/search/tags`);
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
+  tags: async (
+    opts: { signal?: AbortSignal; retries?: number; onWait?: (ms: number) => void } = {}
+  ): Promise<VaultTag[]> => {
+    const { signal, retries = 1, onWait } = opts;
+    return withRetry(
+      async () => {
+        const res = await fetch(`${API_URL}/search/tags`, { signal });
+        if (!res.ok) await throwHttpError(res);
+        return res.json();
+      },
+      signal,
+      retries,
+      onWait
+    );
   },
 };

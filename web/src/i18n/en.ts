@@ -211,6 +211,8 @@ export const en: Messages = {
   'search.match': '{n} match in content',
   'search.matches': '{n} matches in content',
   'search.noResults': 'No results',
+  'search.rateLimitedWait': 'Search limit reached, retrying in {s}s...',
+  'search.rateLimited': 'Too many searches. Try again in {s}s; the previous results are kept.',
   'search.line': 'Line {n}',
   'search.more': 'and {n} more...',
   'tags.sortByCount': 'Sort by number of notes',

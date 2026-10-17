@@ -614,7 +614,7 @@ SEARCH_MAX_RESULTS=200
 SEARCH_MAX_MATCHES_PER_FILE=5
 
 # Búsquedas por minuto por IP
-SEARCH_RATE_MAX=60
+SEARCH_RATE_MAX=120
 
 # ===== SESIONES (DÍAS) =====
 # Duración máxima de sesión

@@ -210,6 +210,8 @@ export const es = {
   'search.match': '{n} coincidencia en el contenido',
   'search.matches': '{n} coincidencias en el contenido',
   'search.noResults': 'Sin resultados',
+  'search.rateLimitedWait': 'Límite de búsquedas alcanzado; reintentando en {s} s...',
+  'search.rateLimited': 'Demasiadas búsquedas. Prueba de nuevo en {s} s; se mantienen los resultados anteriores.',
   'search.line': 'Línea {n}',
   'search.more': 'y {n} más...',
   'tags.sortByCount': 'Ordenar por número de notas',
