@@ -47,6 +47,19 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        // Mínimo a propósito: el trozo principal lo corta mejor Rollup respetando el orden de
+        // carga. Solo se separa markdown-it, que pesa ~166 kB y únicamente hace falta para la
+        // vista de lectura: así la pantalla principal no lo descarga (ni espera a él) hasta
+        // abrir una nota en ese modo
+        manualChunks(id) {
+          if (/[\\/]node_modules[\\/](markdown-it|mdurl|uc\.micro|linkify-it|punycode\.js|entities)[\\/]/.test(id)) {
+            return 'markdown';
+          }
+        },
+      },
+    },
   },
   server: {
     proxy: {

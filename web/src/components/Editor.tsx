@@ -10,7 +10,7 @@ import { EditorView, drawSelection, highlightActiveLineGutter, keymap, lineNumbe
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { markdown, markdownKeymap, markdownLanguage } from '@codemirror/lang-markdown';
 import { indentUnit } from '@codemirror/language';
-import { languages } from '@codemirror/language-data';
+import { languages } from '../editorLanguages';
 import { livePreview, HighlightSyntax, notePath } from '../livePreview';
 import { imageUpload } from '../imageUpload';
 import { wikilinkCompletion } from '../wikilinkComplete';
