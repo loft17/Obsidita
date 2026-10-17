@@ -320,7 +320,7 @@ export function DeleteFileDialog({
   onClose: () => void;
 }) {
   const isNote = !isFolder && /\.md$/i.test(path);
-  const [usage, setUsage] = useState<{ own: string[]; shared: string[] } | null>(null);
+  const [usage, setUsage] = useState<{ own: string[]; shared: string[]; complete: boolean } | null>(null);
   const [loading, setLoading] = useState(isNote);
   const [deleteImages, setDeleteImages] = useState(true);
   const t = useT();
@@ -383,6 +383,9 @@ export function DeleteFileDialog({
           {shared.length === 1 ? t('delete.sharedImage') : t('delete.sharedImages', { n: shared.length })}
         </p>
       )}
+      {/* La comprobación no fue completa (p. ej. el servidor limitó las búsquedas): se avisa
+          para no dar por hecho que se revisaron todas las imágenes */}
+      {usage && !usage.complete && <p className="file-dialog-message">{t('delete.usageIncomplete')}</p>}
     </ConfirmDialog>
   );
 }

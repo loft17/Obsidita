@@ -109,6 +109,7 @@ export const es = {
   'delete.alsoImages': 'Borrar también sus {n} imágenes',
   'delete.sharedImage': 'Se conserva 1 imagen usada también en otras notas.',
   'delete.sharedImages': 'Se conservan {n} imágenes usadas también en otras notas.',
+  'delete.usageIncomplete': 'No se han podido comprobar todas las imágenes: las dudosas no se ofrecen para borrar.',
   'conflict.title': 'La nota ha cambiado en otro sitio',
   'conflict.message':
     '{name} se ha modificado fuera de esta pestaña (otro dispositivo, la sincronización…) mientras la editabas. Elige qué versión conservar; la otra se descartará.',

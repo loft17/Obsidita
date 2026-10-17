@@ -90,43 +90,66 @@ export function noteImages(content: string, notePath: string): string[] {
   return [...found.values()];
 }
 
-// Imágenes de la nota separadas en exclusivas (`own`) y usadas también por otras notas (`shared`)
-export async function noteImageUsage(notePath: string): Promise<{ own: string[]; shared: string[] }> {
+// Imágenes de la nota separadas en exclusivas (`own`) y usadas también por otras notas (`shared`).
+// Regla de seguridad: si no se puede determinar si otra nota usa la imagen, cuenta como `shared`
+// y no se ofrece borrar. El error debe caer del lado de «no borres», nunca del de «borra»: la
+// búsqueda puede fallar (el servidor limita las búsquedas por IP y responde 429), y una nota
+// candidata puede no leerse. `complete` indica si la comprobación se pudo hacer entera.
+export async function noteImageUsage(
+  notePath: string
+): Promise<{ own: string[]; shared: string[]; complete: boolean }> {
   const { content } = await filesApi.readFile(notePath);
   const own: string[] = [];
   const shared: string[] = [];
   const cache = new Map<string, string[]>();
-  const imagesOf = async (path: string) => {
+  // Notas que no se pudieron leer: se recuerdan aparte, porque la caché de contenido no puede
+  // distinguir "leída y no usa la imagen" de "no se pudo leer" (que debe contar como desconocido)
+  const unreadable = new Set<string>();
+  const imagesOf = async (path: string): Promise<string[] | null> => {
+    if (unreadable.has(path)) return null;
     if (!cache.has(path)) {
       try {
         cache.set(path, noteImages((await filesApi.readFile(path)).content, path));
       } catch {
-        cache.set(path, []);
+        unreadable.add(path);
+        return null;
       }
     }
     return cache.get(path)!;
   };
 
+  let complete = true;
   for (const image of noteImages(content, notePath)) {
     const name = image.split('/').pop()!;
     // Candidatas: notas que mencionan el nombre (tal cual o codificado en ![](...))
     const queries = [...new Set([name, encodeURI(name)])];
     const candidates = new Set<string>();
+    // ¿Se pudo averiguar el uso de ESTA imagen? Si no, no se puede afirmar que sea exclusiva
+    let unknown = false;
     for (const q of queries) {
-      for (const r of await searchApi.search(q)) {
-        if (r.total > 0 && r.path !== notePath) candidates.add(r.path);
+      try {
+        for (const r of await searchApi.search(q)) {
+          if (r.total > 0 && r.path !== notePath) candidates.add(r.path);
+        }
+      } catch {
+        // Búsqueda fallida (p. ej. 429 del límite por IP): sin candidatas fiables
+        unknown = true;
       }
     }
     let used = false;
     for (const path of candidates) {
-      if ((await imagesOf(path)).includes(image)) {
+      const images = await imagesOf(path);
+      // Una candidata ilegible también impide descartar que use la imagen
+      if (images === null) unknown = true;
+      else if (images.includes(image)) {
         used = true;
         break;
       }
     }
-    (used ? shared : own).push(image);
+    if (unknown && !used) complete = false;
+    (used || unknown ? shared : own).push(image);
   }
-  return { own, shared };
+  return { own, shared, complete };
 }
 
 // Obsidian admite tamaño tras "|": "texto|300" o "texto|300x200"

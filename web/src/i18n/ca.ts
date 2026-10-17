@@ -110,6 +110,7 @@ export const ca: Messages = {
   'delete.alsoImages': 'Esborra també les seves {n} imatges',
   'delete.sharedImage': 'Es conserva 1 imatge que també es fa servir en altres notes.',
   'delete.sharedImages': 'Es conserven {n} imatges que també es fan servir en altres notes.',
+  'delete.usageIncomplete': 'No s’han pogut comprovar totes les imatges: les dubtoses no s’ofereixen per esborrar.',
   'conflict.title': "La nota ha canviat en un altre lloc",
   'conflict.message':
     "{name} s'ha modificat fora d'aquesta pestanya (un altre dispositiu, la sincronització…) mentre l'editaves. Tria quina versió vols conservar; l'altra es descartarà.",

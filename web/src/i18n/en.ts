@@ -110,6 +110,7 @@ export const en: Messages = {
   'delete.alsoImages': 'Also delete its {n} images',
   'delete.sharedImage': '1 image also used in other notes will be kept.',
   'delete.sharedImages': '{n} images also used in other notes will be kept.',
+  'delete.usageIncomplete': 'Not all images could be checked: uncertain ones are not offered for deletion.',
   'conflict.title': 'The note changed somewhere else',
   'conflict.message':
     '{name} was modified outside this tab (another device, sync…) while you were editing it. Choose which version to keep; the other one will be discarded.',
