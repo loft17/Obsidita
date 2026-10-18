@@ -11,6 +11,7 @@ import { isImage } from '../attachments';
 import { t as translate, useT } from '../i18n';
 import { notify } from '../toast';
 import { MenuItem, focusMenuItem, onMenuKeyDown } from './menuNav';
+import { useLatest } from '../latestRef';
 
 export default function NoteMenu() {
   const [open, setOpen] = useState(false);
@@ -38,7 +39,7 @@ export default function NoteMenu() {
     if (gitSyncProvider !== null) return;
     syncApi.get().then(
       (cfg) => setGitSyncProvider(cfg.provider),
-      () => setGitSyncProvider('')
+      () => setGitSyncProvider(''),
     );
   }, [gitSyncProvider, setGitSyncProvider]);
 
@@ -85,6 +86,16 @@ export default function NoteMenu() {
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [activeTab]);
+
+  // Antes del return: un hook después cambiaría el orden de los hooks entre renders
+  const folders = useMemo(
+    () =>
+      tree
+        .filter((i) => i.type === 'folder')
+        .map((i) => i.path)
+        .sort((a, b) => a.localeCompare(b)),
+    [tree],
+  );
 
   if (!activeTab) return null;
   const activeIsImage = isImage(activeTab);
@@ -168,15 +179,6 @@ export default function NoteMenu() {
     else notify('exportPdf', translate('note.popupBlocked'), 'error');
   };
 
-  const folders = useMemo(
-    () =>
-      tree
-        .filter((i) => i.type === 'folder')
-        .map((i) => i.path)
-        .sort((a, b) => a.localeCompare(b)),
-    [tree]
-  );
-
   return (
     <div className="dropdown" ref={ref}>
       <button
@@ -248,11 +250,7 @@ export default function NoteMenu() {
       )}
       {searchOpen && <SearchBar onClose={() => setSearchOpen(false)} />}
       {dialog === 'rename' && (
-        <RenameDialog
-          initialName={noteTitle(activeTab)}
-          onSubmit={handleRename}
-          onClose={() => setDialog(null)}
-        />
+        <RenameDialog initialName={noteTitle(activeTab)} onSubmit={handleRename} onClose={() => setDialog(null)} />
       )}
       {dialog === 'move' && (
         <MoveDialog
@@ -282,8 +280,12 @@ export default function NoteMenu() {
 const HL_ALL = 'note-search';
 const HL_CURRENT = 'note-search-current';
 
+// Navegadores sin la API: no hay registro de resaltados ni constructor `Highlight`
+const highlightRegistry = (): HighlightRegistry | undefined =>
+  typeof Highlight === 'undefined' ? undefined : CSS.highlights;
+
 function clearHighlights() {
-  const hl = (CSS as any).highlights;
+  const hl = highlightRegistry();
   hl?.delete(HL_ALL);
   hl?.delete(HL_CURRENT);
 }
@@ -349,9 +351,7 @@ function SearchBar({ onClose }: { onClose: () => void }) {
       if (ranges.length === 0) return;
       const n = (i + ranges.length) % ranges.length;
       setIndex(n);
-      const hl = (CSS as any).highlights;
-      const HighlightCtor = (window as any).Highlight;
-      if (hl && HighlightCtor) hl.set(HL_CURRENT, new HighlightCtor(ranges[n]));
+      highlightRegistry()?.set(HL_CURRENT, new Highlight(ranges[n]));
       ranges[n].startContainer.parentElement?.scrollIntoView({ block: 'center' });
     }
   };
@@ -378,12 +378,11 @@ function SearchBar({ onClose }: { onClose: () => void }) {
     const ranges = findRanges(root, query);
     rangesRef.current = ranges;
     setTotal(ranges.length);
-    const hl = (CSS as any).highlights;
-    const HighlightCtor = (window as any).Highlight;
-    if (hl && HighlightCtor && ranges.length) {
+    const hl = highlightRegistry();
+    if (hl && ranges.length) {
       // `new Highlight(...ranges)` revienta la pila con una nota grande y una búsqueda de una
       // sola letra (miles de coincidencias), así que se añaden una a una
-      const all = new HighlightCtor();
+      const all = new Highlight();
       for (const range of ranges) all.add(range);
       hl.set(HL_ALL, all);
       show(0, false);
@@ -391,18 +390,20 @@ function SearchBar({ onClose }: { onClose: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, editMode]);
 
-  // F3 / Shift+F3 siguen buscando aunque el foco esté en el editor
+  // F3 / Shift+F3 siguen buscando aunque el foco esté en el editor. El listener se registra una
+  // vez y llama al manejador del último render (con el `index` y la búsqueda actuales)
+  const onKeyRef = useLatest((e: KeyboardEvent) => {
+    if (e.key === 'Escape') onClose();
+    else if (e.key === 'F3') {
+      e.preventDefault();
+      show(index + (e.shiftKey ? -1 : 1), true);
+    }
+  });
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      else if (e.key === 'F3') {
-        e.preventDefault();
-        show(index + (e.shiftKey ? -1 : 1), true);
-      }
-    };
+    const onKey = (e: KeyboardEvent) => onKeyRef.current(e);
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  });
+  }, [onKeyRef]);
 
   const step = (delta: number) => show(index + delta, editMode);
 
@@ -423,10 +424,20 @@ function SearchBar({ onClose }: { onClose: () => void }) {
         }}
       />
       <span className="search-count">{query ? `${total ? index + 1 : 0}/${total}` : ''}</span>
-      <button type="button" title={`${t('note.findPrev')} (Shift+F3)`} onMouseDown={(e) => e.preventDefault()} onClick={() => step(-1)}>
+      <button
+        type="button"
+        title={`${t('note.findPrev')} (Shift+F3)`}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => step(-1)}
+      >
         ↑
       </button>
-      <button type="button" title={`${t('note.findNext')} (F3)`} onMouseDown={(e) => e.preventDefault()} onClick={() => step(1)}>
+      <button
+        type="button"
+        title={`${t('note.findNext')} (F3)`}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => step(1)}
+      >
         ↓
       </button>
       <button type="button" title={t('common.close')} onClick={onClose}>

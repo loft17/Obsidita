@@ -7,9 +7,6 @@ import { useT } from '../i18n';
 import { setPendingLine } from '../wikilinks';
 import { IconChevronRight, IconChevronDown, IconClose, IconSearch } from './Icons';
 
-// Segundos exagerados no se anuncian (p. ej. 3600); el aviso pasa a ser genérico
-const MAX_ANNOUNCED_WAIT = 5 * 60;
-
 function Highlighted({ text, start, length }: Pick<SearchMatch, 'text' | 'start' | 'length'>) {
   return (
     <>
@@ -81,7 +78,7 @@ export default function SearchPanel() {
         setError(
           rateLimited
             ? t('search.rateLimited', { s: retryAfter > 0 ? Math.max(1, Math.ceil(retryAfter / 1000)) : 60 })
-            : (err as Error).message
+            : (err as Error).message,
         );
       }
       setWaiting(0);
@@ -99,7 +96,7 @@ export default function SearchPanel() {
   const q = query.trim();
   const summary = `${t(visible.length === 1 ? 'search.file' : 'search.files', { n: visible.length })} · ${t(
     totalMatches === 1 ? 'search.match' : 'search.matches',
-    { n: totalMatches }
+    { n: totalMatches },
   )}`;
   // Los resultados viejos se mantienen visibles aunque el aviso esté debajo
   const showingStale = visible.length > 0 && !!error;
@@ -135,9 +132,11 @@ export default function SearchPanel() {
       {q && (
         <div className="search-summary">
           {loading ? (
-            waiting > 0
-              ? t('search.rateLimitedWait', { s: waiting })
-              : t('search.searching')
+            waiting > 0 ? (
+              t('search.rateLimitedWait', { s: waiting })
+            ) : (
+              t('search.searching')
+            )
           ) : error ? (
             showingStale ? (
               <>
@@ -153,7 +152,10 @@ export default function SearchPanel() {
         </div>
       )}
       <div className="file-explorer search-results">
-        {!loading && q && !error && visible.length === 0 && <div className="dropdown-empty">{t('search.noResults')}</div>}        {visible.map((r) => {
+        {!loading && q && !error && visible.length === 0 && (
+          <div className="dropdown-empty">{t('search.noResults')}</div>
+        )}{' '}
+        {visible.map((r) => {
           const isOpen = !collapsed.has(r.path);
           const hasMatches = r.matches.length > 0;
           return (
@@ -180,9 +182,7 @@ export default function SearchPanel() {
                 )}
                 <span className="tree-label">
                   <HighlightedName name={r.name.replace(/\.md$/i, '')} query={q} />
-                  {r.path.includes('/') && (
-                    <span className="search-result-folder">{parentFolder(r.path)}</span>
-                  )}
+                  {r.path.includes('/') && <span className="search-result-folder">{parentFolder(r.path)}</span>}
                 </span>
                 {r.total > 0 && <span className="search-result-count">{r.total}</span>}
               </div>

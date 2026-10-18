@@ -5,8 +5,13 @@ export const parseHiddenExtensions = (value: string): Set<string> =>
   new Set(
     value
       .split(/[\s,;]+/)
-      .map((e) => e.trim().replace(/^\*?\./, '').toLowerCase())
-      .filter(Boolean)
+      .map((e) =>
+        e
+          .trim()
+          .replace(/^\*?\./, '')
+          .toLowerCase(),
+      )
+      .filter(Boolean),
   );
 
 export const hasHiddenExtension = (path: string, exts: Set<string>) => {

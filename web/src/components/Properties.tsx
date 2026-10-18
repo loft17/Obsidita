@@ -55,7 +55,7 @@ function normalizeKey(raw: string): string {
   return KEY_ALIASES[lower] ?? key;
 }
 
-const toList =(value: unknown): string[] => {
+const toList = (value: unknown): string[] => {
   if (Array.isArray(value)) return value.map(String);
   if (value === null || value === undefined || value === '') return [];
   return [String(value)];
@@ -190,7 +190,9 @@ export default function Properties({ data, editable = false, onChange, onTagClic
   const t = useT();
 
   const entries = Object.entries(data).filter(
-    ([, value]) => editable || (value !== null && value !== undefined && value !== '' && !(Array.isArray(value) && value.length === 0))
+    ([, value]) =>
+      editable ||
+      (value !== null && value !== undefined && value !== '' && !(Array.isArray(value) && value.length === 0)),
   );
 
   if (!editable && entries.length === 0) return null;

@@ -41,9 +41,7 @@ export default function Login({ onComplete, startupError }: Props) {
     <div className="auth-screen">
       <div className="auth-form">
         <h1>{siteTitle || DEFAULT_SITE_TITLE}</h1>
-        <p style={{ fontSize: '12px', color: 'var(--text-faint)', marginBottom: '16px' }}>
-          {t('login.prompt')}
-        </p>
+        <p style={{ fontSize: '12px', color: 'var(--text-faint)', marginBottom: '16px' }}>{t('login.prompt')}</p>
 
         {message && <div className="error">{message}</div>}
 

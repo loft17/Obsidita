@@ -14,7 +14,7 @@ export type NoteFileAction = 'rename' | 'move' | 'delete';
 
 // Estado mínimo para que el manejador de teclas (fuera de React) pueda abrir los diálogos
 export const useNoteOverlayStore = create<{ action: NoteFileAction | null; open: (a: NoteFileAction) => void }>(
-  (set) => ({ action: null, open: (action) => set({ action }) })
+  (set) => ({ action: null, open: (action) => set({ action }) }),
 );
 
 export default function NoteShortcuts() {
@@ -44,31 +44,17 @@ export default function NoteShortcuts() {
   const done = () => close();
 
   // Renombrar y mover son el mismo cambio de ruta en el servidor (reescribe enlaces y pestañas)
-  const rename = (newName: string) =>
-    applyPathChange(activeTab, renamedPath(activeTab, newName)).then(done);
+  const rename = (newName: string) => applyPathChange(activeTab, renamedPath(activeTab, newName)).then(done);
 
   const move = (folder: string) => applyPathChange(activeTab, movedPath(activeTab, folder)).then(done);
 
   const remove = (images: string[]) => deletePath(activeTab, images).then(done);
 
   if (action === 'rename') {
-    return (
-      <RenameDialog
-        initialName={noteTitle(activeTab)}
-        onSubmit={rename}
-        onClose={close}
-      />
-    );
+    return <RenameDialog initialName={noteTitle(activeTab)} onSubmit={rename} onClose={close} />;
   }
   if (action === 'move') {
-    return (
-      <MoveDialog
-        folders={folders}
-        currentFolder={parentFolder(activeTab)}
-        onSubmit={move}
-        onClose={close}
-      />
-    );
+    return <MoveDialog folders={folders} currentFolder={parentFolder(activeTab)} onSubmit={move} onClose={close} />;
   }
   // La pestaña abierta puede ser una carpeta (se selecciona en el árbol): el título y el
   // borrado de sus imágenes deben tratarla como tal y no como una nota

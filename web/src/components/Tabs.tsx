@@ -6,15 +6,7 @@ import { IconClose, IconPlus, IconSidebar } from './Icons';
 import { useIsMobile } from '../mobile';
 import { flushPendingSave } from './Editor';
 
-function CloseUnsavedDialog({
-  path,
-  onClose,
-  onRemove,
-}: {
-  path: string;
-  onClose: () => void;
-  onRemove: () => void;
-}) {
+function CloseUnsavedDialog({ path, onClose, onRemove }: { path: string; onClose: () => void; onRemove: () => void }) {
   const [busy, setBusy] = useState(false);
   const t = useT();
 
@@ -45,17 +37,13 @@ function CloseUnsavedDialog({
           >
             {t('tabs.closeWithoutSaving')}
           </button>
-          <button
-            type="button"
-            onClick={handleSaveAndClose}
-            disabled={busy}
-          >
+          <button type="button" onClick={handleSaveAndClose} disabled={busy}>
             {t('tabs.saveAndClose')}
           </button>
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
 
@@ -118,7 +106,11 @@ export default function Tabs() {
     <div className="tabs">
       {/* Sin la cinta, este es el único botón para volver a abrir la barra lateral */}
       {!showRibbon && !mobile && (
-        <button className="icon-btn tabs-sidebar-toggle" title={`${t('sidebar.toggle')} (Ctrl+B)`} onClick={toggleSidebar}>
+        <button
+          className="icon-btn tabs-sidebar-toggle"
+          title={`${t('sidebar.toggle')} (Ctrl+B)`}
+          onClick={toggleSidebar}
+        >
           <IconSidebar size={16} />
         </button>
       )}

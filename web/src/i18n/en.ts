@@ -281,7 +281,8 @@ export const en: Messages = {
   'settings.fontSize.desc': 'Font size in pixels for the editor and the preview.',
   'settings.resetDefault': 'Restore default',
   'settings.quickFont': 'Quick font size adjustment',
-  'settings.quickFont.desc': 'Adjust the font size with Ctrl + mouse wheel, or with the trackpad pinch-to-zoom gesture.',
+  'settings.quickFont.desc':
+    'Adjust the font size with Ctrl + mouse wheel, or with the trackpad pinch-to-zoom gesture.',
   'settings.tabHeader': 'Show tab title bar',
   'settings.tabHeader.desc': 'Show the header at the top of every tab.',
   'settings.ribbon': 'Show ribbon',
@@ -302,7 +303,7 @@ export const en: Messages = {
   'settings.attachments': 'Default location for new attachments',
   'settings.uploads': 'Allowed upload file types',
   'settings.uploads.desc':
-    "Extensions you can upload by dragging files into the explorer, comma-separated, e.g. {a}. By default, notes (.md) and images.",
+    'Extensions you can upload by dragging files into the explorer, comma-separated, e.g. {a}. By default, notes (.md) and images.',
   'settings.attachments.desc': 'Where newly added attachments are placed.',
   'settings.attachments.root': 'Vault folder',
   'settings.attachments.same': 'Same folder as the current file',
@@ -336,7 +337,8 @@ export const en: Messages = {
   'settings.vaultPath': 'Vault path',
   'settings.vaultPath.desc':
     "Absolute path on the server. It will be created if it doesn't exist. Changing it requires your password; the app reloads after saving.",
-  'settings.download.desc': 'Download your vault as a compressed ZIP file, with notes, attachments and the .obsidian configuration folder.',
+  'settings.download.desc':
+    'Download your vault as a compressed ZIP file, with notes, attachments and the .obsidian configuration folder.',
   'settings.download.git': 'Include .git folder',
   'settings.download.git.desc': 'GitHub sync history. It can be large.',
   'settings.download.trash': 'Include trash',
@@ -346,8 +348,7 @@ export const en: Messages = {
   'settings.hiddenFolders.desc':
     'One pattern per line, e.g. {a} or {b}. Use * as a wildcard. Matching folders (and their contents) are hidden from the tree.',
   'settings.hiddenExtensions': 'Hidden file extensions',
-  'settings.hiddenExtensions.desc':
-    "Comma-separated, e.g. {a}. Files with these extensions are hidden from the tree.",
+  'settings.hiddenExtensions.desc': 'Comma-separated, e.g. {a}. Files with these extensions are hidden from the tree.',
 
   // Sync
   'sync.service': 'Service',

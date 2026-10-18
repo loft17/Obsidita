@@ -49,7 +49,7 @@ export function hasOpenOverlay(): boolean {
 export function canRunFileShortcut(
   action: FileShortcut,
   target: Element | null,
-  opts: { overlayOpen: boolean }
+  opts: { overlayOpen: boolean },
 ): boolean {
   if (opts.overlayOpen) return false;
   const inField = !!target?.closest(TYPING);

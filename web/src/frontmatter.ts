@@ -10,8 +10,7 @@ export interface ParsedNote {
 
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 
-export const isDateString = (value: unknown): value is string =>
-  typeof value === 'string' && DATE_ONLY.test(value);
+export const isDateString = (value: unknown): value is string => typeof value === 'string' && DATE_ONLY.test(value);
 
 const FRONTMATTER = /^---[ \t]*\r?\n(?:([\s\S]*?)\r?\n)?---[ \t]*(?:\r?\n|$)/;
 
@@ -57,7 +56,7 @@ function splitInline(text: string): string[] {
 // Clave del frontmatter: normal (`titulo`) o entrecomillada, que es como se escriben las que
 // YAML no admite tal cual (con ":", empezando por "-"/"#", con espacios alrededor...).
 // Sin esto, una propiedad llamada `#tag` se guardaba como comentario y desaparecía al releer la nota
-const KEY_RE = /^(?:"((?:\\.|[^"\\])*)"|([^\s#\-][^:]*?)):(?:[ \t]+(.*))?$/;
+const KEY_RE = /^(?:"((?:\\.|[^"\\])*)"|([^\s#-][^:]*?)):(?:[ \t]+(.*))?$/;
 
 const unquoteKey = (raw: string) => {
   try {
@@ -131,8 +130,7 @@ function scalar(value: unknown): string {
 
 // Una clave que YAML no admite tal cual se escribe entrecomillada, para que al volver a leer
 // la nota se recupere igual (ver KEY_RE, que sí entiende las claves entrecomilladas)
-const needsQuotedKey = (key: string) =>
-  !key || key !== key.trim() || key.includes(':') || !/^[^\s#\-"]/.test(key);
+const needsQuotedKey = (key: string) => !key || key !== key.trim() || key.includes(':') || !/^[^\s#\-"]/.test(key);
 const keyText = (key: string) => (needsQuotedKey(key) ? JSON.stringify(key) : key);
 
 export function stringifyFrontmatter(data: FrontmatterData): string {

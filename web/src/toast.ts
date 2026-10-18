@@ -34,7 +34,7 @@ export const notify = (
   text: string,
   kind: ToastKind = 'success',
   duration = DURATION[kind],
-  top = false
+  top = false,
 ) => {
   clearTimeout(timers.get(key));
   timers.delete(key);
@@ -46,5 +46,9 @@ export const notify = (
     toasts[i] = toast;
     return { toasts };
   });
-  if (duration) timers.set(key, window.setTimeout(() => dismissToast(key), duration));
+  if (duration)
+    timers.set(
+      key,
+      window.setTimeout(() => dismissToast(key), duration),
+    );
 };

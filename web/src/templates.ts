@@ -69,8 +69,10 @@ const TOKENS: Record<string, (d: Date) => string> = {
 
 // Los tokens más largos primero; el texto entre corchetes se copia tal cual: [Semana] WW
 const TOKEN_RE = new RegExp(
-  `\\[([^\\]]*)\\]|${Object.keys(TOKENS).sort((a, b) => b.length - a.length).join('|')}`,
-  'g'
+  `\\[([^\\]]*)\\]|${Object.keys(TOKENS)
+    .sort((a, b) => b.length - a.length)
+    .join('|')}`,
+  'g',
 );
 
 // Formatea una fecha con la sintaxis de moment.js (la que usa Obsidian)
@@ -82,7 +84,8 @@ export const applyTemplate = (text: string, title: string, config: NotesConfig['
   text.replace(/{{\s*(title|date|time)\s*(?::([^}]*))?}}/gi, (_, name: string, format?: string) => {
     const key = name.toLowerCase();
     if (key === 'title') return title;
-    const fallback = key === 'date' ? config.dateFormat || DEFAULT_DATE_FORMAT : config.timeFormat || DEFAULT_TIME_FORMAT;
+    const fallback =
+      key === 'date' ? config.dateFormat || DEFAULT_DATE_FORMAT : config.timeFormat || DEFAULT_TIME_FORMAT;
     return formatDate(date, format?.trim() || fallback);
   });
 
@@ -130,5 +133,7 @@ export const templateFiles = (tree: { type: string; path: string; name: string }
   const base = folder.replace(/^\/+|\/+$/g, '');
   if (!base) return [];
   const prefix = base.toLowerCase() + '/';
-  return tree.filter((item) => item.type === 'file' && /\.md$/i.test(item.path) && item.path.toLowerCase().startsWith(prefix));
+  return tree.filter(
+    (item) => item.type === 'file' && /\.md$/i.test(item.path) && item.path.toLowerCase().startsWith(prefix),
+  );
 };

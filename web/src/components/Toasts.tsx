@@ -25,8 +25,14 @@ export default function Toasts() {
 
   return (
     <>
-      {renderGroup(toasts.filter((x) => x.top), 'toasts toasts-top')}
-      {renderGroup(toasts.filter((x) => !x.top), 'toasts')}
+      {renderGroup(
+        toasts.filter((x) => x.top),
+        'toasts toasts-top',
+      )}
+      {renderGroup(
+        toasts.filter((x) => !x.top),
+        'toasts',
+      )}
     </>
   );
 }

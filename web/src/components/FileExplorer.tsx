@@ -33,16 +33,10 @@ interface DragHandlers {
   onDragEnd: () => void;
 }
 
-const displayName = (item: TreeItem) =>
-  item.type === 'file' ? item.name.replace(/\.md$/i, '') : item.name;
+const displayName = (item: TreeItem) => (item.type === 'file' ? item.name.replace(/\.md$/i, '') : item.name);
 
 // Aplana el árbol en lista 1D para virtualización manual
-function flattenTree(
-  items: TreeItem[],
-  grouped: Grouped,
-  expandedFolders: Set<string>,
-  level: number = 0
-): FlatItem[] {
+function flattenTree(items: TreeItem[], grouped: Grouped, expandedFolders: Set<string>, level: number = 0): FlatItem[] {
   const result: FlatItem[] = [];
   for (const item of items) {
     const hasChildren = item.type === 'folder' && (grouped.get(item.path)?.length ?? 0) > 0;
@@ -163,7 +157,7 @@ export default function FileExplorer() {
   const setActiveTab = useStore((s) => s.setActiveTab);
   // keyboard: abierto con el teclado (tecla de menú o Shift+F10), el foco va al primer elemento
   const [menu, setMenu] = useState<{ x: number; y: number; path: string; isFolder: boolean; keyboard: boolean } | null>(
-    null
+    null,
   );
   // Elemento del árbol con el foco (o el último que lo tuvo): es la parada de Tab del árbol
   const [focusedPath, setFocusedPath] = useState<string | null>(null);
@@ -283,8 +277,7 @@ export default function FileExplorer() {
   const handleMove = (oldPath: string, folder: string) =>
     applyPathChange(oldPath, movedPath(oldPath, folder)).then(closeDialog);
 
-  const handleDelete = (path: string, images: string[]) =>
-    deletePath(path, images).finally(closeDialog);
+  const handleDelete = (path: string, images: string[]) => deletePath(path, images).finally(closeDialog);
 
   // Arrastrar y soltar. La ruta arrastrada se guarda aquí porque durante el arrastre
   // el navegador no deja leer los datos del dataTransfer
@@ -346,7 +339,10 @@ export default function FileExplorer() {
       if (hoveredFolder !== expandTimer.current?.folder) {
         clearExpandTimer();
         if (hoveredFolder && !useStore.getState().expandedFolders.has(hoveredFolder)) {
-          expandTimer.current = { folder: hoveredFolder, timer: window.setTimeout(() => expandFolder(hoveredFolder), 700) };
+          expandTimer.current = {
+            folder: hoveredFolder,
+            timer: window.setTimeout(() => expandFolder(hoveredFolder), 700),
+          };
         }
       }
       // Los archivos del sistema se pueden soltar en cualquier carpeta: se copian
@@ -410,7 +406,9 @@ export default function FileExplorer() {
     else menuRef.current?.focus();
   }, [menu]);
 
-  // Sin dependencias: el elemento pendiente aparece cuando el scroll actualiza el rango visible
+  // Sin dependencias: el elemento pendiente aparece cuando el scroll actualiza el rango visible.
+  // Sin nada pendiente solo compara una ref, así que correr tras cada render no cuesta nada
+  // eslint-disable-next-line no-restricted-syntax
   useEffect(() => {
     if (pendingFocus.current && focusTreeItem(pendingFocus.current)) pendingFocus.current = null;
   });
@@ -426,7 +424,7 @@ export default function FileExplorer() {
         ? tree.filter(
             (item) =>
               !isHiddenPath(item.path, item.type === 'folder', matchers) &&
-              !(item.type !== 'folder' && exts.size && hasHiddenExtension(item.path, exts))
+              !(item.type !== 'folder' && exts.size && hasHiddenExtension(item.path, exts)),
           )
         : tree;
     return buildTree(visibleTree);
@@ -463,7 +461,9 @@ export default function FileExplorer() {
       return;
     }
     // En el árbol, los atajos de archivo actúan sobre el elemento enfocado y no sobre la nota abierta
-    const action = fileShortcutFor(e) ?? (e.key === 'Delete' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey ? 'delete' : null);
+    const action =
+      fileShortcutFor(e) ??
+      (e.key === 'Delete' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey ? 'delete' : null);
     if (action) {
       e.preventDefault();
       e.stopPropagation();
@@ -516,10 +516,18 @@ export default function FileExplorer() {
   return (
     <>
       <div className="sidebar-toolbar">
-        <button className="icon-btn" title={t('file.createNote')} onClick={() => setDialog({ kind: 'new-note', path: '' })}>
+        <button
+          className="icon-btn"
+          title={t('file.createNote')}
+          onClick={() => setDialog({ kind: 'new-note', path: '' })}
+        >
           <IconFileNew size={16} />
         </button>
-        <button className="icon-btn" title={t('file.createFolder')} onClick={() => setDialog({ kind: 'new-folder', path: '' })}>
+        <button
+          className="icon-btn"
+          title={t('file.createFolder')}
+          onClick={() => setDialog({ kind: 'new-folder', path: '' })}
+        >
           <IconFolderNew size={16} />
         </button>
         <button className="icon-btn" title={t('file.collapseAll')} onClick={collapseAll}>

@@ -35,7 +35,7 @@ function splitRow(line: string) {
 function parseTable(source: string): TableData {
   const lines = source.split('\n');
   const aligns: Align[] = splitRow(lines[1] ?? '').map((d) =>
-    d.startsWith(':') && d.endsWith(':') ? 'center' : d.endsWith(':') ? 'right' : d.startsWith(':') ? 'left' : null
+    d.startsWith(':') && d.endsWith(':') ? 'center' : d.endsWith(':') ? 'right' : d.startsWith(':') ? 'left' : null,
   );
   const rows = [lines[0], ...lines.slice(2)].map(splitRow);
   const cols = Math.max(aligns.length, ...rows.map((r) => r.length));
@@ -101,7 +101,11 @@ function commit(view: EditorView, wrap: TableDom) {
 
 function addRow(view: EditorView, wrap: TableDom, focusCol = 0) {
   const tbody = tableOf(wrap).tBodies[0];
-  const tr = makeRow(wrap.cmTable.aligns.map(() => ''), false, wrap.cmTable.aligns);
+  const tr = makeRow(
+    wrap.cmTable.aligns.map(() => ''),
+    false,
+    wrap.cmTable.aligns,
+  );
   tbody.appendChild(tr);
   commit(view, wrap);
   tr.querySelectorAll('input')[focusCol]?.focus();
@@ -236,7 +240,7 @@ class TableWidget extends WidgetType {
           input.value = value;
           (input.parentElement as HTMLElement).dataset.value = value;
         }
-      })
+      }),
     );
     return true;
   }
@@ -271,7 +275,8 @@ function buildTables(state: EditorState): DecorationSet {
 export const liveTables = StateField.define<DecorationSet>({
   create: buildTables,
   update(decos, tr) {
-    if (tr.docChanged || tr.selection || syntaxTree(tr.startState) !== syntaxTree(tr.state)) return buildTables(tr.state);
+    if (tr.docChanged || tr.selection || syntaxTree(tr.startState) !== syntaxTree(tr.state))
+      return buildTables(tr.state);
     return decos;
   },
   provide: (f) => EditorView.decorations.from(f),

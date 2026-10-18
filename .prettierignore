@@ -1,0 +1,5 @@
+node_modules
+web/dist
+web/src/fonts
+data
+package-lock.json

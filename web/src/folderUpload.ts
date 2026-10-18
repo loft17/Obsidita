@@ -33,14 +33,20 @@ const readAllEntries = async (dir: FileSystemDirectoryEntry) => {
 
 const entryFile = (entry: FileSystemFileEntry) => new Promise<File>((resolve, reject) => entry.file(resolve, reject));
 
-async function collect(entry: FileSystemEntry, dir: string, out: PendingFile[], isUploadable: (name: string) => boolean) {
+async function collect(
+  entry: FileSystemEntry,
+  dir: string,
+  out: PendingFile[],
+  isUploadable: (name: string) => boolean,
+) {
   // Ocultos (.git, .obsidian, .DS_Store...) no se suben
   if (entry.name.startsWith('.')) return;
   if (entry.isFile) {
     if (isUploadable(entry.name)) out.push({ dir, file: await entryFile(entry as FileSystemFileEntry) });
   } else if (entry.isDirectory) {
     const sub = dir ? `${dir}/${entry.name}` : entry.name;
-    for (const child of await readAllEntries(entry as FileSystemDirectoryEntry)) await collect(child, sub, out, isUploadable);
+    for (const child of await readAllEntries(entry as FileSystemDirectoryEntry))
+      await collect(child, sub, out, isUploadable);
   }
 }
 

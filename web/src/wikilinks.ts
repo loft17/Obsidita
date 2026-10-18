@@ -29,7 +29,10 @@ const lower = (s: string) => s.toLowerCase();
 // Ruta del archivo (nota o adjunto) enlazado desde `notePath`, o null si no existe.
 // La lógica es la misma que usa el servidor al actualizar enlaces: ver shared/wikilinks.js
 export function resolveWikilink(target: string, notePath: string): string | null {
-  const paths = useStore.getState().tree.filter((item) => item.type !== 'folder').map((item) => item.path);
+  const paths = useStore
+    .getState()
+    .tree.filter((item) => item.type !== 'folder')
+    .map((item) => item.path);
   return resolveInVault(target, notePath, paths);
 }
 
@@ -74,7 +77,7 @@ export function setPendingLine(path: string, line: number) {
 export function scrollToHeading(container: HTMLElement, heading: string) {
   const wanted = lower(heading.trim());
   const el = [...container.querySelectorAll<HTMLElement>('h1, h2, h3, h4, h5, h6')].find(
-    (h) => lower(h.textContent?.trim() ?? '') === wanted
+    (h) => lower(h.textContent?.trim() ?? '') === wanted,
   );
   el?.scrollIntoView({ block: 'start' });
 }

@@ -11,8 +11,7 @@ export const fileName = (path: string) => path.split('/').pop() || path;
 export const noteTitle = (path: string) => fileName(path).replace(/\.md$/i, '');
 
 // Carpeta que contiene la ruta ('' si está en la raíz)
-export const parentFolder = (path: string) =>
-  path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
+export const parentFolder = (path: string) => (path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '');
 
 // `name` dentro de `folder` ('' es la raíz)
 export const joinPath = (folder: string, name: string) => `${folder ? folder + '/' : ''}${name}`;
@@ -27,3 +26,7 @@ export const renamedPath = (oldPath: string, newName: string, isFolder?: boolean
 
 // Mover a otra carpeta conservando el nombre
 export const movedPath = (oldPath: string, folder: string) => joinPath(folder, fileName(oldPath));
+
+// Solo el markdown se edita como texto: cualquier otro archivo se leería en UTF-8 y al
+// autoguardarlo se reescribiría corrompido (un PDF, un ZIP...)
+export const isNote = (path: string) => /\.md$/i.test(path);

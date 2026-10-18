@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { useStore } from '../store';
 import { applyPathChange } from './fileActions';
 import { noteTitle, renamedPath } from '../paths';
 import { useT } from '../i18n';

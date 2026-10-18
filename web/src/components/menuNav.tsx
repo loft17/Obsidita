@@ -42,9 +42,23 @@ export function onMenuKeyDown(e: KeyboardEvent<HTMLElement>, onTab: (e: Keyboard
 }
 
 // Elemento de menú: botón fuera del orden de Tab, se alcanza con las flechas
-export function MenuItem({ danger, onClick, children }: { danger?: boolean; onClick: () => void; children: ReactNode }) {
+export function MenuItem({
+  danger,
+  onClick,
+  children,
+}: {
+  danger?: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
   return (
-    <button type="button" role="menuitem" tabIndex={-1} className={`dropdown-item ${danger ? 'danger' : ''}`} onClick={onClick}>
+    <button
+      type="button"
+      role="menuitem"
+      tabIndex={-1}
+      className={`dropdown-item ${danger ? 'danger' : ''}`}
+      onClick={onClick}
+    >
       {children}
     </button>
   );

@@ -8,7 +8,17 @@ import { QuickOpenDialog } from './FileDialogs';
 import { t, useT } from '../i18n';
 import { notify } from '../toast';
 import { noteTitle } from '../paths';
-import { IconSidebar, IconFolderOpen, IconSearch, IconTag, IconCalendarDays, IconTemplate, IconTrash, IconSettings, IconLogout } from './Icons';
+import {
+  IconSidebar,
+  IconFolderOpen,
+  IconSearch,
+  IconTag,
+  IconCalendarDays,
+  IconTemplate,
+  IconTrash,
+  IconSettings,
+  IconLogout,
+} from './Icons';
 
 export const logout = async () => {
   await authApi.logout();
@@ -77,7 +87,13 @@ export default function Ribbon() {
   return (
     <div className="ribbon">
       <div className="ribbon-group">
-        <button type="button" className="ribbon-item" title={t('sidebar.toggle')} aria-label={t('sidebar.toggle')} onClick={toggleSidebar}>
+        <button
+          type="button"
+          className="ribbon-item"
+          title={t('sidebar.toggle')}
+          aria-label={t('sidebar.toggle')}
+          onClick={toggleSidebar}
+        >
           <IconSidebar />
         </button>
         <button
@@ -120,19 +136,43 @@ export default function Ribbon() {
         >
           <IconTrash />
         </button>
-        <button type="button" className="ribbon-item" title={t('daily.open')} aria-label={t('daily.open')} onClick={openToday}>
+        <button
+          type="button"
+          className="ribbon-item"
+          title={t('daily.open')}
+          aria-label={t('daily.open')}
+          onClick={openToday}
+        >
           <IconCalendarDays />
         </button>
-        <button type="button" className="ribbon-item" title={t('templates.insert')} aria-label={t('templates.insert')} onClick={templates.open}>
+        <button
+          type="button"
+          className="ribbon-item"
+          title={t('templates.insert')}
+          aria-label={t('templates.insert')}
+          onClick={templates.open}
+        >
           <IconTemplate />
         </button>
       </div>
 
       <div className="ribbon-group bottom">
-        <button type="button" className="ribbon-item" title={t('settings.open')} aria-label={t('settings.open')} onClick={() => setSettingsOpen(true)}>
+        <button
+          type="button"
+          className="ribbon-item"
+          title={t('settings.open')}
+          aria-label={t('settings.open')}
+          onClick={() => setSettingsOpen(true)}
+        >
           <IconSettings />
         </button>
-        <button type="button" className="ribbon-item" title={t('auth.logout')} aria-label={t('auth.logout')} onClick={logout}>
+        <button
+          type="button"
+          className="ribbon-item"
+          title={t('auth.logout')}
+          aria-label={t('auth.logout')}
+          onClick={logout}
+        >
           <IconLogout />
         </button>
       </div>

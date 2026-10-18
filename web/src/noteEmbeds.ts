@@ -33,7 +33,7 @@ function load(path: string) {
       // Sin conexión: se mantiene lo que ya se mostraba
       cache.set(path, { content: prev?.content ?? null, stale: false });
       if (!prev) notify();
-    }
+    },
   );
 }
 
@@ -85,7 +85,10 @@ export function embedSection(body: string, heading: string): string | null {
     if (at < 0) return null;
     let start = at;
     while (start > 0 && lines[start - 1].trim() && !HEADING.test(lines[start - 1])) start--;
-    return lines.slice(start, at + 1).join('\n').replace(marker, '');
+    return lines
+      .slice(start, at + 1)
+      .join('\n')
+      .replace(marker, '');
   }
 
   const wanted = heading.trim().toLowerCase();

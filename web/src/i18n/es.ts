@@ -261,7 +261,8 @@ export const es = {
   'settings.theme.system': 'Según el sistema',
   'settings.site': 'Web',
   'settings.siteTitle': 'Título de la web',
-  'settings.siteTitle.desc': 'Nombre que aparece en la pestaña del navegador y en la pantalla de inicio de sesión. Si lo dejas vacío se usa «{title}».',
+  'settings.siteTitle.desc':
+    'Nombre que aparece en la pestaña del navegador y en la pantalla de inicio de sesión. Si lo dejas vacío se usa «{title}».',
   'settings.font': 'Fuente',
   'settings.font.default': 'Predeterminada',
   'settings.font.custom': 'Otra fuente instalada…',
@@ -293,7 +294,8 @@ export const es = {
   'settings.defaultMode.edit': 'Modo edición',
   'settings.display': 'Pantalla',
   'settings.inlineTitle': 'Título en línea',
-  'settings.inlineTitle.desc': 'Mostrar el nombre de archivo como un título editable en línea con el contenido del archivo.',
+  'settings.inlineTitle.desc':
+    'Mostrar el nombre de archivo como un título editable en línea con el contenido del archivo.',
   'settings.readableLine': 'Longitud de línea legible',
   'settings.readableLine.desc':
     'Limita la longitud de línea máxima. Muestra menos contenido en pantalla, pero los párrafos largos son más legibles.',
@@ -302,7 +304,7 @@ export const es = {
   'settings.attachments': 'Ubicación predeterminada para los archivos adjuntos nuevos',
   'settings.uploads': 'Tipos de archivo permitidos al subir',
   'settings.uploads.desc':
-    "Extensiones que se pueden subir arrastrando archivos al explorador, separadas por comas, p. ej. {a}. Por defecto, notas (.md) e imágenes.",
+    'Extensiones que se pueden subir arrastrando archivos al explorador, separadas por comas, p. ej. {a}. Por defecto, notas (.md) e imágenes.',
   'settings.attachments.desc': 'Dónde se ubican los archivos adjuntos recién agregados.',
   'settings.attachments.root': 'Carpeta de la bóveda',
   'settings.attachments.same': 'Misma carpeta donde está el archivo',
@@ -337,7 +339,8 @@ export const es = {
   'settings.vaultPath': 'Ruta de la bóveda',
   'settings.vaultPath.desc':
     'Ruta absoluta en el servidor. Se creará si no existe. Para cambiarla hace falta la contraseña; al guardar se recargará la aplicación.',
-  'settings.download.desc': 'Descarga tu bóveda como un archivo ZIP comprimido, con las notas, los adjuntos y la carpeta de configuración .obsidian.',
+  'settings.download.desc':
+    'Descarga tu bóveda como un archivo ZIP comprimido, con las notas, los adjuntos y la carpeta de configuración .obsidian.',
   'settings.download.git': 'Incluir carpeta .git',
   'settings.download.git.desc': 'Historial de la sincronización con GitHub. Puede ocupar mucho.',
   'settings.download.trash': 'Incluir papelera',
@@ -348,7 +351,7 @@ export const es = {
     'Un patrón por línea, p. ej. {a} o {b}. Usa * como comodín. Las carpetas que coincidan (y su contenido) no se mostrarán en el árbol.',
   'settings.hiddenExtensions': 'Ocultar extensiones de archivo',
   'settings.hiddenExtensions.desc':
-    "Separadas por comas, p. ej. {a}. Los archivos con estas extensiones no se mostrarán en el árbol.",
+    'Separadas por comas, p. ej. {a}. Los archivos con estas extensiones no se mostrarán en el árbol.',
 
   // Sincronización
   'sync.service': 'Servicio',
@@ -384,8 +387,7 @@ export const es = {
 
   // Seguridad
   'security.changePassword': 'Cambiar la contraseña',
-  'security.changePassword.desc':
-    'Mínimo {n} caracteres. Se cerrarán las sesiones abiertas en otros dispositivos.',
+  'security.changePassword.desc': 'Mínimo {n} caracteres. Se cerrarán las sesiones abiertas en otros dispositivos.',
   'security.change': 'Cambiar',
   'security.changed': 'Contraseña cambiada. Se han cerrado las demás sesiones.',
   'security.revoke': 'Cerrar todas las sesiones',

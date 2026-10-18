@@ -2,7 +2,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore, hiddenMatchers, isHiddenPath } from '../store';
 import { searchApi, type VaultTag } from '../api';
 import { useT } from '../i18n';
-import { IconChevronDown, IconChevronRight, IconClose, IconSearch, IconSortCount, IconSortName, IconSync } from './Icons';
+import {
+  IconChevronDown,
+  IconChevronRight,
+  IconClose,
+  IconSearch,
+  IconSortCount,
+  IconSortName,
+  IconSync,
+} from './Icons';
 
 // Nodo del árbol de etiquetas: proyecto → proyecto/web → proyecto/web/front
 interface TagNode {
@@ -82,7 +90,15 @@ function TagTreeNode({ node, depth, sort, filter, expanded, onToggle }: NodeProp
       </div>
       {isOpen &&
         children.map((c) => (
-          <TagTreeNode key={c.tag} node={c} depth={depth + 1} sort={sort} filter={filter} expanded={expanded} onToggle={onToggle} />
+          <TagTreeNode
+            key={c.tag}
+            node={c}
+            depth={depth + 1}
+            sort={sort}
+            filter={filter}
+            expanded={expanded}
+            onToggle={onToggle}
+          />
         ))}
     </>
   );
@@ -130,7 +146,7 @@ export default function TagsPanel() {
           ? t('search.rateLimited', {
               s: Math.max(1, Math.ceil(((err as { retryAfterMs?: number }).retryAfterMs ?? 0) / 1000)),
             })
-          : (err as Error).message
+          : (err as Error).message,
       );
       if (!rateLimited) setTags(null);
     } finally {
@@ -138,9 +154,11 @@ export default function TagsPanel() {
     }
   };
 
+  // Solo al montar: luego se recarga con el botón
   useEffect(() => {
     load();
     return () => abortRef.current?.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleSort = () => {

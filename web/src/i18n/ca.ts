@@ -27,7 +27,7 @@ export const ca: Messages = {
   'setup.title': 'Configura Obsidita',
   'setup.subtitle': 'Primer inici - defineix la teva caixa forta i contrasenya',
   'setup.token': 'Token de configuració',
-  'setup.tokenHint': "Es mostra a la consola del servidor en arrencar.",
+  'setup.tokenHint': 'Es mostra a la consola del servidor en arrencar.',
   'setup.tokenRequired': 'El token de configuració és obligatori',
   'setup.vaultPath': 'Ruta de la caixa forta',
   'setup.vaultHint': 'Ruta absoluta al servidor. Es crearà si no existeix.',
@@ -65,7 +65,7 @@ export const ca: Messages = {
   'tabs.saveAndClose': 'Desa i tanca',
   'daily.open': "Obre la nota diària d'avui",
   'daily.openError': "No s'ha pogut obrir la nota diària: {error}",
-  'daily.templateMissing': "No s'ha trobat la plantilla \"{template}\": la nota s'ha creat buida.",
+  'daily.templateMissing': 'No s\'ha trobat la plantilla "{template}": la nota s\'ha creat buida.',
   'templates.insert': 'Insereix una plantilla',
   'templates.search': 'Cerca una plantilla...',
   'templates.none': 'No hi ha plantilles a la carpeta "{folder}"',
@@ -83,7 +83,7 @@ export const ca: Messages = {
   'file.noteName': 'Nom de la nota',
   'file.folderName': 'Nom de la carpeta',
   'file.openInNewTab': 'Obre en una pestanya nova',
-  'file.makeCopy': "Fes-ne una còpia",
+  'file.makeCopy': 'Fes-ne una còpia',
   'file.downloadFolder': 'Descarrega la carpeta com a ZIP',
   'file.moveFile': 'Mou el fitxer a...',
   'file.moveFolder': 'Mou la carpeta a...',
@@ -117,7 +117,7 @@ export const ca: Messages = {
   'delete.sharedImage': 'Es conserva 1 imatge que també es fa servir en altres notes.',
   'delete.sharedImages': 'Es conserven {n} imatges que també es fan servir en altres notes.',
   'delete.usageIncomplete': 'No s’han pogut comprovar totes les imatges: les dubtoses no s’ofereixen per esborrar.',
-  'conflict.title': "La nota ha canviat en un altre lloc",
+  'conflict.title': 'La nota ha canviat en un altre lloc',
   'conflict.message':
     "{name} s'ha modificat fora d'aquesta pestanya (un altre dispositiu, la sincronització…) mentre l'editaves. Tria quina versió vols conservar; l'altra es descartarà.",
   'conflict.mine': 'La teva versió',
@@ -125,7 +125,8 @@ export const ca: Messages = {
   'conflict.useTheirs': 'Fes servir la del servidor',
   'conflict.keepMine': 'Conserva la meva',
   'history.title': 'Historial de versions: {name}',
-  'history.empty': 'Aquesta nota encara no té versions desades a git. Apareixeran després de la propera sincronització.',
+  'history.empty':
+    'Aquesta nota encara no té versions desades a git. Apareixeran després de la propera sincronització.',
   'history.latest': 'última',
   'history.changes': 'Canvis',
   'history.content': 'Contingut',
@@ -144,7 +145,8 @@ export const ca: Messages = {
   'note.exitRawMode': "Torna a l'editor",
   'note.find': 'Cerca',
   'note.history': 'Historial de versions',
-  'note.popupBlocked': 'El navegador ha bloquejat la finestra emergent. Permet les finestres emergents per exportar a PDF.',
+  'note.popupBlocked':
+    'El navegador ha bloquejat la finestra emergent. Permet les finestres emergents per exportar a PDF.',
   'note.findPlaceholder': 'Cerca al document...',
   'note.findPrev': 'Anterior',
   'note.findNext': 'Següent',
@@ -159,7 +161,7 @@ export const ca: Messages = {
   'toast.syncError': 'Error en sincronitzar amb GitHub: {error}',
   'toast.updateAvailable': 'Nova versió {version} disponible. Més informació a Preferències → Quant a',
   'embed.loadError': "No s'ha pogut carregar la nota",
-  'embed.headingNotFound': "No es troba «{heading}» a la nota",
+  'embed.headingNotFound': 'No es troba «{heading}» a la nota',
   'mermaid.error': 'Error al diagrama',
   'image.loadError': "No s'ha pogut carregar la imatge",
   'image.fitWindow': 'Fes clic per ajustar a la finestra',
@@ -262,7 +264,8 @@ export const ca: Messages = {
   'settings.theme.system': 'Segons el sistema',
   'settings.site': 'Web',
   'settings.siteTitle': 'Títol de la web',
-  'settings.siteTitle.desc': 'Nom que apareix a la pestanya del navegador i a la pantalla d’inici de sessió. Si el deixes buit s’utilitza «{title}».',
+  'settings.siteTitle.desc':
+    'Nom que apareix a la pestanya del navegador i a la pantalla d’inici de sessió. Si el deixes buit s’utilitza «{title}».',
   'settings.font': 'Lletra',
   'settings.font.default': 'Predeterminada',
   'settings.font.custom': 'Una altra lletra instal·lada…',
@@ -308,7 +311,7 @@ export const ca: Messages = {
   'settings.attachments.root': 'Carpeta de la caixa forta',
   'settings.attachments.same': 'La mateixa carpeta on és el fitxer',
   'settings.attachments.sub': 'En una subcarpeta de la carpeta actual',
-  'settings.attachments.folder': "A la carpeta especificada a sota",
+  'settings.attachments.folder': 'A la carpeta especificada a sota',
   'settings.attachments.subName': 'Nom de la subcarpeta',
   'settings.attachments.folderPath': 'Ruta de la carpeta de fitxers adjunts',
   'settings.attachments.subDesc':
@@ -338,11 +341,12 @@ export const ca: Messages = {
   'settings.vaultPath': 'Ruta de la caixa forta',
   'settings.vaultPath.desc':
     "Ruta absoluta al servidor. Es crearà si no existeix. Per canviar-la cal la contrasenya; en desar es tornarà a carregar l'aplicació.",
-  'settings.download.desc': "Descarrega la teva caixa forta com a fitxer ZIP comprimit, amb les notes, els adjunts i la carpeta de configuració .obsidian.",
+  'settings.download.desc':
+    'Descarrega la teva caixa forta com a fitxer ZIP comprimit, amb les notes, els adjunts i la carpeta de configuració .obsidian.',
   'settings.download.git': 'Inclou la carpeta .git',
-  'settings.download.git.desc': "Historial de la sincronització amb GitHub. Pot ocupar molt.",
+  'settings.download.git.desc': 'Historial de la sincronització amb GitHub. Pot ocupar molt.',
   'settings.download.trash': 'Inclou la paperera',
-  'settings.download.trash.desc': "Afegeix al ZIP els elements esborrats de la carpeta .trash.",
+  'settings.download.trash.desc': 'Afegeix al ZIP els elements esborrats de la carpeta .trash.',
   'settings.hiddenFolders': 'Amaga carpetes',
   'settings.hiddenFolders.example': '_recursos',
   'settings.hiddenFolders.desc':
@@ -371,10 +375,10 @@ export const ca: Messages = {
   'sync.token': "Token d'accés personal",
   'sync.token.desc':
     "Crea'l a GitHub → Settings → Developer settings → {tokens}, només per a aquest repositori i amb el permís {permission}.",
-  'sync.token.saved': "Hi ha un token desat; escriu-ne un altre només per canviar-lo.",
+  'sync.token.saved': 'Hi ha un token desat; escriu-ne un altre només per canviar-lo.',
   'sync.token.savedShort': 'desat',
   'sync.howItWorks':
-    "Cada sincronització fa commit dels canvis, integra els del repositori (si una nota ha canviat als dos costats, es queda la versió del servidor) i puja el resultat. La paperera {trash} no es puja.",
+    'Cada sincronització fa commit dels canvis, integra els del repositori (si una nota ha canviat als dos costats, es queda la versió del servidor) i puja el resultat. La paperera {trash} no es puja.',
   'sync.forgetToken': 'Oblida el token',
   'sync.status': 'Estat',
   'sync.running': 'Sincronitzant…',
@@ -385,13 +389,12 @@ export const ca: Messages = {
 
   // Seguretat
   'security.changePassword': 'Canvia la contrasenya',
-  'security.changePassword.desc':
-    "Mínim {n} caràcters. Es tancaran les sessions obertes en altres dispositius.",
+  'security.changePassword.desc': 'Mínim {n} caràcters. Es tancaran les sessions obertes en altres dispositius.',
   'security.change': 'Canvia',
   'security.changed': "Contrasenya canviada. S'han tancat les altres sessions.",
   'security.revoke': 'Tanca totes les sessions',
   'security.revoke.desc':
-    "Tanca la sessió a tots els dispositius, també en aquest. Les sessions caduquen soles als {max} dies o després de {idle} dies sense fer-se servir.",
+    'Tanca la sessió a tots els dispositius, també en aquest. Les sessions caduquen soles als {max} dies o després de {idle} dies sense fer-se servir.',
   'security.revokeAll': 'Tanca-les totes',
 
   // Dreceres
@@ -427,7 +430,7 @@ export const ca: Messages = {
   'about.updateUnknown': "No s'ha pogut comprovar si hi ha una versió nova",
   'about.updateDisabled': 'Comprovació de versions desactivada (UPDATE_CHECK)',
   'about.developedBy': 'Desenvolupat per',
-  'about.tagline': "Fet amb carinyo (i una ajudeta de la IA) per a tots els Obsidian lovers 💜",
+  'about.tagline': 'Fet amb carinyo (i una ajudeta de la IA) per a tots els Obsidian lovers 💜',
   'limits.title': 'Límits del servidor',
   'limits.desc': "Es canvien amb variables d'entorn al servidor (vegeu {file}) i cal reiniciar-lo.",
   'limits.maxNote': "Mida màxima d'una nota",

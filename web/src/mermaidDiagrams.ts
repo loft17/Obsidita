@@ -35,7 +35,7 @@ const MODULES = {
 const block = (
   id: string,
   detector: RegExp | ((txt: string, config?: DiagramConfig) => boolean),
-  module: keyof typeof MODULES
+  module: keyof typeof MODULES,
 ) => ({
   id,
   detector: (txt: string, config?: DiagramConfig) =>

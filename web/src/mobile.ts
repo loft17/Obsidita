@@ -38,7 +38,7 @@ export function useIsMobile() {
   return useSyncExternalStore(
     subscribe,
     () => mql?.matches ?? false,
-    () => false
+    () => false,
   );
 }
 

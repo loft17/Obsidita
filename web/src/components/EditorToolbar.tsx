@@ -61,7 +61,8 @@ function toggleInline(ta: TA, marker: string, placeholder: string) {
   const left = runLength(v, ch, s - 1, -1);
   const right = runLength(v, ch, e, 1);
   // Con '*' hay que distinguir cursiva de negrita: ***x*** tiene ambas
-  const active = marker.length === 1 ? left % 2 === 1 && right % 2 === 1 : left >= marker.length && right >= marker.length;
+  const active =
+    marker.length === 1 ? left % 2 === 1 && right % 2 === 1 : left >= marker.length && right >= marker.length;
   const n = marker.length;
   if (active) {
     replaceRange(ta, s - n, e + n, v.slice(s, e), s - n, e - n);
@@ -198,7 +199,7 @@ function clearFormat(ta: TA) {
           .replace(/<\/?u>/g, '')
           .replace(/(\*\*|~~|==|\*|`)/g, '')
       );
-    })
+    }),
   );
 }
 
@@ -212,7 +213,14 @@ const keepFocus = (e: React.MouseEvent) => e.preventDefault();
 
 function ToolButton({ title, onClick, children }: { title: string; onClick: () => void; children: ReactNode }) {
   return (
-    <button type="button" className="toolbar-btn" title={title} aria-label={title} onMouseDown={keepFocus} onClick={onClick}>
+    <button
+      type="button"
+      className="toolbar-btn"
+      title={title}
+      aria-label={title}
+      onMouseDown={keepFocus}
+      onClick={onClick}
+    >
       {children}
     </button>
   );
@@ -221,13 +229,24 @@ function ToolButton({ title, onClick, children }: { title: string; onClick: () =
 interface MenuItem {
   label: ReactNode;
   title: string;
-  run: () => void;
+  run: (ta: TA) => void;
 }
 
 // Desplegable con el patrón de menú de ARIA: con el teclado se abre con Intro/Espacio/↓/↑, se recorre
 // con las flechas e Inicio/Fin, Escape lo cierra devolviendo el foco al botón y Tab lo cierra sin más.
 // Con el ratón el foco se queda en el editor, como en el resto de botones
-function ToolMenu({ title, icon, items }: { title: string; icon: ReactNode; items: MenuItem[] }) {
+function ToolMenu({
+  title,
+  icon,
+  items,
+  onRun,
+}: {
+  title: string;
+  icon: ReactNode;
+  items: MenuItem[];
+  // Aplica la acción del elemento elegido sobre el editor
+  onRun: (fn: (ta: TA) => void) => void;
+}) {
   const [open, setOpen] = useState(false);
   // Elemento que recibe el foco al abrir con el teclado (null: abierto con el ratón, el foco no se mueve)
   const [focusOnOpen, setFocusOnOpen] = useState<'first' | 'last' | null>(null);
@@ -271,7 +290,11 @@ function ToolMenu({ title, icon, items }: { title: string; icon: ReactNode; item
   const show = (focus: 'first' | 'last' | null) => {
     if (isMobile() && buttonRef.current) {
       const r = buttonRef.current.getBoundingClientRect();
-      setFixedAt({ position: 'fixed', top: r.bottom + 4, left: Math.max(4, Math.min(r.left, window.innerWidth - 200)) });
+      setFixedAt({
+        position: 'fixed',
+        top: r.bottom + 4,
+        left: Math.max(4, Math.min(r.left, window.innerWidth - 200)),
+      });
     } else setFixedAt(undefined);
     setFocusOnOpen(focus);
     setOpen(true);
@@ -352,7 +375,7 @@ function ToolMenu({ title, icon, items }: { title: string; icon: ReactNode; item
               onMouseDown={keepFocus}
               onClick={() => {
                 setOpen(false);
-                item.run();
+                onRun(item.run);
               }}
             >
               {item.label}
@@ -365,27 +388,39 @@ function ToolMenu({ title, icon, items }: { title: string; icon: ReactNode; item
   );
 }
 
-export default function EditorToolbar({ viewRef, filePath }: { viewRef: RefObject<EditorView | null>; filePath: string }) {
-  const act = (fn: (ta: TA) => void) => () => {
-    if (viewRef.current) fn(snapshot(viewRef.current));
+export default function EditorToolbar({
+  viewRef,
+  filePath,
+}: {
+  viewRef: RefObject<EditorView | null>;
+  filePath: string;
+}) {
+  // Solo se lee la ref al pulsar: los manejadores se crean en el render pero no la tocan
+  const apply = (fn: (ta: TA) => void) => {
+    const view = viewRef.current;
+    if (view) fn(snapshot(view));
   };
   const heading = (level: number) => <span className="toolbar-heading">H{level}</span>;
   const t = useT();
 
   return (
     <div className="editor-toolbar" role="toolbar" aria-label={t('toolbar.format')}>
-      <ToolButton title={t('toolbar.undo')} onClick={act((ta) => historyCommand(ta, undo))}>
+      <ToolButton title={t('toolbar.undo')} onClick={() => apply((ta) => historyCommand(ta, undo))}>
         <IconUndo />
       </ToolButton>
-      <ToolButton title={t('toolbar.redo')} onClick={act((ta) => historyCommand(ta, redo))}>
+      <ToolButton title={t('toolbar.redo')} onClick={() => apply((ta) => historyCommand(ta, redo))}>
         <IconRedo />
       </ToolButton>
-      <ToolButton title={t('toolbar.clearFormat')} onClick={act(clearFormat)}>
+      <ToolButton title={t('toolbar.clearFormat')} onClick={() => apply(clearFormat)}>
         <IconEraser />
       </ToolButton>
       <span className="toolbar-sep" />
       {[1, 2, 3].map((level) => (
-        <ToolButton key={level} title={t('toolbar.heading', { n: level })} onClick={act((ta) => setHeading(ta, level))}>
+        <ToolButton
+          key={level}
+          title={t('toolbar.heading', { n: level })}
+          onClick={() => apply((ta) => setHeading(ta, level))}
+        >
           {heading(level)}
         </ToolButton>
       ))}
@@ -395,49 +430,71 @@ export default function EditorToolbar({ viewRef, filePath }: { viewRef: RefObjec
         items={[4, 5, 6].map((level) => ({
           label: heading(level),
           title: t('toolbar.heading', { n: level }),
-          run: act((ta) => setHeading(ta, level)),
+          run: (ta) => setHeading(ta, level),
         }))}
+        onRun={apply}
       />
       <span className="toolbar-sep" />
-      <ToolButton title={t('toolbar.bold')} onClick={act((ta) => toggleInline(ta, '**', t('toolbar.placeholder.bold')))}>
+      <ToolButton
+        title={t('toolbar.bold')}
+        onClick={() => apply((ta) => toggleInline(ta, '**', t('toolbar.placeholder.bold')))}
+      >
         <IconBold />
       </ToolButton>
-      <ToolButton title={t('toolbar.italic')} onClick={act((ta) => toggleInline(ta, '*', t('toolbar.placeholder.italic')))}>
+      <ToolButton
+        title={t('toolbar.italic')}
+        onClick={() => apply((ta) => toggleInline(ta, '*', t('toolbar.placeholder.italic')))}
+      >
         <IconItalic />
       </ToolButton>
-      <ToolButton title={t('toolbar.strike')} onClick={act((ta) => toggleInline(ta, '~~', t('toolbar.placeholder.strike')))}>
+      <ToolButton
+        title={t('toolbar.strike')}
+        onClick={() => apply((ta) => toggleInline(ta, '~~', t('toolbar.placeholder.strike')))}
+      >
         <IconStrikethrough />
       </ToolButton>
-      <ToolButton title={t('toolbar.highlight')} onClick={act((ta) => toggleInline(ta, '==', t('toolbar.placeholder.highlight')))}>
+      <ToolButton
+        title={t('toolbar.highlight')}
+        onClick={() => apply((ta) => toggleInline(ta, '==', t('toolbar.placeholder.highlight')))}
+      >
         <IconHighlight />
       </ToolButton>
-      <ToolButton title={t('toolbar.code')} onClick={act(toggleCode)}>
+      <ToolButton title={t('toolbar.code')} onClick={() => apply(toggleCode)}>
         <IconCode />
       </ToolButton>
-      <ToolButton title={t('toolbar.codeblock')} onClick={act(insertCodeBlock)}>
+      <ToolButton title={t('toolbar.codeblock')} onClick={() => apply(insertCodeBlock)}>
         <IconCodeBlock />
       </ToolButton>
       <span className="toolbar-sep" />
-      <ToolButton title={t('toolbar.quote')} onClick={act(toggleQuote)}>
+      <ToolButton title={t('toolbar.quote')} onClick={() => apply(toggleQuote)}>
         <IconQuote />
       </ToolButton>
       <ToolMenu
         title={t('toolbar.lists')}
         icon={<IconListBullet />}
         items={[
-          { label: <IconListBullet size={16} />, title: t('toolbar.bulletList'), run: act((ta) => toggleList(ta, 'bullet')) },
-          { label: <IconListOrdered size={16} />, title: t('toolbar.orderedList'), run: act((ta) => toggleList(ta, 'ordered')) },
-          { label: <IconCheckSquare size={16} />, title: t('toolbar.taskList'), run: act((ta) => toggleList(ta, 'task')) },
+          {
+            label: <IconListBullet size={16} />,
+            title: t('toolbar.bulletList'),
+            run: (ta) => toggleList(ta, 'bullet'),
+          },
+          {
+            label: <IconListOrdered size={16} />,
+            title: t('toolbar.orderedList'),
+            run: (ta) => toggleList(ta, 'ordered'),
+          },
+          { label: <IconCheckSquare size={16} />, title: t('toolbar.taskList'), run: (ta) => toggleList(ta, 'task') },
         ]}
+        onRun={apply}
       />
       <span className="toolbar-sep" />
-      <ToolButton title={t('toolbar.link')} onClick={act(insertLink)}>
+      <ToolButton title={t('toolbar.link')} onClick={() => apply(insertLink)}>
         <IconLink />
       </ToolButton>
-      <ToolButton title={`${t('toolbar.wikilink')} [[ ]]`} onClick={act(insertWikilink)}>
+      <ToolButton title={`${t('toolbar.wikilink')} [[ ]]`} onClick={() => apply(insertWikilink)}>
         <IconBrackets />
       </ToolButton>
-      <ToolButton title={t('toolbar.table')} onClick={act(insertTable)}>
+      <ToolButton title={t('toolbar.table')} onClick={() => apply(insertTable)}>
         <IconTable />
       </ToolButton>
       <ToolButton title={t('toolbar.image')} onClick={() => viewRef.current && pickImages(viewRef.current, filePath)}>

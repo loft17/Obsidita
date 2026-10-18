@@ -77,13 +77,12 @@ export const createUiSlice: StateCreator<AppStore, [], [], UiSlice> = (set) => (
     set((state) =>
       state.sidebarOpen && state.sidebarView === view
         ? { sidebarOpen: false }
-        : { sidebarOpen: true, sidebarView: view }
+        : { sidebarOpen: true, sidebarView: view },
     ),
   // Se conserva la última búsqueda al cambiar entre vistas de la barra lateral
   searchQuery: '',
   setSearchQuery: (query) => set({ searchQuery: query }),
-  searchTag: (tag) =>
-    set({ sidebarOpen: true, sidebarView: 'search', searchQuery: `tag:${tag.replace(/^#/, '')}` }),
+  searchTag: (tag) => set({ sidebarOpen: true, sidebarView: 'search', searchQuery: `tag:${tag.replace(/^#/, '')}` }),
   gitSyncProvider: null,
   setGitSyncProvider: (provider) => set({ gitSyncProvider: provider }),
 });

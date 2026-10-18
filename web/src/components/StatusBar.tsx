@@ -12,8 +12,12 @@ export default function StatusBar({ content }: Props) {
   const charCount = content.length;
   const deferredContent = useDeferredValue(content);
   const wordCount = useMemo(
-    () => deferredContent.trim().split(/\s+/).filter((w) => w.length > 0).length,
-    [deferredContent]
+    () =>
+      deferredContent
+        .trim()
+        .split(/\s+/)
+        .filter((w) => w.length > 0).length,
+    [deferredContent],
   );
 
   return (

@@ -5,10 +5,7 @@ import { useT } from '../i18n';
 // Por encima de este tamaño no se pinta: se ofrece la descarga
 const MAX_SIZE = 2 * 1024 * 1024;
 
-type State =
-  | { status: 'loading' }
-  | { status: 'ready'; text: string }
-  | { status: 'tooLarge' | 'binary' | 'error' };
+type State = { status: 'loading' } | { status: 'ready'; text: string } | { status: 'tooLarge' | 'binary' | 'error' };
 
 // Visor de solo lectura para archivos de texto que no son notas (txt, json, canvas...).
 // Nunca guarda: se lee del endpoint raw y no pasa por el contenido ni el autoguardado de las notas

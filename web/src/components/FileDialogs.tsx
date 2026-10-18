@@ -5,6 +5,7 @@ import { noteImageUsage } from '../attachments';
 import { syncApi, type NoteCommit } from '../api';
 import { getLang, Trans, useT } from '../i18n';
 import { fileName, noteTitle } from '../paths';
+import { useLatest } from '../latestRef';
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -33,8 +34,7 @@ function DialogShell({
   const titleId = useId();
   // Se lee al renderizar: antes de que el autoFocus o los efectos de los hijos muevan el foco
   const [returnFocus] = useState(() => document.activeElement as HTMLElement | null);
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  const onCloseRef = useLatest(onClose);
 
   useEffect(() => {
     const dialog = dialogRef.current!;
@@ -84,7 +84,7 @@ function DialogShell({
         returnFocus.focus();
       }
     };
-  }, [returnFocus]);
+  }, [returnFocus, onCloseRef]);
 
   // Portal: un ancestro con `transform` rompería el `position: fixed` del overlay
   return createPortal(
@@ -108,7 +108,7 @@ function DialogShell({
         )}
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
 
@@ -234,7 +234,11 @@ export function MoveDialog({
   const move = (step: number) => {
     if (options.length === 0) return;
     setSelected(
-      current === null ? (step > 0 ? 0 : options.length - 1) : Math.min(Math.max(current + step, 0), options.length - 1)
+      current === null
+        ? step > 0
+          ? 0
+          : options.length - 1
+        : Math.min(Math.max(current + step, 0), options.length - 1),
     );
   };
 
@@ -451,10 +455,7 @@ export function DeleteFileDialog({
     <ConfirmDialog
       title={title}
       message={
-        <Trans
-          k={isFolder ? 'delete.confirmFolder' : 'delete.confirm'}
-          values={{ name: <strong>{name}</strong> }}
-        />
+        <Trans k={isFolder ? 'delete.confirmFolder' : 'delete.confirm'} values={{ name: <strong>{name}</strong> }} />
       }
       confirmLabel={confirmLabel}
       disabled={loading}
@@ -623,9 +624,7 @@ export function HistoryDialog({
       {commits === null ? (
         !error && <p className="file-dialog-message">{t('common.loading')}</p>
       ) : commits.length === 0 ? (
-        <p className="file-dialog-message">
-          {t('history.empty')}
-        </p>
+        <p className="file-dialog-message">{t('history.empty')}</p>
       ) : (
         <div className="history-layout">
           <ul className="history-list">

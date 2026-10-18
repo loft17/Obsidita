@@ -1,19 +1,24 @@
 // Autocompletado de enlaces internos: al escribir [[ (o ![[) se sugieren las notas del vault
-import { autocompletion, type Completion, type CompletionContext, type CompletionResult } from '@codemirror/autocomplete';
+import {
+  autocompletion,
+  type Completion,
+  type CompletionContext,
+  type CompletionResult,
+} from '@codemirror/autocomplete';
 import { useStore } from './store';
 import { fileName, parentFolder } from './paths';
 
 // Texto escrito tras [[ hasta el cursor, sin cerrar ni pasar a #encabezado o |alias
-const OPEN_LINK = /(!?)\[\[([^\[\]|#\n]*)$/;
+const OPEN_LINK = /(!?)\[\[([^[\]|#\n]*)$/;
 
 const isNote = (path: string) => /\.md$/i.test(path);
 const stripMd = (path: string) => path.replace(/\.md$/i, '');
 
 // Como Obsidian: el nombre si es único en el vault, la ruta completa si hay varios iguales
 function linkOptions(includeAttachments: boolean): Completion[] {
-  const files = useStore.getState().tree.filter(
-    (item) => item.type === 'file' && (includeAttachments || isNote(item.path))
-  );
+  const files = useStore
+    .getState()
+    .tree.filter((item) => item.type === 'file' && (includeAttachments || isNote(item.path)));
   const nameCount = new Map<string, number>();
   for (const f of files) {
     const name = fileName(f.path).toLowerCase();
@@ -49,7 +54,7 @@ function wikilinkSource(context: CompletionContext): CompletionResult | null {
   return {
     from: context.pos - match[2].length,
     options: linkOptions(match[1] === '!'),
-    validFor: /^[^\[\]|#\n]*$/,
+    validFor: /^[^[\]|#\n]*$/,
   };
 }
 

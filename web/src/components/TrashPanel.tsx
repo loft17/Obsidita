@@ -6,8 +6,7 @@ import { ConfirmDialog } from './FileDialogs';
 import { getLang, Trans, useT } from '../i18n';
 import { IconClose, IconFile, IconFolderOpen, IconRestore, IconSearch, IconSync, IconTrash } from './Icons';
 
-const formatDate = (ms: number) =>
-  new Date(ms).toLocaleString(getLang(), { dateStyle: 'short', timeStyle: 'short' });
+const formatDate = (ms: number) => new Date(ms).toLocaleString(getLang(), { dateStyle: 'short', timeStyle: 'short' });
 
 // Papelera del vault (.trash): restaurar a la ruta original o borrar definitivamente
 export default function TrashPanel() {
@@ -90,7 +89,11 @@ export default function TrashPanel() {
           shown.map((item) => {
             const folder = item.path.split('/').slice(0, -1).join('/');
             return (
-              <div key={item.id} className="tree-item trash-item" title={`${item.path}\n${t('trash.deletedAt', { date: formatDate(item.deletedAt) })}`}>
+              <div
+                key={item.id}
+                className="tree-item trash-item"
+                title={`${item.path}\n${t('trash.deletedAt', { date: formatDate(item.deletedAt) })}`}
+              >
                 <span className="tree-chevron">
                   {item.isFolder ? <IconFolderOpen size={14} /> : <IconFile size={14} />}
                 </span>

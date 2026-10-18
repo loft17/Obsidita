@@ -73,8 +73,7 @@ const FONT_FALLBACKS: Record<FontKind, string> = {
 };
 const cleanFont = (name: string) => name.replace(/["\\;{}]/g, '').trim();
 
-const clampFontSize = (size: number) =>
-  Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, Math.round(size)));
+const clampFontSize = (size: number) => Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, Math.round(size)));
 
 const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
 
@@ -82,11 +81,12 @@ const applyTheme = (theme: Theme) => {
   const resolved = theme === 'system' ? (systemDark.matches ? 'dark' : 'light') : theme;
   document.documentElement.dataset.theme = resolved;
   // Color de la barra del navegador en el móvil, a juego con la cabecera (--background-secondary)
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolved === 'light' ? '#f6f6f6' : '#1e1e1e');
+  document
+    .querySelector('meta[name="theme-color"]')
+    ?.setAttribute('content', resolved === 'light' ? '#f6f6f6' : '#1e1e1e');
 };
 
-const applyFontSize = (size: number) =>
-  document.documentElement.style.setProperty('--font-text-size', `${size}px`);
+const applyFontSize = (size: number) => document.documentElement.style.setProperty('--font-text-size', `${size}px`);
 
 const applyFont = (kind: FontKind, name: string) => {
   const style = document.documentElement.style;

@@ -1,9 +1,45 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import { useStore, type FontKind, type Theme, DEFAULT_FONT_SIZE, DEFAULT_SITE_TITLE, MIN_FONT_SIZE, MAX_FONT_SIZE } from '../store';
-import { settingsApi, syncApi, type NotesConfig, type NotesConfigUpdate, type ServerLimits, type SyncConfig, type SyncConfigUpdate, type SyncProvider, type UpdateStatus, type UploadExtensions } from '../api';
-import { formatDate as formatMoment, DEFAULT_DAILY_FORMAT, DEFAULT_DATE_FORMAT, DEFAULT_TIME_FORMAT } from '../templates';
+import {
+  useStore,
+  type FontKind,
+  type Theme,
+  DEFAULT_FONT_SIZE,
+  DEFAULT_SITE_TITLE,
+  MIN_FONT_SIZE,
+  MAX_FONT_SIZE,
+} from '../store';
+import {
+  settingsApi,
+  syncApi,
+  type NotesConfig,
+  type NotesConfigUpdate,
+  type ServerLimits,
+  type SyncConfig,
+  type SyncConfigUpdate,
+  type SyncProvider,
+  type UpdateStatus,
+  type UploadExtensions,
+} from '../api';
+import {
+  formatDate as formatMoment,
+  DEFAULT_DAILY_FORMAT,
+  DEFAULT_DATE_FORMAT,
+  DEFAULT_TIME_FORMAT,
+} from '../templates';
 import { getLang, LANGUAGES, Trans, useI18n, useT, type Lang, type MessageKey } from '../i18n';
-import { IconChevronLeft, IconClose, IconEdit, IconEye, IconFolderNew, IconList, IconLock, IconReset, IconSearch, IconSync, IconUserCircle } from './Icons';
+import {
+  IconChevronLeft,
+  IconClose,
+  IconEdit,
+  IconEye,
+  IconFolderNew,
+  IconList,
+  IconLock,
+  IconReset,
+  IconSearch,
+  IconSync,
+  IconUserCircle,
+} from './Icons';
 import { runSync } from '../syncNotify';
 import { BUNDLED_FONTS, isBundledFont, loadBundledFont, type FontCategory } from '../fonts';
 import { useServerFonts } from '../serverFonts';
@@ -46,7 +82,9 @@ const FONT_LABELS: Record<FontKind, MessageKey> = {
 const DEFAULT_OPTION = '';
 const CUSTOM_OPTION = '__custom__';
 const fontStack = (name: string, kind: FontKind) =>
-  name.trim() ? `"${name.replace(/["\\]/g, '')}", var(--font-${kind}-default, var(--font-interface-default))` : undefined;
+  name.trim()
+    ? `"${name.replace(/["\\]/g, '')}", var(--font-${kind}-default, var(--font-interface-default))`
+    : undefined;
 
 // Una de las fuentes incluidas o, con "Otra fuente instalada", el nombre de cualquier fuente del equipo
 function FontSetting({ kind }: { kind: FontKind }) {
@@ -162,15 +200,14 @@ function SiteTitleSetting() {
       <div className="setting-info">
         <div className="setting-name">{t('settings.siteTitle')}</div>
         <div className="setting-desc">{t('settings.siteTitle.desc', { title: DEFAULT_SITE_TITLE })}</div>
-        {error && <div className="setting-desc" style={{ color: 'var(--text-error, #e5484d)' }}>{error}</div>}
+        {error && (
+          <div className="setting-desc" style={{ color: 'var(--text-error, #e5484d)' }}>
+            {error}
+          </div>
+        )}
       </div>
       <div className="setting-slider">
-        <button
-          className="icon-btn"
-          title={t('settings.resetDefault')}
-          disabled={!siteTitle}
-          onClick={() => save('')}
-        >
+        <button className="icon-btn" title={t('settings.resetDefault')} disabled={!siteTitle} onClick={() => save('')}>
           <IconReset size={16} />
         </button>
         <input
@@ -206,102 +243,98 @@ function AppearanceSection() {
   const fontPercent = ((fontSize - MIN_FONT_SIZE) / (MAX_FONT_SIZE - MIN_FONT_SIZE)) * 100;
   return (
     <>
-    <div className="settings-group">
-      <div className="setting-item">
-        <div className="setting-info">
-          <div className="setting-name">{t('settings.language')}</div>
-          <div className="setting-desc">{t('settings.language.desc')}</div>
+      <div className="settings-group">
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.language')}</div>
+            <div className="setting-desc">{t('settings.language.desc')}</div>
+          </div>
+          <select value={lang} onChange={(e) => setLang(e.target.value as Lang)}>
+            {LANGUAGES.map((l) => (
+              <option key={l.value} value={l.value}>
+                {l.label}
+              </option>
+            ))}
+          </select>
         </div>
-        <select value={lang} onChange={(e) => setLang(e.target.value as Lang)}>
-          {LANGUAGES.map((l) => (
-            <option key={l.value} value={l.value}>
-              {l.label}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="setting-item">
-        <div className="setting-info">
-          <div className="setting-name">{t('settings.theme')}</div>
-          <div className="setting-desc">{t('settings.theme.desc')}</div>
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.theme')}</div>
+            <div className="setting-desc">{t('settings.theme.desc')}</div>
+          </div>
+          <select value={theme} onChange={(e) => setTheme(e.target.value as Theme)}>
+            <option value="dark">{t('settings.theme.dark')}</option>
+            <option value="light">{t('settings.theme.light')}</option>
+            <option value="system">{t('settings.theme.system')}</option>
+          </select>
         </div>
-        <select value={theme} onChange={(e) => setTheme(e.target.value as Theme)}>
-          <option value="dark">{t('settings.theme.dark')}</option>
-          <option value="light">{t('settings.theme.light')}</option>
-          <option value="system">{t('settings.theme.system')}</option>
-        </select>
-      </div>
-      <div className="setting-item">
-        <div className="setting-info">
-          <div className="setting-name">{t('settings.tabHeader')}</div>
-          <div className="setting-desc">{t('settings.tabHeader.desc')}</div>
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.tabHeader')}</div>
+            <div className="setting-desc">{t('settings.tabHeader.desc')}</div>
+          </div>
+          <label className="setting-toggle">
+            <input type="checkbox" checked={showTabHeader} onChange={(e) => setShowTabHeader(e.target.checked)} />
+            <span />
+          </label>
         </div>
-        <label className="setting-toggle">
-          <input type="checkbox" checked={showTabHeader} onChange={(e) => setShowTabHeader(e.target.checked)} />
-          <span />
-        </label>
-      </div>
-      <div className="setting-item">
-        <div className="setting-info">
-          <div className="setting-name">{t('settings.ribbon')}</div>
-          <div className="setting-desc">{t('settings.ribbon.desc')}</div>
-        </div>
-        <label className="setting-toggle">
-          <input type="checkbox" checked={showRibbon} onChange={(e) => setShowRibbon(e.target.checked)} />
-          <span />
-        </label>
-      </div>
-    </div>
-    <h3 className="settings-heading">{t('settings.site')}</h3>
-    <div className="settings-group">
-      <SiteTitleSetting />
-    </div>
-    <h3 className="settings-heading">{t('settings.font')}</h3>
-    <div className="settings-group">
-      <FontSetting kind="interface" />
-      <FontSetting kind="text" />
-      <FontSetting kind="monospace" />
-      <div className="setting-item">
-        <div className="setting-info">
-          <div className="setting-name">{t('settings.fontSize')}</div>
-          <div className="setting-desc">{t('settings.fontSize.desc')}</div>
-        </div>
-        <div className="setting-slider">
-          <button
-            className="icon-btn"
-            title={t('settings.resetDefault')}
-            disabled={fontSize === DEFAULT_FONT_SIZE}
-            onClick={() => setFontSize(DEFAULT_FONT_SIZE)}
-          >
-            <IconReset size={16} />
-          </button>
-          <span className="setting-slider-value">{fontSize}</span>
-          <input
-            type="range"
-            min={MIN_FONT_SIZE}
-            max={MAX_FONT_SIZE}
-            step={1}
-            value={fontSize}
-            style={{ '--slider-fill': `${fontPercent}%` } as CSSProperties}
-            onChange={(e) => setFontSize(Number(e.target.value))}
-          />
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.ribbon')}</div>
+            <div className="setting-desc">{t('settings.ribbon.desc')}</div>
+          </div>
+          <label className="setting-toggle">
+            <input type="checkbox" checked={showRibbon} onChange={(e) => setShowRibbon(e.target.checked)} />
+            <span />
+          </label>
         </div>
       </div>
-      <div className="setting-item">
-        <div className="setting-info">
-          <div className="setting-name">{t('settings.quickFont')}</div>
-          <div className="setting-desc">{t('settings.quickFont.desc')}</div>
-        </div>
-        <label className="setting-toggle">
-          <input
-            type="checkbox"
-            checked={quickFontSize}
-            onChange={(e) => setQuickFontSize(e.target.checked)}
-          />
-          <span />
-        </label>
+      <h3 className="settings-heading">{t('settings.site')}</h3>
+      <div className="settings-group">
+        <SiteTitleSetting />
       </div>
-    </div>
+      <h3 className="settings-heading">{t('settings.font')}</h3>
+      <div className="settings-group">
+        <FontSetting kind="interface" />
+        <FontSetting kind="text" />
+        <FontSetting kind="monospace" />
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.fontSize')}</div>
+            <div className="setting-desc">{t('settings.fontSize.desc')}</div>
+          </div>
+          <div className="setting-slider">
+            <button
+              className="icon-btn"
+              title={t('settings.resetDefault')}
+              disabled={fontSize === DEFAULT_FONT_SIZE}
+              onClick={() => setFontSize(DEFAULT_FONT_SIZE)}
+            >
+              <IconReset size={16} />
+            </button>
+            <span className="setting-slider-value">{fontSize}</span>
+            <input
+              type="range"
+              min={MIN_FONT_SIZE}
+              max={MAX_FONT_SIZE}
+              step={1}
+              value={fontSize}
+              style={{ '--slider-fill': `${fontPercent}%` } as CSSProperties}
+              onChange={(e) => setFontSize(Number(e.target.value))}
+            />
+          </div>
+        </div>
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.quickFont')}</div>
+            <div className="setting-desc">{t('settings.quickFont.desc')}</div>
+          </div>
+          <label className="setting-toggle">
+            <input type="checkbox" checked={quickFontSize} onChange={(e) => setQuickFontSize(e.target.checked)} />
+            <span />
+          </label>
+        </div>
+      </div>
     </>
   );
 }
@@ -318,58 +351,58 @@ function EditorSection() {
   const t = useT();
   return (
     <>
-    <div className="settings-group">
-      <div className="setting-item">
-        <div className="setting-info">
-          <div className="setting-name">{t('settings.defaultMode')}</div>
-          <div className="setting-desc">{t('settings.defaultMode.desc')}</div>
+      <div className="settings-group">
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.defaultMode')}</div>
+            <div className="setting-desc">{t('settings.defaultMode.desc')}</div>
+          </div>
+          <select
+            value={defaultEditMode ? 'edit' : 'view'}
+            onChange={(e) => setDefaultEditMode(e.target.value === 'edit')}
+          >
+            <option value="view">{t('settings.defaultMode.view')}</option>
+            <option value="edit">{t('settings.defaultMode.edit')}</option>
+          </select>
         </div>
-        <select
-          value={defaultEditMode ? 'edit' : 'view'}
-          onChange={(e) => setDefaultEditMode(e.target.value === 'edit')}
-        >
-          <option value="view">{t('settings.defaultMode.view')}</option>
-          <option value="edit">{t('settings.defaultMode.edit')}</option>
-        </select>
       </div>
-    </div>
-    <h3 className="settings-heading">{t('settings.display')}</h3>
-    <div className="settings-group">
-      <div className="setting-item">
-        <div className="setting-info">
-          <div className="setting-name">{t('settings.inlineTitle')}</div>
-          <div className="setting-desc">{t('settings.inlineTitle.desc')}</div>
+      <h3 className="settings-heading">{t('settings.display')}</h3>
+      <div className="settings-group">
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.inlineTitle')}</div>
+            <div className="setting-desc">{t('settings.inlineTitle.desc')}</div>
+          </div>
+          <label className="setting-toggle">
+            <input type="checkbox" checked={showInlineTitle} onChange={(e) => setShowInlineTitle(e.target.checked)} />
+            <span />
+          </label>
         </div>
-        <label className="setting-toggle">
-          <input type="checkbox" checked={showInlineTitle} onChange={(e) => setShowInlineTitle(e.target.checked)} />
-          <span />
-        </label>
-      </div>
-      <div className="setting-item">
-        <div className="setting-info">
-          <div className="setting-name">{t('settings.readableLine')}</div>
-          <div className="setting-desc">{t('settings.readableLine.desc')}</div>
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.readableLine')}</div>
+            <div className="setting-desc">{t('settings.readableLine.desc')}</div>
+          </div>
+          <label className="setting-toggle">
+            <input
+              type="checkbox"
+              checked={readableLineLength}
+              onChange={(e) => setReadableLineLength(e.target.checked)}
+            />
+            <span />
+          </label>
         </div>
-        <label className="setting-toggle">
-          <input
-            type="checkbox"
-            checked={readableLineLength}
-            onChange={(e) => setReadableLineLength(e.target.checked)}
-          />
-          <span />
-        </label>
-      </div>
-      <div className="setting-item">
-        <div className="setting-info">
-          <div className="setting-name">{t('settings.lineNumbers')}</div>
-          <div className="setting-desc">{t('settings.lineNumbers.desc')}</div>
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.lineNumbers')}</div>
+            <div className="setting-desc">{t('settings.lineNumbers.desc')}</div>
+          </div>
+          <label className="setting-toggle">
+            <input type="checkbox" checked={showLineNumbers} onChange={(e) => setShowLineNumbers(e.target.checked)} />
+            <span />
+          </label>
         </div>
-        <label className="setting-toggle">
-          <input type="checkbox" checked={showLineNumbers} onChange={(e) => setShowLineNumbers(e.target.checked)} />
-          <span />
-        </label>
       </div>
-    </div>
     </>
   );
 }
@@ -434,13 +467,13 @@ function AttachmentsSetting() {
         <div className="setting-info">
           <div className="setting-name">{t('settings.attachments')}</div>
           <div className="setting-desc">{t('settings.attachments.desc')}</div>
-          {error && <div className="setting-desc" style={{ color: 'var(--text-error, #e5484d)' }}>{error}</div>}
+          {error && (
+            <div className="setting-desc" style={{ color: 'var(--text-error, #e5484d)' }}>
+              {error}
+            </div>
+          )}
         </div>
-        <select
-          value={mode}
-          disabled={!loaded}
-          onChange={(e) => save(e.target.value as AttachmentMode, folder)}
-        >
+        <select value={mode} disabled={!loaded} onChange={(e) => save(e.target.value as AttachmentMode, folder)}>
           <option value="root">{t('settings.attachments.root')}</option>
           <option value="same">{t('settings.attachments.same')}</option>
           <option value="sub">{t('settings.attachments.sub')}</option>
@@ -492,7 +525,10 @@ function UploadsSetting() {
   };
 
   useEffect(() => {
-    settingsApi.getUploads().then(apply).catch((err) => setError(err.message));
+    settingsApi
+      .getUploads()
+      .then(apply)
+      .catch((err) => setError(err.message));
   }, []);
 
   const save = async (text: string) => {
@@ -513,9 +549,18 @@ function UploadsSetting() {
           <div className="setting-desc">
             <Trans k="settings.uploads.desc" values={{ a: <code>.txt, .pdf</code> }} />
           </div>
-          {error && <div className="setting-desc" style={{ color: 'var(--text-error, #e5484d)' }}>{error}</div>}
+          {error && (
+            <div className="setting-desc" style={{ color: 'var(--text-error, #e5484d)' }}>
+              {error}
+            </div>
+          )}
         </div>
-        <button className="icon-btn" title={t('settings.resetDefault')} disabled={!loaded || isDefault} onClick={() => save('')}>
+        <button
+          className="icon-btn"
+          title={t('settings.resetDefault')}
+          disabled={!loaded || isDefault}
+          onClick={() => save('')}
+        >
           <IconReset size={16} />
         </button>
       </div>
@@ -614,60 +659,79 @@ function NotesSettings() {
   return (
     <>
       <h3 className="settings-heading">{t('settings.daily')}</h3>
-      {error && <div className="setting-desc" style={{ color: 'var(--text-error, #e5484d)' }}>{error}</div>}
+      {error && (
+        <div className="setting-desc" style={{ color: 'var(--text-error, #e5484d)' }}>
+          {error}
+        </div>
+      )}
       <div className="settings-group">
-      <NotesField
-        name={t('settings.dateFormat')}
-        desc={<>{preview(daily.format, DEFAULT_DAILY_FORMAT)}. <Trans k="settings.daily.subfolders" values={{ example: <code>YYYY/MM/YYYY-MM-DD</code> }} /></>}
-        placeholder={DEFAULT_DAILY_FORMAT}
-        value={daily.format}
-        disabled={disabled}
-        onSave={(v) => save('dailyNotes', 'format', v)}
-      />
-      <NotesField
-        name={t('settings.daily.folder')}
-        desc={t('settings.daily.folder.desc')}
-        placeholder={t('settings.daily.folder.placeholder')}
-        value={daily.folder}
-        disabled={disabled}
-        onSave={(v) => save('dailyNotes', 'folder', v)}
-      />
-      <NotesField
-        name={t('settings.daily.template')}
-        desc={t('settings.daily.template.desc')}
-        placeholder={t('settings.daily.template.placeholder')}
-        value={daily.template}
-        disabled={disabled}
-        onSave={(v) => save('dailyNotes', 'template', v)}
-      />
+        <NotesField
+          name={t('settings.dateFormat')}
+          desc={
+            <>
+              {preview(daily.format, DEFAULT_DAILY_FORMAT)}.{' '}
+              <Trans k="settings.daily.subfolders" values={{ example: <code>YYYY/MM/YYYY-MM-DD</code> }} />
+            </>
+          }
+          placeholder={DEFAULT_DAILY_FORMAT}
+          value={daily.format}
+          disabled={disabled}
+          onSave={(v) => save('dailyNotes', 'format', v)}
+        />
+        <NotesField
+          name={t('settings.daily.folder')}
+          desc={t('settings.daily.folder.desc')}
+          placeholder={t('settings.daily.folder.placeholder')}
+          value={daily.folder}
+          disabled={disabled}
+          onSave={(v) => save('dailyNotes', 'folder', v)}
+        />
+        <NotesField
+          name={t('settings.daily.template')}
+          desc={t('settings.daily.template.desc')}
+          placeholder={t('settings.daily.template.placeholder')}
+          value={daily.template}
+          disabled={disabled}
+          onSave={(v) => save('dailyNotes', 'template', v)}
+        />
       </div>
 
       <h3 className="settings-heading">{t('settings.templates')}</h3>
       <div className="settings-group">
-      <NotesField
-        name={t('settings.templates.folder')}
-        desc={t('settings.templates.folder.desc')}
-        placeholder={t('settings.templates.folder.placeholder')}
-        value={templates.folder}
-        disabled={disabled}
-        onSave={(v) => save('templates', 'folder', v)}
-      />
-      <NotesField
-        name={t('settings.dateFormat')}
-        desc={<>{preview(templates.dateFormat, DEFAULT_DATE_FORMAT)}. <Trans k="settings.templates.usedIn" values={{ variable: <code>{'{{date}}'}</code> }} /></>}
-        placeholder={DEFAULT_DATE_FORMAT}
-        value={templates.dateFormat}
-        disabled={disabled}
-        onSave={(v) => save('templates', 'dateFormat', v)}
-      />
-      <NotesField
-        name={t('settings.timeFormat')}
-        desc={<>{preview(templates.timeFormat, DEFAULT_TIME_FORMAT)}. <Trans k="settings.templates.usedIn" values={{ variable: <code>{'{{time}}'}</code> }} /></>}
-        placeholder={DEFAULT_TIME_FORMAT}
-        value={templates.timeFormat}
-        disabled={disabled}
-        onSave={(v) => save('templates', 'timeFormat', v)}
-      />
+        <NotesField
+          name={t('settings.templates.folder')}
+          desc={t('settings.templates.folder.desc')}
+          placeholder={t('settings.templates.folder.placeholder')}
+          value={templates.folder}
+          disabled={disabled}
+          onSave={(v) => save('templates', 'folder', v)}
+        />
+        <NotesField
+          name={t('settings.dateFormat')}
+          desc={
+            <>
+              {preview(templates.dateFormat, DEFAULT_DATE_FORMAT)}.{' '}
+              <Trans k="settings.templates.usedIn" values={{ variable: <code>{'{{date}}'}</code> }} />
+            </>
+          }
+          placeholder={DEFAULT_DATE_FORMAT}
+          value={templates.dateFormat}
+          disabled={disabled}
+          onSave={(v) => save('templates', 'dateFormat', v)}
+        />
+        <NotesField
+          name={t('settings.timeFormat')}
+          desc={
+            <>
+              {preview(templates.timeFormat, DEFAULT_TIME_FORMAT)}.{' '}
+              <Trans k="settings.templates.usedIn" values={{ variable: <code>{'{{time}}'}</code> }} />
+            </>
+          }
+          placeholder={DEFAULT_TIME_FORMAT}
+          value={templates.timeFormat}
+          disabled={disabled}
+          onSave={(v) => save('templates', 'timeFormat', v)}
+        />
       </div>
     </>
   );
@@ -715,119 +779,126 @@ function FilesSection() {
 
   return (
     <>
-    <h3 className="settings-heading settings-heading-first">{t('settings.files.vault')}</h3>
-    <div className="settings-group">
-      <div className="setting-item">
-        <div className="setting-info">
-          <div className="setting-name">{t('settings.vaultPath')}</div>
-          <div className="setting-desc">{t('settings.vaultPath.desc')}</div>
-          {vaultError && <div className="setting-desc" style={{ color: 'var(--text-error, #e5484d)' }}>{vaultError}</div>}
+      <h3 className="settings-heading settings-heading-first">{t('settings.files.vault')}</h3>
+      <div className="settings-group">
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.vaultPath')}</div>
+            <div className="setting-desc">{t('settings.vaultPath.desc')}</div>
+            {vaultError && (
+              <div className="setting-desc" style={{ color: 'var(--text-error, #e5484d)' }}>
+                {vaultError}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-      <div className="setting-item">
-        <input
-          className="setting-input"
-          type="text"
-          value={vaultPath}
-          onChange={(e) => setVaultPath(e.target.value)}
-          disabled={saving}
-        />
-      </div>
-      {vaultPath.trim() !== savedPath && (
         <div className="setting-item">
           <input
             className="setting-input"
-            type="password"
-            placeholder={t('password.current')}
-            autoComplete="current-password"
-            value={vaultPassword}
-            onChange={(e) => setVaultPassword(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && vaultPath.trim() && vaultPassword && saveVault()}
+            type="text"
+            value={vaultPath}
+            onChange={(e) => setVaultPath(e.target.value)}
             disabled={saving}
           />
-          <button onClick={saveVault} disabled={saving || !vaultPath.trim() || !vaultPassword}>
-            {t('common.save')}
-          </button>
         </div>
-      )}
-    </div>
-
-    <h3 className="settings-heading">{t('settings.files.download')}</h3>
-    <div className="settings-group">
-      <div className="setting-item">
-        <div className="setting-info">
-          <div className="setting-name">{t('settings.download.git')}</div>
-          <div className="setting-desc">{t('settings.download.git.desc')}</div>
-        </div>
-        <label className="setting-toggle">
-          <input type="checkbox" checked={includeGit} onChange={(e) => setIncludeGit(e.target.checked)} />
-          <span />
-        </label>
+        {vaultPath.trim() !== savedPath && (
+          <div className="setting-item">
+            <input
+              className="setting-input"
+              type="password"
+              placeholder={t('password.current')}
+              autoComplete="current-password"
+              value={vaultPassword}
+              onChange={(e) => setVaultPassword(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && vaultPath.trim() && vaultPassword && saveVault()}
+              disabled={saving}
+            />
+            <button onClick={saveVault} disabled={saving || !vaultPath.trim() || !vaultPassword}>
+              {t('common.save')}
+            </button>
+          </div>
+        )}
       </div>
-      <div className="setting-item">
-        <div className="setting-info">
-          <div className="setting-name">{t('settings.download.trash')}</div>
-          <div className="setting-desc">{t('settings.download.trash.desc')}</div>
-        </div>
-        <label className="setting-toggle">
-          <input type="checkbox" checked={includeTrash} onChange={(e) => setIncludeTrash(e.target.checked)} />
-          <span />
-        </label>
-      </div>
-      <div className="setting-item">
-        <div className="setting-info">
-          <div className="setting-name">{t('common.download')}</div>
-          <div className="setting-desc">{t('settings.download.desc')}</div>
-        </div>
-        <a className="button" href={downloadUrl} download>
-          {t('common.download')}
-        </a>
-      </div>
-    </div>
 
-    <h3 className="settings-heading">{t('settings.files.attachments')}</h3>
-    <div className="settings-group">
-      <AttachmentsSetting />
-      <UploadsSetting />
-    </div>
+      <h3 className="settings-heading">{t('settings.files.download')}</h3>
+      <div className="settings-group">
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.download.git')}</div>
+            <div className="setting-desc">{t('settings.download.git.desc')}</div>
+          </div>
+          <label className="setting-toggle">
+            <input type="checkbox" checked={includeGit} onChange={(e) => setIncludeGit(e.target.checked)} />
+            <span />
+          </label>
+        </div>
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.download.trash')}</div>
+            <div className="setting-desc">{t('settings.download.trash.desc')}</div>
+          </div>
+          <label className="setting-toggle">
+            <input type="checkbox" checked={includeTrash} onChange={(e) => setIncludeTrash(e.target.checked)} />
+            <span />
+          </label>
+        </div>
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('common.download')}</div>
+            <div className="setting-desc">{t('settings.download.desc')}</div>
+          </div>
+          <a className="button" href={downloadUrl} download>
+            {t('common.download')}
+          </a>
+        </div>
+      </div>
 
-    <h3 className="settings-heading">{t('settings.files.explorer')}</h3>
-    <div className="settings-group">
-      <div className="setting-item">
-        <div className="setting-info">
-          <div className="setting-name">{t('settings.hiddenFolders')}</div>
-          <div className="setting-desc">
-            <Trans k="settings.hiddenFolders.desc" values={{ a: <code>{t('settings.hiddenFolders.example')}</code>, b: <code>_*</code> }} />
+      <h3 className="settings-heading">{t('settings.files.attachments')}</h3>
+      <div className="settings-group">
+        <AttachmentsSetting />
+        <UploadsSetting />
+      </div>
+
+      <h3 className="settings-heading">{t('settings.files.explorer')}</h3>
+      <div className="settings-group">
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.hiddenFolders')}</div>
+            <div className="setting-desc">
+              <Trans
+                k="settings.hiddenFolders.desc"
+                values={{ a: <code>{t('settings.hiddenFolders.example')}</code>, b: <code>_*</code> }}
+              />
+            </div>
           </div>
         </div>
-      </div>
-      <textarea
-        className="setting-textarea"
-        rows={6}
-        placeholder={`${t('settings.hiddenFolders.example')}\n_*`}
-        value={hiddenFolders}
-        onChange={(e) => setHiddenFolders(e.target.value)}
-      />
-      <div className="setting-item">
-        <div className="setting-info">
-          <div className="setting-name">{t('settings.hiddenExtensions')}</div>
-          <div className="setting-desc">
-            <Trans k="settings.hiddenExtensions.desc" values={{ a: <code>.txt, .pdf</code> }} />
-          </div>
-        </div>
-      </div>
-      <div className="setting-item">
-        <input
-          className="setting-input"
-          type="text"
-          placeholder=".txt, .pdf"
-          value={hiddenExtensions}
-          onChange={(e) => setHiddenExtensions(e.target.value)}
+        <textarea
+          className="setting-textarea"
+          rows={6}
+          placeholder={`${t('settings.hiddenFolders.example')}\n_*`}
+          value={hiddenFolders}
+          onChange={(e) => setHiddenFolders(e.target.value)}
         />
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.hiddenExtensions')}</div>
+            <div className="setting-desc">
+              <Trans k="settings.hiddenExtensions.desc" values={{ a: <code>.txt, .pdf</code> }} />
+            </div>
+          </div>
+        </div>
+        <div className="setting-item">
+          <input
+            className="setting-input"
+            type="text"
+            placeholder=".txt, .pdf"
+            value={hiddenExtensions}
+            onChange={(e) => setHiddenExtensions(e.target.value)}
+          />
+        </div>
       </div>
-    </div>
 
-    <NotesSettings />
+      <NotesSettings />
     </>
   );
 }
@@ -881,7 +952,10 @@ function SyncSection() {
   useEffect(() => {
     if (!running) return;
     const id = window.setInterval(() => {
-      syncApi.get().then((c) => setConfig((prev) => (prev ? { ...prev, status: c.status } : c))).catch(() => {});
+      syncApi
+        .get()
+        .then((c) => setConfig((prev) => (prev ? { ...prev, status: c.status } : c)))
+        .catch(() => {});
     }, 3000);
     return () => window.clearInterval(id);
   }, [running]);
@@ -936,7 +1010,11 @@ function SyncSection() {
   };
 
   if (!config) {
-    return message ? <div className="setting-desc" style={errorStyle}>{message.text}</div> : null;
+    return message ? (
+      <div className="setting-desc" style={errorStyle}>
+        {message.text}
+      </div>
+    ) : null;
   }
 
   const hasToken = provider === 'github' && config.github.hasToken;
@@ -1036,7 +1114,6 @@ function SyncSection() {
         </>
       )}
 
-
       <div className="setting-item" style={{ borderBottom: 'none' }}>
         <div className="setting-info">
           {message && (
@@ -1064,7 +1141,9 @@ function SyncSection() {
             <div className="setting-item">
               <div className="setting-info">
                 <div className="setting-name">
-                  {status.running ? t('sync.running') : t('sync.last', { date: formatDate(status.lastSync, t('sync.never')) })}
+                  {status.running
+                    ? t('sync.running')
+                    : t('sync.last', { date: formatDate(status.lastSync, t('sync.never')) })}
                 </div>
                 {!status.running && status.lastError && (
                   <div className="setting-desc" style={errorStyle}>
@@ -1075,7 +1154,11 @@ function SyncSection() {
                   <div className="setting-desc">{status.lastMessage}</div>
                 )}
               </div>
-              <button onClick={syncNow} disabled={busy || status.running || dirty} title={dirty ? t('sync.saveFirst') : undefined}>
+              <button
+                onClick={syncNow}
+                disabled={busy || status.running || dirty}
+                title={dirty ? t('sync.saveFirst') : undefined}
+              >
                 {t('sync.now')}
               </button>
             </div>
@@ -1090,7 +1173,10 @@ function SyncSection() {
 function useServerLimits() {
   const [limits, setLimits] = useState<ServerLimits | null>(null);
   useEffect(() => {
-    settingsApi.getLimits().then(setLimits).catch(() => {});
+    settingsApi
+      .getLimits()
+      .then(setLimits)
+      .catch(() => {});
   }, []);
   return limits;
 }
@@ -1300,7 +1386,10 @@ function AboutSection() {
   const t = useT();
   const [update, setUpdate] = useState<UpdateStatus | null>(null);
   useEffect(() => {
-    settingsApi.getUpdate().then(setUpdate).catch(() => {});
+    settingsApi
+      .getUpdate()
+      .then(setUpdate)
+      .catch(() => {});
   }, []);
 
   const updateText = !update
@@ -1329,13 +1418,18 @@ function AboutSection() {
             </div>
             <div className="setting-desc">{t('about.updateDesc')}</div>
           </div>
-          <button onClick={() => window.open(update.url, '_blank', 'noopener,noreferrer')}>{t('about.viewOnGithub')}</button>
+          <button onClick={() => window.open(update.url, '_blank', 'noopener,noreferrer')}>
+            {t('about.viewOnGithub')}
+          </button>
         </div>
       )}
       <div className="setting-item">
         <div className="setting-info">
           <div className="setting-name">
-            {t('about.developedBy')} <a href="https://github.com/loft17" target="_blank" rel="noopener noreferrer"><strong>Jose Luis Romera</strong></a>
+            {t('about.developedBy')}{' '}
+            <a href="https://github.com/loft17" target="_blank" rel="noopener noreferrer">
+              <strong>Jose Luis Romera</strong>
+            </a>
           </div>
           <div className="setting-desc">{t('about.tagline')}</div>
         </div>
@@ -1424,11 +1518,7 @@ export default function SettingsModal({ onClose }: Props) {
           <nav className="settings-sidebar">
             <div className="settings-search">
               <IconSearch size={14} />
-              <input
-                placeholder={t('settings.search')}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
+              <input placeholder={t('settings.search')} value={query} onChange={(e) => setQuery(e.target.value)} />
             </div>
             <div className="settings-nav-title">{t('settings.options')}</div>
             {sections.map(({ id, label, Icon }) => (

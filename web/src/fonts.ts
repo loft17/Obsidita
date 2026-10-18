@@ -16,8 +16,7 @@ export const BUNDLED_FONTS: Record<FontCategory, string[]> = {
   mono: ['JetBrains Mono', 'Fira Code', 'Source Code Pro', 'IBM Plex Mono', 'Roboto Mono'],
 };
 
-export const isBundledFont = (name: string) =>
-  Object.values(BUNDLED_FONTS).some((fonts) => fonts.includes(name));
+export const isBundledFont = (name: string) => Object.values(BUNDLED_FONTS).some((fonts) => fonts.includes(name));
 
 // Nombre visible → carpeta del paquete de Fontsource
 const PACKAGES: Record<string, string> = {
@@ -198,7 +197,7 @@ export function loadBundledFont(name: string): Promise<void> {
       // Si falla, se reintentará la próxima vez que se pida la familia
       loaded.delete(pkg);
       console.warn(`[Fonts] No se pudo cargar ${name}:`, err);
-    }
+    },
   );
   loaded.set(pkg, task);
   return task;

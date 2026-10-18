@@ -102,7 +102,7 @@ export function noteImages(content: string, notePath: string): string[] {
 // búsqueda puede fallar (el servidor limita las búsquedas por IP y responde 429), y una nota
 // candidata puede no leerse. `complete` indica si la comprobación se pudo hacer entera.
 export async function noteImageUsage(
-  notePath: string
+  notePath: string,
 ): Promise<{ own: string[]; shared: string[]; complete: boolean }> {
   const { content } = await filesApi.readFile(notePath);
   const own: string[] = [];

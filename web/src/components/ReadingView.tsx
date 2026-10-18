@@ -6,7 +6,16 @@ import InlineTitle from './InlineTitle';
 import { useStore } from '../store';
 import { attachmentUrl, isImage, parseSize } from '../attachments';
 import {
-  followWikilink, isResolved, parseWikilink, resolveWikilink, scrollToHeading, scrollToLine, subscribePendingScroll, takePendingHeading, takePendingLine, wikilinkLabel,
+  followWikilink,
+  isResolved,
+  parseWikilink,
+  resolveWikilink,
+  scrollToHeading,
+  scrollToLine,
+  subscribePendingScroll,
+  takePendingHeading,
+  takePendingLine,
+  wikilinkLabel,
 } from '../wikilinks';
 import { embedSection, getEmbedContent, getEmbedsVersion, refreshEmbeds, subscribeEmbeds } from '../noteEmbeds';
 import { cancelPendingSave, NOTES_CHANGED, saveNote } from './Editor';
@@ -136,7 +145,7 @@ md.core.ruler.after('inline', 'note_embed_block', (state) => {
     const children = tokens[i + 1].children ?? [];
     const embeds = children.filter((t) => t.type === 'note_embed');
     const onlyEmbeds = children.every(
-      (t) => t.type === 'note_embed' || t.type === 'softbreak' || (t.type === 'text' && !t.content.trim())
+      (t) => t.type === 'note_embed' || t.type === 'softbreak' || (t.type === 'text' && !t.content.trim()),
     );
     if (!embeds.length || !onlyEmbeds) continue;
     tokens.splice(
@@ -147,7 +156,7 @@ md.core.ruler.after('inline', 'note_embed_block', (state) => {
         block.block = true;
         block.meta = t.meta;
         return block;
-      })
+      }),
     );
   }
 });
@@ -179,7 +188,8 @@ md.core.ruler.after('inline', 'task_list', (state) => {
       if (type === 'bullet_list_close' || type === 'ordered_list_close') depth++;
       else if (type === 'bullet_list_open' || type === 'ordered_list_open') {
         if (depth-- === 0) {
-          if (!/contains-task-list/.test(String(tokens[j].attrGet('class') ?? ''))) tokens[j].attrJoin('class', 'contains-task-list');
+          if (!/contains-task-list/.test(String(tokens[j].attrGet('class') ?? '')))
+            tokens[j].attrJoin('class', 'contains-task-list');
           break;
         }
       }
@@ -263,27 +273,47 @@ const svg = (body: string) =>
 
 const CALLOUT_ICONS: Record<string, string> = {
   note: svg('<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>'),
-  abstract: svg('<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>'),
+  abstract: svg(
+    '<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
+  ),
   info: svg('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>'),
   todo: svg('<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>'),
-  tip: svg('<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>'),
+  tip: svg(
+    '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+  ),
   success: svg('<polyline points="20 6 9 17 4 12"/>'),
-  question: svg('<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>'),
-  warning: svg('<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>'),
+  question: svg(
+    '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+  ),
+  warning: svg(
+    '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  ),
   failure: svg('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'),
   danger: svg('<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>'),
-  bug: svg('<path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/>'),
-  example: svg('<line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/>'),
-  quote: svg('<path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/>'),
+  bug: svg(
+    '<path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/>',
+  ),
+  example: svg(
+    '<line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/>',
+  ),
+  quote: svg(
+    '<path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/>',
+  ),
 };
 
 const CALLOUT_ALIASES: Record<string, string> = {
-  summary: 'abstract', tldr: 'abstract',
-  hint: 'tip', important: 'tip',
-  check: 'success', done: 'success',
-  help: 'question', faq: 'question',
-  caution: 'warning', attention: 'warning',
-  fail: 'failure', missing: 'failure',
+  summary: 'abstract',
+  tldr: 'abstract',
+  hint: 'tip',
+  important: 'tip',
+  check: 'success',
+  done: 'success',
+  help: 'question',
+  faq: 'question',
+  caution: 'warning',
+  attention: 'warning',
+  fail: 'failure',
+  missing: 'failure',
   error: 'danger',
   cite: 'quote',
 };
@@ -402,7 +432,7 @@ function openWikilink(e: MouseEvent<HTMLDivElement>, notePath: string) {
 function handleContentClick(
   e: MouseEvent<HTMLDivElement>,
   notePath: string,
-  onToggleTask: (line: number, checked: boolean) => void
+  onToggleTask: (line: number, checked: boolean) => void,
 ) {
   if (openWikilink(e, notePath)) return;
   const box = (e.target as HTMLElement).closest<HTMLInputElement>('input.task-list-item-checkbox');
@@ -456,9 +486,12 @@ export default function ReadingView({ content, filePath, onContentChange }: Prop
   // Al abrir una nota se releen sus incrustaciones, por si han cambiado mientras tanto
   useEffect(refreshEmbeds, [notePath]);
 
+  // El render lee el árbol, las incrustaciones, el idioma y el tema fuera de React (del store y
+  // de cachés de módulo): por eso están en las dependencias aunque no aparezcan en la función
   const html = useMemo(
     () => md.render(markdownContent, { notePath }),
-    [markdownContent, notePath, tree, embedsVersion, lang, theme]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [markdownContent, notePath, tree, embedsVersion, lang, theme],
   );
 
   // También al volver a la pestaña y cuando el servidor reescribe enlaces
@@ -516,7 +549,8 @@ export default function ReadingView({ content, filePath, onContentChange }: Prop
           className="reading-view-content"
           onClick={(e) => handleContentClick(e, notePath, toggleTaskAt)}
           onAuxClick={(e) => e.button === 1 && openWikilink(e, notePath)}
-          dangerouslySetInnerHTML={{ __html: html }} />
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
       </div>
     </div>
   );

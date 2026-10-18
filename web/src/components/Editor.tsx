@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '../store';
 import { isUnder, noteTitle } from '../paths';
 import { filesApi, ConflictError } from '../api';
@@ -17,6 +17,7 @@ import { imageUpload } from '../imageUpload';
 import { wikilinkCompletion } from '../wikilinkComplete';
 import { setEmbedContent } from '../noteEmbeds';
 import { subscribePendingScroll, takePendingLine } from '../wikilinks';
+import { useLatest } from '../latestRef';
 import { notify } from '../toast';
 import { t, useT } from '../i18n';
 
@@ -192,89 +193,6 @@ export default function Editor({ filePath, content, onContentChange }: Props) {
   // Con un frontmatter inválido se edita el texto completo, sin panel de propiedades
   const body = note.valid ? note.body : content;
 
-  // El listener de CodeMirror se crea una vez: siempre llama al manejador del último render
-  const onBodyChangeRef = useRef<(newBody: string) => void>(() => {});
-  onBodyChangeRef.current = (newBody) => handleBodyChange(newBody);
-  const filePathRef = useRef(filePath);
-  filePathRef.current = filePath;
-  const getPath = () => filePathRef.current;
-
-  useEffect(() => {
-    const view = new EditorView({
-      parent: hostRef.current!,
-      state: createState(body, (doc) => onBodyChangeRef.current(doc), getPath),
-    });
-    viewRef.current = view;
-    return () => {
-      view.destroy();
-      viewRef.current = null;
-    };
-  }, []);
-
-  const insertRef = useRef<(text: string) => void>(() => {});
-  insertRef.current = (text) => handleInsert(text);
-  useEffect(() => {
-    const handler = { path: filePath, insert: (text: string) => insertRef.current(text) };
-    insertHandler = handler;
-    const pending = pendingInsert;
-    pendingInsert = null;
-    if (pending?.path === filePath) insertRef.current(pending.text);
-    return () => {
-      if (insertHandler === handler) insertHandler = null;
-    };
-  }, []);
-
-  useEffect(() => {
-    viewRef.current?.dispatch({ effects: lineNumbersCompartment.reconfigure(lineNumbersExtension(showLineNumbers)) });
-  }, [showLineNumbers]);
-
-  // Contenido cambiado desde fuera. Otra nota: estado nuevo, historial limpio. La misma nota
-  // (cambiada en otro dispositivo, por la sincronización...): solo se sustituye el tramo
-  // distinto, para no perder el cursor, el scroll ni el historial
-  const shownPathRef = useRef(filePath);
-  useEffect(() => {
-    const view = viewRef.current;
-    if (!view) return;
-    const current = view.state.doc.toString();
-    if (current !== body) {
-      if (shownPathRef.current === filePath) {
-        let from = 0;
-        while (from < current.length && from < body.length && current[from] === body[from]) from++;
-        let end = 0;
-        while (
-          end < current.length - from &&
-          end < body.length - from &&
-          current[current.length - 1 - end] === body[body.length - 1 - end]
-        ) {
-          end++;
-        }
-        view.dispatch({
-          changes: { from, to: current.length - end, insert: body.slice(from, body.length - end) },
-          annotations: [externalChange.of(true), Transaction.addToHistory.of(false)],
-        });
-      } else {
-        view.setState(createState(body, (doc) => onBodyChangeRef.current(doc), getPath));
-      }
-    }
-    shownPathRef.current = filePath;
-  }, [body, filePath]);
-
-  // Llegada desde un resultado de búsqueda (también con la nota ya abierta)
-  const [scrollRequest, setScrollRequest] = useState(0);
-  useEffect(() => subscribePendingScroll(() => setScrollRequest((n) => n + 1)), []);
-  useEffect(() => {
-    const view = viewRef.current;
-    const line = takePendingLine(filePath);
-    if (!view || !line) return;
-    // La búsqueda cuenta líneas del fichero completo; el editor muestra solo el cuerpo
-    const offset = note.valid ? (note.head?.match(/\n/g)?.length ?? 0) : 0;
-    const target = view.state.doc.line(Math.min(Math.max(1, line - offset), view.state.doc.lines));
-    view.dispatch({
-      selection: { anchor: target.from },
-      effects: EditorView.scrollIntoView(target.from, { y: 'center' }),
-    });
-  }, [body, filePath, note, scrollRequest]);
-
   const handleBodyChange = (newBody: string) => {
     if (!note.valid) commit(newBody);
     else commit(note.head !== null ? note.head + newBody : composeNote(note.data, newBody));
@@ -290,7 +208,11 @@ export default function Editor({ filePath, content, onContentChange }: Props) {
     const insert = template.valid && note.valid ? template.body : text;
     const { from, to } = view.state.selection.main;
     if (!newKeys.length || !note.valid) {
-      view.dispatch({ changes: { from, to, insert }, selection: { anchor: from + insert.length }, scrollIntoView: true });
+      view.dispatch({
+        changes: { from, to, insert },
+        selection: { anchor: from + insert.length },
+        scrollIntoView: true,
+      });
     } else {
       // El cuerpo y las propiedades se guardan juntos, no como dos cambios por separado
       view.dispatch({
@@ -333,6 +255,88 @@ export default function Editor({ filePath, content, onContentChange }: Props) {
     };
     pendingSaves.set(filePath, { timer: window.setTimeout(run, AUTOSAVE_DELAY), run });
   };
+
+  // El listener de CodeMirror se crea una vez: siempre llama al manejador del último render
+  const onBodyChangeRef = useLatest((newBody: string) => handleBodyChange(newBody));
+  const filePathRef = useLatest(filePath);
+  const insertRef = useLatest((text: string) => handleInsert(text));
+  const getPath = useCallback(() => filePathRef.current, [filePathRef]);
+
+  useEffect(() => {
+    const view = new EditorView({
+      parent: hostRef.current!,
+      state: createState(body, (doc) => onBodyChangeRef.current(doc), getPath),
+    });
+    viewRef.current = view;
+    return () => {
+      view.destroy();
+      viewRef.current = null;
+    };
+    // Solo al montar: los cambios de `body` posteriores los aplica el efecto de más abajo
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const handler = { path: filePath, insert: (text: string) => insertRef.current(text) };
+    insertHandler = handler;
+    const pending = pendingInsert;
+    pendingInsert = null;
+    if (pending?.path === filePath) insertRef.current(pending.text);
+    return () => {
+      if (insertHandler === handler) insertHandler = null;
+    };
+  }, [filePath, insertRef]);
+
+  useEffect(() => {
+    viewRef.current?.dispatch({ effects: lineNumbersCompartment.reconfigure(lineNumbersExtension(showLineNumbers)) });
+  }, [showLineNumbers]);
+
+  // Contenido cambiado desde fuera. Otra nota: estado nuevo, historial limpio. La misma nota
+  // (cambiada en otro dispositivo, por la sincronización...): solo se sustituye el tramo
+  // distinto, para no perder el cursor, el scroll ni el historial
+  const shownPathRef = useRef(filePath);
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view) return;
+    const current = view.state.doc.toString();
+    if (current !== body) {
+      if (shownPathRef.current === filePath) {
+        let from = 0;
+        while (from < current.length && from < body.length && current[from] === body[from]) from++;
+        let end = 0;
+        while (
+          end < current.length - from &&
+          end < body.length - from &&
+          current[current.length - 1 - end] === body[body.length - 1 - end]
+        ) {
+          end++;
+        }
+        view.dispatch({
+          changes: { from, to: current.length - end, insert: body.slice(from, body.length - end) },
+          annotations: [externalChange.of(true), Transaction.addToHistory.of(false)],
+        });
+      } else {
+        view.setState(createState(body, (doc) => onBodyChangeRef.current(doc), getPath));
+      }
+    }
+    shownPathRef.current = filePath;
+  }, [body, filePath, getPath, onBodyChangeRef]);
+
+  // Llegada desde un resultado de búsqueda (también con la nota ya abierta)
+  const [scrollRequest, setScrollRequest] = useState(0);
+  useEffect(() => subscribePendingScroll(() => setScrollRequest((n) => n + 1)), []);
+  useEffect(() => {
+    const view = viewRef.current;
+    const line = takePendingLine(filePath);
+    if (!view || !line) return;
+    // La búsqueda cuenta líneas del fichero completo; el editor muestra solo el cuerpo
+    const offset = note.valid ? (note.head?.match(/\n/g)?.length ?? 0) : 0;
+    const target = view.state.doc.line(Math.min(Math.max(1, line - offset), view.state.doc.lines));
+    view.dispatch({
+      selection: { anchor: target.from },
+      effects: EditorView.scrollIntoView(target.from, { y: 'center' }),
+    });
+  }, [body, filePath, note, scrollRequest]);
 
   // En texto plano el editor CodeMirror sigue montado pero oculto: así conserva el cursor y
   // el historial, y se mantiene al día con lo que se escribe en el área de texto

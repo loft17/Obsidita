@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { setupApi, authApi, filesApi } from './api';
+import { setupApi, filesApi } from './api';
 import Setup from './components/Setup';
 import Login from './components/Login';
 import { useStore } from './store';
@@ -38,16 +38,16 @@ export default function App() {
         } else {
           setAppState('setup');
         }
-      } catch (err: any) {
+      } catch (err) {
         console.error('Init error:', err);
-        setError(`Error: ${err.message || t('app.connectError')}`);
+        setError(`Error: ${(err instanceof Error && err.message) || t('app.connectError')}`);
         setAppState('setup');
       } finally {
         setLoading(false);
       }
     };
     init();
-  }, []);
+  }, [setSiteTitle, setTree]);
 
   // El servidor guarda la configuración antes de responder y no abre sesión (además invalida
   // las anteriores), así que tras el setup siempre toca iniciar sesión: sin esperas ni recargas
@@ -63,16 +63,25 @@ export default function App() {
       setTree(tree);
       setError('');
       setAppState('main');
-    } catch (err: any) {
+    } catch (err) {
       // Sin esto, un fallo al cargar el árbol dejaba al usuario en el login sin explicación
       console.error('Failed to load tree:', err);
-      setError(`Error: ${err?.message || t('app.connectError')}`);
+      setError(`Error: ${(err instanceof Error && err.message) || t('app.connectError')}`);
     }
   };
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: '16px' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+          flexDirection: 'column',
+          gap: '16px',
+        }}
+      >
         <div>{tr('common.loading')}</div>
         {error && <div style={{ color: 'var(--color-red)', fontSize: '12px' }}>{error}</div>}
       </div>
@@ -84,14 +93,33 @@ export default function App() {
       {/* El error se muestra también fuera de la carga: si no, cualquier fallo al arrancar
           (o al entrar) dejaba al usuario en la pantalla de configuración sin saber por qué */}
       {error && appState !== 'login' && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, background: 'var(--color-red, #e5484d)', color: '#fff', padding: '8px 12px', fontSize: '13px', textAlign: 'center' }}>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 100,
+            background: 'var(--color-red, #e5484d)',
+            color: '#fff',
+            padding: '8px 12px',
+            fontSize: '13px',
+            textAlign: 'center',
+          }}
+        >
           {error}
         </div>
       )}
       {appState === 'setup' && <Setup onComplete={handleSetupComplete} />}
       {appState === 'login' && <Login onComplete={handleLoginComplete} startupError={error} />}
       {appState === 'main' && (
-        <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>{tr('common.loading')}</div>}>
+        <Suspense
+          fallback={
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+              {tr('common.loading')}
+            </div>
+          }
+        >
           <MainLayout />
         </Suspense>
       )}

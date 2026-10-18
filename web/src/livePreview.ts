@@ -51,10 +51,18 @@ const markdownHighlight = HighlightStyle.define([
   { tag: [tags.string, tags.special(tags.string), tags.regexp, tags.inserted], color: 'var(--color-green)' },
   { tag: [tags.number, tags.standard(tags.variableName)], color: 'var(--color-orange)' },
   {
-    tag: [tags.function(tags.variableName), tags.function(tags.propertyName), tags.definition(tags.function(tags.variableName)), tags.className],
+    tag: [
+      tags.function(tags.variableName),
+      tags.function(tags.propertyName),
+      tags.definition(tags.function(tags.variableName)),
+      tags.className,
+    ],
     color: 'var(--color-blue)',
   },
-  { tag: [tags.typeName, tags.propertyName, tags.attributeName, tags.tagName, tags.deleted], color: 'var(--color-red)' },
+  {
+    tag: [tags.typeName, tags.propertyName, tags.attributeName, tags.tagName, tags.deleted],
+    color: 'var(--color-red)',
+  },
   { tag: [tags.meta, tags.punctuation, tags.angleBracket], color: 'var(--text-muted)' },
 ]);
 
@@ -106,11 +114,18 @@ class RuleWidget extends WidgetType {
 }
 
 class ImageWidget extends WidgetType {
-  constructor(readonly src: string, readonly alt: string, readonly width?: number, readonly height?: number) {
+  constructor(
+    readonly src: string,
+    readonly alt: string,
+    readonly width?: number,
+    readonly height?: number,
+  ) {
     super();
   }
   eq(other: ImageWidget) {
-    return other.src === this.src && other.alt === this.alt && other.width === this.width && other.height === this.height;
+    return (
+      other.src === this.src && other.alt === this.alt && other.width === this.width && other.height === this.height
+    );
   }
   toDOM() {
     const img = document.createElement('img');
@@ -158,7 +173,8 @@ function build(view: EditorView): DecorationSet {
     if (to > from) decos.push(deco.range(from, to));
   };
   // Oculta el marcador y el espacio que lo sigue (#, >, -)
-  const hideWithSpace = (from: number, to: number) => add(hide, from, doc.sliceString(to, to + 1) === ' ' ? to + 1 : to);
+  const hideWithSpace = (from: number, to: number) =>
+    add(hide, from, doc.sliceString(to, to + 1) === ' ' ? to + 1 : to);
   const eachLine = (from: number, to: number, cls: string) => {
     const last = doc.lineAt(to).number;
     for (let n = doc.lineAt(from).number; n <= last; n++) decos.push(line(cls).range(doc.line(n).from));
@@ -285,7 +301,7 @@ const livePreviewPlugin = ViewPlugin.fromClass(
       }
     }
   },
-  { decorations: (v) => v.decorations }
+  { decorations: (v) => v.decorations },
 );
 
 const indentGuide = Decoration.mark({ class: 'cm-lp-indent' });
@@ -352,7 +368,7 @@ const codeBlocks = ViewPlugin.fromClass(
       }
     }
   },
-  { decorations: (v) => v.decorations }
+  { decorations: (v) => v.decorations },
 );
 
 // Clic en un [[enlace]] ya renderizado (fuera de la línea del cursor) o Ctrl/Cmd+clic
@@ -370,4 +386,10 @@ const wikilinkClicks = EditorView.domEventHandlers({
   },
 });
 
-export const livePreview = [syntaxHighlighting(markdownHighlight), codeBlocks, livePreviewPlugin, liveTables, wikilinkClicks];
+export const livePreview = [
+  syntaxHighlighting(markdownHighlight),
+  codeBlocks,
+  livePreviewPlugin,
+  liveTables,
+  wikilinkClicks,
+];

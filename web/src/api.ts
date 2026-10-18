@@ -3,10 +3,17 @@ import type { TreeItem, TrashItem, SearchResult } from './types';
 
 const API_URL = '/api';
 
+// Cuerpo JSON de una respuesta de error: el servidor siempre manda `error`; el resto depende del caso
+export type ErrorBody = { error?: string } & Record<string, unknown>;
+
 // Error de una respuesta HTTP no satisfactoria. `status` permite reaccionar al código (401, 409,
 // 429...) y `data` guarda el cuerpo JSON tal cual lo envió el servidor
 export class ApiError extends Error {
-  constructor(message: string, public status: number, public data: Record<string, any> = {}) {
+  constructor(
+    message: string,
+    public status: number,
+    public data: ErrorBody = {},
+  ) {
     super(message);
     this.name = 'ApiError';
   }
@@ -14,7 +21,11 @@ export class ApiError extends Error {
 
 // La nota ha cambiado en el servidor desde la versión que se leyó: trae la versión actual
 export class ConflictError extends ApiError {
-  constructor(public content: string, public version: string, data: Record<string, any> = {}) {
+  constructor(
+    public content: string,
+    public version: string,
+    data: ErrorBody = {},
+  ) {
     super(t('conflict.title'), 409, data);
     this.name = 'ConflictError';
   }
@@ -23,7 +34,11 @@ export class ConflictError extends ApiError {
 // El servidor limita las búsquedas por minuto (SEARCH_RATE_MAX) y responde 429 con `Retry-After`
 // (segundos). Se distingue del resto de errores para no perder lo que ya se tenía en pantalla
 export class RateLimitError extends ApiError {
-  constructor(message: string, public retryAfterMs: number, data: Record<string, any> = {}) {
+  constructor(
+    message: string,
+    public retryAfterMs: number,
+    data: ErrorBody = {},
+  ) {
     super(message, 429, data);
     this.name = 'RateLimitError';
   }
@@ -42,10 +57,11 @@ export function parseRetryAfter(value: string | null, fallbackMs = 60_000): numb
 // Convierte una respuesta de error en la subclase de ApiError que corresponda. El cuerpo puede no
 // ser JSON (proxy, 502...): entonces el mensaje es `HTTP <código>`
 const toApiError = async (res: Response): Promise<ApiError> => {
-  const data = await res.json().catch(() => ({}));
+  const data: ErrorBody = await res.json().catch(() => ({}));
   const message = data.error || `HTTP ${res.status}`;
   if (res.status === 429) return new RateLimitError(message, parseRetryAfter(res.headers.get('Retry-After')), data);
-  if (res.status === 409 && typeof data.version === 'string') return new ConflictError(data.content, data.version, data);
+  if (res.status === 409 && typeof data.version === 'string')
+    return new ConflictError(data.content as string, data.version, data);
   return new ApiError(message, res.status, data);
 };
 
@@ -67,12 +83,12 @@ async function send(path: string, { json, headers, ...init }: RequestOptions = {
 }
 
 // Petición a la API: lanza ApiError (o una subclase) si la respuesta no es ok; si no, devuelve el JSON
-async function request<T = any>(path: string, opts: RequestOptions = {}): Promise<T> {
+async function request<T = unknown>(path: string, opts: RequestOptions = {}): Promise<T> {
   const res = await send(path, opts);
   return res.json();
 }
 
-const post = <T = any>(path: string, json?: unknown) => request<T>(path, { method: 'POST', json: json ?? {} });
+const post = <T = unknown>(path: string, json?: unknown) => request<T>(path, { method: 'POST', json: json ?? {} });
 
 export interface ServerLimits {
   maxNoteMB: number;
@@ -95,7 +111,7 @@ export const setupApi = {
     request('/setup/status'),
   // Lanza ApiError si el servidor rechaza la configuración (403 del token, 400 del puerto...)
   init: (setupToken: string, vaultPath: string, password: string, port: number = 3000) =>
-    post('/setup/init', { setupToken, vaultPath, password, port }),
+    post<{ success?: boolean; error?: string }>('/setup/init', { setupToken, vaultPath, password, port }),
 };
 
 export const authApi = {
@@ -109,7 +125,10 @@ export const filesApi = {
   // `version` identifica el contenido leído; se pasa al guardar para detectar conflictos.
   // Con `knownVersion` (ya se tiene la nota), el servidor responde `unchanged` si sigue igual,
   // sin devolver el contenido
-  readFile: async (filePath: string, knownVersion?: string): Promise<{ content: string; version: string; unchanged?: boolean }> => {
+  readFile: async (
+    filePath: string,
+    knownVersion?: string,
+  ): Promise<{ content: string; version: string; unchanged?: boolean }> => {
     const query = knownVersion ? `?version=${encodeURIComponent(knownVersion)}` : '';
     const res = await send(`/files/read/${encodeURIComponent(filePath)}${query}`);
     if (res.status === 304) return { content: '', version: knownVersion!, unchanged: true };
@@ -139,7 +158,7 @@ export const filesApi = {
 
 // El archivo va tal cual en el cuerpo; nombre y destino, en la query
 const upload = (params: URLSearchParams, file: Blob) =>
-  request(`/files/upload?${params}`, {
+  request<{ path: string }>(`/files/upload?${params}`, {
     method: 'POST',
     headers: { 'Content-Type': file.type || 'application/octet-stream' },
     body: file,
@@ -277,7 +296,7 @@ async function withRetry<T>(
   run: () => Promise<T>,
   signal: AbortSignal | undefined,
   retries: number,
-  onWait?: (ms: number) => void
+  onWait?: (ms: number) => void,
 ): Promise<T> {
   for (let attempt = 0; ; attempt++) {
     try {
@@ -296,26 +315,16 @@ export const searchApi = {
   search: async (
     q: string,
     signal?: AbortSignal,
-    opts: { retries?: number; onWait?: (ms: number) => void } = {}
+    opts: { retries?: number; onWait?: (ms: number) => void } = {},
   ): Promise<SearchResult[]> => {
     const { retries = 1, onWait } = opts;
-    return withRetry(
-      () => request(`/search?q=${encodeURIComponent(q)}`, { signal }),
-      signal,
-      retries,
-      onWait
-    );
+    return withRetry(() => request(`/search?q=${encodeURIComponent(q)}`, { signal }), signal, retries, onWait);
   },
   // Etiquetas del vault y notas en las que aparece cada una
   tags: async (
-    opts: { signal?: AbortSignal; retries?: number; onWait?: (ms: number) => void } = {}
+    opts: { signal?: AbortSignal; retries?: number; onWait?: (ms: number) => void } = {},
   ): Promise<VaultTag[]> => {
     const { signal, retries = 1, onWait } = opts;
-    return withRetry(
-      () => request('/search/tags', { signal }),
-      signal,
-      retries,
-      onWait
-    );
+    return withRetry(() => request('/search/tags', { signal }), signal, retries, onWait);
   },
 };

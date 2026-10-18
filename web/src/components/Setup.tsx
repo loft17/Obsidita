@@ -60,8 +60,8 @@ export default function Setup({ onComplete }: Props) {
         setError(result.error || t('setup.error'));
         setLoading(false);
       }
-    } catch (err: any) {
-      setError(err?.error || err?.message || t('setup.error'));
+    } catch (err) {
+      setError((err instanceof Error && err.message) || t('setup.error'));
       setLoading(false);
     }
   };
@@ -70,9 +70,7 @@ export default function Setup({ onComplete }: Props) {
     <div className="auth-screen">
       <div className="auth-form">
         <h1>{t('setup.title')}</h1>
-        <p style={{ fontSize: '12px', color: 'var(--text-faint)', marginTop: '-8px' }}>
-          {t('setup.subtitle')}
-        </p>
+        <p style={{ fontSize: '12px', color: 'var(--text-faint)', marginTop: '-8px' }}>{t('setup.subtitle')}</p>
 
         {error && <div className="error">{error}</div>}
 
