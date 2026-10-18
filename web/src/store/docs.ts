@@ -1,15 +1,10 @@
 import type { StateCreator } from 'zustand';
-import { isUnder } from './paths';
+import type { TreeItem } from '../types';
+import { fileName, isUnder } from '../paths';
 import { initialDefaultEditMode } from './prefs';
 import type { AppStore } from './index';
 
 // Documentos: árbol del vault, pestañas abiertas, modo de la nota activa y conflictos al guardar
-
-interface TreeItem {
-  type: 'folder' | 'file' | 'other';
-  path: string;
-  name: string;
-}
 
 interface Tab {
   path: string;
@@ -87,7 +82,7 @@ export const createDocsSlice: StateCreator<AppStore, [], [], DocsSlice> = (set) 
         tabs: state.tabs.map((t) => {
           if (!isUnder(t.path, oldPath)) return t;
           const path = move(t.path);
-          return { ...t, path, name: path.split('/').pop() || path };
+          return { ...t, path, name: fileName(path) };
         }),
         activeTab: state.activeTab && move(state.activeTab),
         expandedFolders: new Set([...state.expandedFolders].map(move)),

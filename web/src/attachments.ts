@@ -1,6 +1,7 @@
 // Resolución de adjuntos (imágenes) al estilo Obsidian: ![[imagen.png]] y ![](ruta/imagen.png)
 import { useStore } from './store';
 import { filesApi, searchApi } from './api';
+import { fileName } from './paths';
 
 const IMAGE_EXT = /\.(png|jpe?g|gif|webp|svg|bmp|avif|ico)$/i;
 
@@ -125,7 +126,7 @@ export async function noteImageUsage(
 
   let complete = true;
   for (const image of noteImages(content, notePath)) {
-    const name = image.split('/').pop()!;
+    const name = fileName(image);
     // Candidatas: notas que mencionan el nombre (tal cual o codificado en ![](...))
     const queries = [...new Set([name, encodeURI(name)])];
     const candidates = new Set<string>();

@@ -1,11 +1,9 @@
 // Operaciones de renombrar, mover y borrar que comparten el explorador y los atajos de teclado
 // (NoteShortcuts). Aquí vive la lógica común para que no se comporten distinto según se haga
-// con el ratón o con el teclado. El cálculo de rutas está en filePaths.ts
+// con el ratón o con el teclado. El cálculo de rutas está en src/paths.ts
 import { useStore } from '../store';
 import { filesApi } from '../api';
 import { flushPendingSave, changeNotePath } from './Editor';
-
-export { fileName, filePathParent, movedPath, renamedPath } from './filePaths';
 
 export const refreshTree = async () => useStore.getState().setTree(await filesApi.getTree());
 

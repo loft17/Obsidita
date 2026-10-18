@@ -1,4 +1,5 @@
 import { t } from './i18n';
+import type { TreeItem, TrashItem, SearchResult } from './types';
 
 const API_URL = '/api';
 
@@ -104,7 +105,7 @@ export const authApi = {
 };
 
 export const filesApi = {
-  getTree: () => request('/files/tree'),
+  getTree: (): Promise<TreeItem[]> => request('/files/tree'),
   // `version` identifica el contenido leído; se pasa al guardar para detectar conflictos.
   // Con `knownVersion` (ya se tiene la nota), el servidor responde `unchanged` si sigue igual,
   // sin devolver el contenido
@@ -143,14 +144,6 @@ const upload = (params: URLSearchParams, file: Blob) =>
     headers: { 'Content-Type': file.type || 'application/octet-stream' },
     body: file,
   });
-
-export interface TrashItem {
-  id: string; // nombre dentro de .trash
-  path: string; // ruta original en el vault
-  name: string;
-  isFolder: boolean;
-  deletedAt: number;
-}
 
 export const trashApi = {
   list: (): Promise<TrashItem[]> => request('/files/trash'),
@@ -256,21 +249,6 @@ export const syncApi = {
   version: (path: string, commit: string): Promise<NoteCommit & { content: string; diff: string }> =>
     request(`/sync/history/version?${new URLSearchParams({ path, commit })}`),
 };
-
-export interface SearchMatch {
-  line: number;
-  text: string;
-  start: number;
-  length: number;
-}
-
-export interface SearchResult {
-  path: string;
-  name: string;
-  nameMatch: boolean;
-  total: number;
-  matches: SearchMatch[];
-}
 
 export interface VaultTag {
   tag: string;

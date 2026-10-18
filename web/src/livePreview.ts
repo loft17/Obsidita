@@ -9,6 +9,7 @@ import type { MarkdownConfig } from '@lezer/markdown';
 import { liveTables } from './liveTables';
 import { attachmentUrl, isImage, parseSize } from './attachments';
 import { followWikilink, isResolved } from './wikilinks';
+import { fileName } from './paths';
 
 // ==resaltado== no forma parte de GFM: se define igual que el tachado de @lezer/markdown
 const highlightTag = Tag.define();
@@ -252,7 +253,7 @@ function build(view: EditorView): DecorationSet {
       // ![[imagen.png|300]]
       const [target] = m[1].split('|');
       if (m[0].startsWith('!') && isImage(target.split('#')[0].trim())) {
-        image(start, end, target.trim(), m[1].includes('|') ? m[1] : target.trim().split('/').pop()!);
+        image(start, end, target.trim(), m[1].includes('|') ? m[1] : fileName(target.trim()));
         continue;
       }
       const open = start + m[0].indexOf('[[') + 2;
@@ -370,5 +371,3 @@ const wikilinkClicks = EditorView.domEventHandlers({
 });
 
 export const livePreview = [syntaxHighlighting(markdownHighlight), codeBlocks, livePreviewPlugin, liveTables, wikilinkClicks];
-
-// Modo fuente: el markdown se ve tal cual, solo con el coloreado de sintaxis y los bloques de código

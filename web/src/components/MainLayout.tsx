@@ -31,6 +31,7 @@ import { useSyncNotifications } from '../syncNotify';
 import { useUpdateNotification } from '../updateNotify';
 import { loadServerFonts } from '../serverFonts';
 import { useIsMobile } from '../mobile';
+import { noteTitle } from '../paths';
 import { canRunFileShortcut, fileShortcutFor, hasOpenOverlay } from '../fileShortcuts';
 
 // Los ajustes solo se descargan la primera vez que se abren
@@ -393,7 +394,7 @@ export default function MainLayout() {
                 <IconSidebar />
               </button>
               <div className="mobile-header-title">
-                {activeTab ? (activeTab.split('/').pop() || activeTab).replace(/\.md$/i, '') : ''}
+                {activeTab ? noteTitle(activeTab) : ''}
               </div>
               <button className="icon-btn" title={t('quickOpen.title')} onClick={() => setQuickOpen(true)}>
                 <IconSearch />

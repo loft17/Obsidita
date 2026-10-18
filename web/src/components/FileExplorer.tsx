@@ -1,11 +1,10 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useStore, isUnder, hiddenMatchers, isHiddenPath, parseHiddenExtensions, hasHiddenExtension } from '../store';
+import { useStore, hiddenMatchers, isHiddenPath, parseHiddenExtensions, hasHiddenExtension } from '../store';
 import { filesApi } from '../api';
+import type { TreeItem } from '../types';
 import { flushPendingSave } from './Editor';
-import { applyPathChange, deletePath, filePathParent, fileName, movedPath, refreshTree, renamedPath } from './fileActions';
-
-// Nombre local para el nivel del archivo: dentro del componente `fileName` es otra cosa
-const parentOf = filePathParent;
+import { applyPathChange, deletePath, refreshTree } from './fileActions';
+import { fileName, isUnder, joinPath, movedPath, parentFolder, renamedPath } from '../paths';
 import { RenameDialog, MoveDialog, DeleteFileDialog } from './FileDialogs';
 import { useT } from '../i18n';
 import { IconChevronRight, IconChevronDown, IconCollapseAll, IconFileNew, IconFolderNew } from './Icons';
@@ -14,12 +13,6 @@ import { hasExternalFiles, droppedEntries, uploadDropped } from '../folderUpload
 import { notify } from '../toast';
 import { MenuItem, focusMenuItem, onMenuKeyDown } from './menuNav';
 import { fileShortcutFor } from '../fileShortcuts';
-
-interface TreeItem {
-  type: 'folder' | 'file' | 'other';
-  path: string;
-  name: string;
-}
 
 interface FlatItem {
   item: TreeItem;
@@ -68,8 +61,7 @@ function buildTree(items: TreeItem[]) {
   const roots: TreeItem[] = [];
 
   for (const item of items) {
-    const idx = item.path.lastIndexOf('/');
-    const parentPath = idx >= 0 ? item.path.substring(0, idx) : '';
+    const parentPath = parentFolder(item.path);
     if (!parentPath) {
       roots.push(item);
     } else {
@@ -114,7 +106,7 @@ function FileTreeItem({
   const { item, level, isExpanded, hasChildren } = flatItem;
   const mobile = useIsMobile();
   const isFolder = item.type === 'folder';
-  const folder = isFolder ? item.path : parentOf(item.path);
+  const folder = isFolder ? item.path : parentFolder(item.path);
   const longPress = useLongPress((x, y) => onContextMenu({ x, y }, item.path, isFolder));
 
   return (
@@ -245,7 +237,7 @@ export default function FileExplorer() {
 
   // folder '' es la raíz de la bóveda
   const handleNewNote = async (folder: string, name: string) => {
-    const path = `${folder ? folder + '/' : ''}${name}${/\.md$/i.test(name) ? '' : '.md'}`;
+    const path = joinPath(folder, /\.md$/i.test(name) ? name : `${name}.md`);
     await filesApi.createNote(path);
     await refreshTree();
     if (folder) expandFolder(folder);
@@ -256,7 +248,7 @@ export default function FileExplorer() {
   };
 
   const handleNewFolder = async (folder: string, name: string) => {
-    await filesApi.createFolder(`${folder ? folder + '/' : ''}${name}`);
+    await filesApi.createFolder(joinPath(folder, name));
     await refreshTree();
     if (folder) expandFolder(folder);
     setDialog(null);
@@ -335,7 +327,7 @@ export default function FileExplorer() {
   };
 
   // No se mueve a su misma carpeta ni una carpeta dentro de sí misma
-  const canDrop = (from: string, folder: string) => parentOf(from) !== folder && !isUnder(folder, from);
+  const canDrop = (from: string, folder: string) => parentFolder(from) !== folder && !isUnder(folder, from);
 
   const drag: DragHandlers = {
     dropTarget,
@@ -500,7 +492,7 @@ export default function FileExplorer() {
       case 'ArrowLeft':
         if (isFolder && isExpanded) toggleFolder(item.path);
         else {
-          const parent = parentOf(item.path);
+          const parent = parentFolder(item.path);
           const parentIndex = flatItems.findIndex((f) => f.item.path === parent);
           if (parentIndex >= 0) moveFocus(parentIndex);
         }
@@ -643,7 +635,7 @@ export default function FileExplorer() {
             .filter((i) => i.type === 'folder' && !(dialog.isFolder && isUnder(i.path, dialog.path)))
             .map((i) => i.path)
             .sort((a, b) => a.localeCompare(b))}
-          currentFolder={parentOf(dialog.path)}
+          currentFolder={parentFolder(dialog.path)}
           onSubmit={(folder) => handleMove(dialog.path, folder)}
           onClose={() => setDialog(null)}
         />

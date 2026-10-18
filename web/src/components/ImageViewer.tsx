@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { rawFileUrl } from '../attachments';
 import { useT } from '../i18n';
+import { fileName } from '../paths';
 
 // Visor de imágenes del vault: ajustada a la ventana; clic para alternar con el tamaño real
 export default function ImageViewer({ filePath }: { filePath: string }) {
@@ -25,7 +26,7 @@ export default function ImageViewer({ filePath }: { filePath: string }) {
     <div className={`image-viewer ${actualSize ? 'actual-size' : ''}`}>
       <img
         src={url}
-        alt={filePath.split('/').pop()}
+        alt={fileName(filePath)}
         title={actualSize ? t('image.fitWindow') : t('image.actualSize')}
         onClick={() => setActualSize(!actualSize)}
         onLoad={(e) => setSize({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}

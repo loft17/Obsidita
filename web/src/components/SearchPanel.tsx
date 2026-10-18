@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useStore, hiddenMatchers, isHiddenPath } from '../store';
-import { searchApi, SearchResult, SearchMatch } from '../api';
+import { searchApi } from '../api';
+import type { SearchResult, SearchMatch } from '../types';
+import { parentFolder } from '../paths';
 import { useT } from '../i18n';
 import { setPendingLine } from '../wikilinks';
 import { IconChevronRight, IconChevronDown, IconClose, IconSearch } from './Icons';
@@ -179,7 +181,7 @@ export default function SearchPanel() {
                 <span className="tree-label">
                   <HighlightedName name={r.name.replace(/\.md$/i, '')} query={q} />
                   {r.path.includes('/') && (
-                    <span className="search-result-folder">{r.path.substring(0, r.path.lastIndexOf('/'))}</span>
+                    <span className="search-result-folder">{parentFolder(r.path)}</span>
                   )}
                 </span>
                 {r.total > 0 && <span className="search-result-count">{r.total}</span>}

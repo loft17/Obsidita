@@ -7,6 +7,7 @@ import { insertIntoNote } from './Editor';
 import { QuickOpenDialog } from './FileDialogs';
 import { t, useT } from '../i18n';
 import { notify } from '../toast';
+import { noteTitle } from '../paths';
 import { IconSidebar, IconFolderOpen, IconSearch, IconTag, IconCalendarDays, IconTemplate, IconTrash, IconSettings, IconLogout } from './Icons';
 
 export const logout = async () => {
@@ -42,8 +43,8 @@ function useTemplatePicker() {
     if (!activeTab) return;
     try {
       const [{ content }, { templates }] = await Promise.all([filesApi.readFile(path), settingsApi.getNotes()]);
-      const title = (activeTab.split('/').pop() || activeTab).replace(/\.md$/i, '');
-      insertIntoNote(applyTemplate(content, title, templates));
+      const title = noteTitle(activeTab);
+      insertIntoNote(activeTab, applyTemplate(content, title, templates));
     } catch (err) {
       notify('templates', t('templates.insertError', { error: (err as Error).message }), 'error');
     }

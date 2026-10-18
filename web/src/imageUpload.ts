@@ -6,6 +6,7 @@ import { useStore } from './store';
 import { isImage } from './attachments';
 import { t } from './i18n';
 import { notify } from './toast';
+import { fileName } from './paths';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -22,9 +23,9 @@ const imageFiles = (list: FileList | null | undefined) =>
 
 // Enlace más corto posible: solo el nombre si no hay otro archivo que se llame igual
 const linkTarget = (path: string) => {
-  const name = path.split('/').pop()!;
+  const name = fileName(path);
   const lower = name.toLowerCase();
-  const same = useStore.getState().tree.filter((f) => f.path.split('/').pop()!.toLowerCase() === lower);
+  const same = useStore.getState().tree.filter((f) => fileName(f.path).toLowerCase() === lower);
   return same.length > 1 ? path : name;
 };
 
@@ -107,7 +108,7 @@ export function pickImages(view: EditorView, notePath: string) {
     if (!files.length) return;
     const { from, to } = view.state.selection.main;
     // Las fotos de la cámara se llaman todas igual (image.jpg): mejor con fecha, como al pegar
-    upload(view, notePath, files, { from, to }, files.length > 1 ? (f) => f.name || pastedName(f) : pastedName);
+    upload(view, notePath, files, { from, to }, files.length > 1 ? (f) => f.name : pastedName);
   };
   input.click();
 }
@@ -135,7 +136,7 @@ export const imageUpload = (getPath: () => string) => [
       if (!files.length) return false;
       event.preventDefault();
       const pos = view.posAtCoords({ x: event.clientX, y: event.clientY }) ?? view.state.selection.main.head;
-      upload(view, getPath(), files, { from: pos, to: pos }, (f) => f.name || pastedName(f));
+      upload(view, getPath(), files, { from: pos, to: pos }, (f) => f.name);
       return true;
     },
   }),

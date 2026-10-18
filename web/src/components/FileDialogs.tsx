@@ -4,6 +4,7 @@ import { flushPendingSave } from './Editor';
 import { noteImageUsage } from '../attachments';
 import { syncApi, type NoteCommit } from '../api';
 import { getLang, Trans, useT } from '../i18n';
+import { fileName, noteTitle } from '../paths';
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -444,7 +445,7 @@ export function DeleteFileDialog({
 
   const own = usage?.own ?? [];
   const shared = usage?.shared ?? [];
-  const name = path.split('/').pop() || path;
+  const name = fileName(path);
 
   return (
     <ConfirmDialog
@@ -505,7 +506,7 @@ export function ConflictDialog({
 }) {
   const [busy, setBusy] = useState(false);
   const t = useT();
-  const name = (path.split('/').pop() || path).replace(/\.md$/i, '');
+  const name = noteTitle(path);
 
   const keepMine = async () => {
     setBusy(true);
@@ -578,7 +579,7 @@ export function HistoryDialog({
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const t = useT();
-  const name = (path.split('/').pop() || path).replace(/\.md$/i, '');
+  const name = noteTitle(path);
 
   useEffect(() => {
     syncApi

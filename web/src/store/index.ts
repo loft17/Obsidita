@@ -19,4 +19,4 @@ export { DEFAULT_FONT_SIZE, MIN_FONT_SIZE, MAX_FONT_SIZE } from './prefs';
 export type { SidebarView } from './ui';
 export { DEFAULT_SITE_TITLE, DEFAULT_SIDEBAR_WIDTH, MIN_SIDEBAR_WIDTH, MAX_SIDEBAR_WIDTH } from './ui';
 export type { NoteConflict } from './docs';
-export { isUnder, parseHiddenExtensions, hasHiddenExtension, hiddenMatchers, isHiddenPath } from './paths';
+export { parseHiddenExtensions, hasHiddenExtension, hiddenMatchers, isHiddenPath } from './hidden';

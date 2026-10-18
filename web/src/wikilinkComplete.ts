@@ -1,13 +1,13 @@
 // Autocompletado de enlaces internos: al escribir [[ (o ![[) se sugieren las notas del vault
 import { autocompletion, type Completion, type CompletionContext, type CompletionResult } from '@codemirror/autocomplete';
 import { useStore } from './store';
+import { fileName, parentFolder } from './paths';
 
 // Texto escrito tras [[ hasta el cursor, sin cerrar ni pasar a #encabezado o |alias
 const OPEN_LINK = /(!?)\[\[([^\[\]|#\n]*)$/;
 
 const isNote = (path: string) => /\.md$/i.test(path);
 const stripMd = (path: string) => path.replace(/\.md$/i, '');
-const fileName = (path: string) => path.split('/').pop() || path;
 
 // Como Obsidian: el nombre si es único en el vault, la ruta completa si hay varios iguales
 function linkOptions(includeAttachments: boolean): Completion[] {
@@ -23,7 +23,7 @@ function linkOptions(includeAttachments: boolean): Completion[] {
     const name = fileName(f.path);
     const unique = nameCount.get(name.toLowerCase()) === 1;
     const link = isNote(f.path) ? stripMd(unique ? name : f.path) : unique ? name : f.path;
-    const folder = f.path.includes('/') ? f.path.slice(0, f.path.lastIndexOf('/')) : '';
+    const folder = parentFolder(f.path);
     return {
       label: isNote(f.path) ? stripMd(name) : name,
       detail: folder,

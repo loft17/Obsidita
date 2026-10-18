@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../store';
-import { filesApi } from '../api';
-import { changeNotePath } from './Editor';
+import { applyPathChange } from './fileActions';
+import { noteTitle, renamedPath } from '../paths';
 import { useT } from '../i18n';
 
 const INVALID_CHARS = /[\\/:*?"<>|]/;
@@ -10,16 +10,12 @@ const INVALID_CHARS = /[\\/:*?"<>|]/;
 // aquí dejaría la nota abierta en una pestaña pero invisible en el árbol
 const isValidName = (name: string) => !INVALID_CHARS.test(name) && !name.startsWith('.');
 
-const baseName = (path: string) => (path.split('/').pop() || '').replace(/\.md$/i, '');
-const parentFolder = (path: string) => (path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '');
-
 // Título en línea: el nombre del archivo encima de la nota; al editarlo se renombra el archivo
 export default function InlineTitle({ filePath, onEnter }: { filePath: string; onEnter?: () => void }) {
-  const setTree = useStore((s) => s.setTree);
   const ref = useRef<HTMLDivElement>(null);
   const [error, setError] = useState('');
   const t = useT();
-  const name = baseName(filePath);
+  const name = noteTitle(filePath);
 
   // contentEditable no es controlado por React: sincronizar el texto a mano al cambiar de nota
   useEffect(() => {
@@ -42,14 +38,9 @@ export default function InlineTitle({ filePath, onEnter }: { filePath: string; o
       setError(t('name.invalid'));
       return restore();
     }
-    const folder = parentFolder(filePath);
-    // Sin esta comprobación, escribir "Nota.md" como título renombraría a "Nota.md.md"
-    const ext = /\.md$/i.test(filePath) && !/\.md$/i.test(newName) ? '.md' : '';
-    const newPath = `${folder ? folder + '/' : ''}${newName}${ext}`;
     try {
-      await changeNotePath(filePath, newPath);
+      await applyPathChange(filePath, renamedPath(filePath, newName));
       setError('');
-      setTree(await filesApi.getTree());
     } catch (err) {
       setError((err as Error).message);
       restore();

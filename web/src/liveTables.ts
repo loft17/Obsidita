@@ -256,8 +256,10 @@ function buildTables(state: EditorState): DecorationSet {
       if (cursor.name !== 'Table') continue;
       const from = state.doc.lineAt(cursor.from).from;
       const to = state.doc.lineAt(Math.max(cursor.from, cursor.to - 1)).to;
-      // Con la selección dentro de la tabla (p. ej. al buscar) se muestra el Markdown
-      const inside = sel.some((r) => (r.from > from && r.from < to) || (r.to > from && r.to < to));
+      // Con la selección dentro de la tabla (p. ej. al buscar) se muestra el Markdown. Límites
+      // estrictos a propósito: al editar una celda el widget deja el cursor justo en `from`, y
+      // con el cursor en un borde la tabla tiene que seguir siendo visual
+      const inside = sel.some((r) => r.from < to && r.to > from);
       if (inside) continue;
       const widget = new TableWidget(state.doc.sliceString(from, to));
       decos.push(Decoration.replace({ widget, block: true }).range(from, to));

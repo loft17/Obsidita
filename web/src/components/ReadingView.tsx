@@ -13,6 +13,7 @@ import { cancelPendingSave, NOTES_CHANGED, saveNote } from './Editor';
 import { highlightCodeBlocks } from '../codeHighlight';
 import { cachedDiagram, currentDiagramTheme, renderMermaidDiagrams } from '../mermaidDiagrams';
 import { t, useI18n } from '../i18n';
+import { fileName } from '../paths';
 
 const md = markdownIt({
   html: false,
@@ -106,7 +107,7 @@ md.inline.ruler.before('image', 'embed', (state, silent) => {
     if (isImage(target.split('#')[0].trim())) {
       const token = state.push('image', 'img', 0);
       token.attrs = [['src', target.trim()]];
-      token.content = inner.includes('|') ? inner : target.trim().split('/').pop()!;
+      token.content = inner.includes('|') ? inner : fileName(target.trim());
       token.children = [];
     } else {
       // Nota incrustada: se pinta como bloque si ocupa su propio párrafo (ver note_embed_block)

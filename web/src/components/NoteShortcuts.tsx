@@ -7,7 +7,8 @@ import { create } from 'zustand';
 import { useStore } from '../store';
 import { useT } from '../i18n';
 import { RenameDialog, MoveDialog, DeleteFileDialog } from './FileDialogs';
-import { applyPathChange, deletePath, filePathParent, fileName, movedPath, renamedPath } from './fileActions';
+import { applyPathChange, deletePath } from './fileActions';
+import { movedPath, noteTitle, parentFolder, renamedPath } from '../paths';
 
 export type NoteFileAction = 'rename' | 'move' | 'delete';
 
@@ -53,7 +54,7 @@ export default function NoteShortcuts() {
   if (action === 'rename') {
     return (
       <RenameDialog
-        initialName={fileName(activeTab).replace(/\.md$/i, '')}
+        initialName={noteTitle(activeTab)}
         onSubmit={rename}
         onClose={close}
       />
@@ -63,7 +64,7 @@ export default function NoteShortcuts() {
     return (
       <MoveDialog
         folders={folders}
-        currentFolder={filePathParent(activeTab)}
+        currentFolder={parentFolder(activeTab)}
         onSubmit={move}
         onClose={close}
       />

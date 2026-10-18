@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '../store';
-import { filesApi, trashApi, type TrashItem } from '../api';
+import { filesApi, trashApi } from '../api';
+import type { TrashItem } from '../types';
 import { ConfirmDialog } from './FileDialogs';
 import { getLang, Trans, useT } from '../i18n';
 import { IconClose, IconFile, IconFolderOpen, IconRestore, IconSearch, IconSync, IconTrash } from './Icons';

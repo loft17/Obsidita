@@ -2,6 +2,7 @@
 // misma configuración (.obsidian/daily-notes.json y templates.json), mismos formatos de fecha (moment.js)
 // y mismas variables en las plantillas: {{title}}, {{date}}, {{time}}, {{date:FORMATO}} y {{time:FORMATO}}
 import { useStore } from './store';
+import { fileName, noteTitle } from './paths';
 import { filesApi, settingsApi, type NotesConfig } from './api';
 import { getLang, t } from './i18n';
 import { notify } from './toast';
@@ -86,7 +87,6 @@ export const applyTemplate = (text: string, title: string, config: NotesConfig['
   });
 
 const withMd = (path: string) => (/\.md$/i.test(path) ? path : `${path}.md`);
-const noteTitle = (path: string) => (path.split('/').pop() || path).replace(/\.md$/i, '');
 
 export const dailyNotePath = (config: NotesConfig['dailyNotes'], date = new Date()) => {
   const name = formatDate(date, config.format || DEFAULT_DAILY_FORMAT);
@@ -103,7 +103,7 @@ export async function openDailyNote() {
   setTree(tree);
   const existing = (tree as { path: string }[]).find((item) => item.path.toLowerCase() === path.toLowerCase());
   if (existing) {
-    openFile(existing.path, existing.path.split('/').pop() || existing.path);
+    openFile(existing.path, fileName(existing.path));
     return;
   }
 
@@ -119,7 +119,7 @@ export async function openDailyNote() {
   }
   await filesApi.createNote(path, content);
   setTree(await filesApi.getTree());
-  openFile(path, path.split('/').pop() || path);
+  openFile(path, fileName(path));
   // Recién creada: se abre en modo edición
   setEditMode(true);
   if (missingTemplate) notify('daily', t('daily.templateMissing', { template: missingTemplate }), 'error');

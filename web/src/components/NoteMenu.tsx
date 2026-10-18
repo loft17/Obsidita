@@ -2,16 +2,15 @@ import { useState, useEffect, useId, useRef, useMemo } from 'react';
 import { EditorView } from '@codemirror/view';
 import { useStore } from '../store';
 import { filesApi, syncApi, ConflictError } from '../api';
-import { flushPendingSave, cancelPendingSave, changeNotePath, noteVersions, NOTES_CHANGED } from './Editor';
+import { flushPendingSave, noteVersions, NOTES_CHANGED } from './Editor';
+import { applyPathChange, deletePath } from './fileActions';
+import { fileName, movedPath, noteTitle, parentFolder, renamedPath } from '../paths';
 import { IconMenu } from './Icons';
 import { RenameDialog, MoveDialog, DeleteFileDialog, HistoryDialog } from './FileDialogs';
 import { isImage } from '../attachments';
 import { t as translate, useT } from '../i18n';
 import { notify } from '../toast';
 import { MenuItem, focusMenuItem, onMenuKeyDown } from './menuNav';
-
-const fileName = (path: string) => path.split('/').pop() || path;
-const parentFolder = (path: string) => (path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '');
 
 export default function NoteMenu() {
   const [open, setOpen] = useState(false);
@@ -20,8 +19,6 @@ export default function NoteMenu() {
 
   const activeTab = useStore((s) => s.activeTab);
   const tree = useStore((s) => s.tree);
-  const setTree = useStore((s) => s.setTree);
-  const removeTab = useStore((s) => s.removeTab);
   const editMode = useStore((s) => s.editMode);
   const rawMode = useStore((s) => s.rawMode);
   const setRawMode = useStore((s) => s.setRawMode);
@@ -110,28 +107,16 @@ export default function NoteMenu() {
   };
 
   const changePath = async (newPath: string) => {
-    await changeNotePath(activeTab, newPath);
-    setTree(await filesApi.getTree());
+    await applyPathChange(activeTab, newPath);
     setDialog(null);
   };
 
-  const handleRename = (newName: string) => {
-    const ext = /\.md$/i.test(activeTab) && !/\.md$/i.test(newName) ? '.md' : '';
-    const folder = parentFolder(activeTab);
-    return changePath(`${folder ? folder + '/' : ''}${newName}${ext}`);
-  };
+  const handleRename = (newName: string) => changePath(renamedPath(activeTab, newName));
 
-  const handleMove = (folder: string) => changePath(`${folder ? folder + '/' : ''}${fileName(activeTab)}`);
+  const handleMove = (folder: string) => changePath(movedPath(activeTab, folder));
 
   const handleDelete = async (images: string[]) => {
-    cancelPendingSave(activeTab);
-    await filesApi.deleteFile(activeTab);
-    removeTab(activeTab);
-    for (const image of images) {
-      await filesApi.deleteFile(image);
-      removeTab(image);
-    }
-    setTree(await filesApi.getTree());
+    await deletePath(activeTab, images);
     setDialog(null);
   };
 
@@ -264,7 +249,7 @@ export default function NoteMenu() {
       {searchOpen && <SearchBar onClose={() => setSearchOpen(false)} />}
       {dialog === 'rename' && (
         <RenameDialog
-          initialName={fileName(activeTab).replace(/\.md$/i, '')}
+          initialName={noteTitle(activeTab)}
           onSubmit={handleRename}
           onClose={() => setDialog(null)}
         />

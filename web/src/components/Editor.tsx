@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useStore, isUnder } from '../store';
+import { useStore } from '../store';
+import { isUnder, noteTitle } from '../paths';
 import { filesApi, ConflictError } from '../api';
 import { parseNote, composeNote, type FrontmatterData } from '../frontmatter';
 import Properties from './Properties';
@@ -45,6 +46,19 @@ const under = <T,>(map: Map<string, T>, path: string | null) =>
 
 export const hasPendingSave = (path: string) => pendingSaves.has(path) || inFlightSaves.has(path);
 
+// Olvida la versión de las notas que ya no están en ninguna pestaña (cerradas, o sustituidas al
+// abrir otra en la misma pestaña). Las que tienen un guardado pendiente o en curso la conservan:
+// sin ella se escribirían sin `baseVersion` y el servidor no detectaría el conflicto
+function pruneNoteVersions() {
+  const open = new Set(useStore.getState().tabs.map((t) => t.path));
+  for (const path of noteVersions.keys()) {
+    if (!open.has(path) && !hasPendingSave(path)) noteVersions.delete(path);
+  }
+}
+useStore.subscribe((state, prev) => {
+  if (state.tabs !== prev.tabs) pruneNoteVersions();
+});
+
 // Guarda ya los autoguardados pendientes y espera a los que están en curso
 export async function flushPendingSave(path: string | null) {
   await Promise.all([
@@ -81,7 +95,7 @@ export function saveNote(path: string, content: string): Promise<void> {
         setConflict({ path, mine: content, theirs: err.content, version: err.version });
       } else {
         console.error('Autosave failed:', err);
-        const name = path.split('/').pop()!.replace(/\.md$/i, '');
+        const name = noteTitle(path);
         notify('save', t('toast.saveError', { name, error: (err as Error).message }), 'error');
       }
     }
@@ -92,6 +106,8 @@ export function saveNote(path: string, content: string): Promise<void> {
   return save.finally(() => {
     set.delete(save);
     if (!set.size && inFlightSaves.get(path) === set) inFlightSaves.delete(path);
+    // La pestaña pudo cerrarse mientras se guardaba
+    pruneNoteVersions();
   });
 }
 
@@ -115,13 +131,16 @@ export async function changeNotePath(oldPath: string, newPath: string) {
 }
 
 // Insertar plantilla: el editor montado registra aquí su manejador. En modo lectura no hay
-// editor, así que se pasa a edición y el texto queda pendiente hasta que se monte
-let insertHandler: ((text: string) => void) | null = null;
-let pendingInsert: string | null = null;
+// editor, así que se pasa a edición y el texto queda pendiente hasta que se monte. Todo va
+// con la nota de destino: si entretanto se ha cambiado de pestaña, el texto se descarta en
+// vez de acabar en otra nota
+let insertHandler: { path: string; insert: (text: string) => void } | null = null;
+let pendingInsert: { path: string; text: string } | null = null;
 
-export function insertIntoNote(text: string) {
-  if (insertHandler) return insertHandler(text);
-  pendingInsert = text;
+export function insertIntoNote(path: string, text: string) {
+  if (useStore.getState().activeTab !== path) return;
+  if (insertHandler?.path === path) return insertHandler.insert(text);
+  pendingInsert = { path, text };
   useStore.getState().setEditMode(true);
 }
 
@@ -195,14 +214,13 @@ export default function Editor({ filePath, content, onContentChange }: Props) {
   const insertRef = useRef<(text: string) => void>(() => {});
   insertRef.current = (text) => handleInsert(text);
   useEffect(() => {
-    insertHandler = (text) => insertRef.current(text);
-    if (pendingInsert !== null) {
-      const text = pendingInsert;
-      pendingInsert = null;
-      insertRef.current(text);
-    }
+    const handler = { path: filePath, insert: (text: string) => insertRef.current(text) };
+    insertHandler = handler;
+    const pending = pendingInsert;
+    pendingInsert = null;
+    if (pending?.path === filePath) insertRef.current(pending.text);
     return () => {
-      insertHandler = null;
+      if (insertHandler === handler) insertHandler = null;
     };
   }, []);
 

@@ -1,5 +1,4 @@
-// true si `path` es `base` o está dentro de la carpeta `base`
-export const isUnder = (path: string, base: string) => path === base || path.startsWith(base + '/');
+// Filtros del explorador, la búsqueda y las etiquetas: carpetas y extensiones ocultas
 
 // Extensiones separadas por comas, espacios o saltos de línea; el punto inicial es opcional
 export const parseHiddenExtensions = (value: string): Set<string> =>
