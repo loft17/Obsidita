@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { setupApi } from '../api';
 import { LANGUAGES, useI18n, useT, type Lang } from '../i18n';
 
@@ -17,6 +17,8 @@ export default function Setup({ onComplete }: Props) {
   const t = useT();
   const lang = useI18n((s) => s.lang);
   const setLang = useI18n((s) => s.setLang);
+  // Prefijo de los id que asocian cada <label> (y cada pista) con su campo
+  const id = useId();
 
   useEffect(() => {
     setupApi
@@ -76,8 +78,8 @@ export default function Setup({ onComplete }: Props) {
 
         <form onSubmit={handleSubmit} className="setup-wizard">
           <div className="setup-wizard-field">
-            <label>{t('settings.language')}</label>
-            <select value={lang} onChange={(e) => setLang(e.target.value as Lang)} disabled={loading}>
+            <label htmlFor={`${id}-lang`}>{t('settings.language')}</label>
+            <select id={`${id}-lang`} value={lang} onChange={(e) => setLang(e.target.value as Lang)} disabled={loading}>
               {LANGUAGES.map((l) => (
                 <option key={l.value} value={l.value}>
                   {l.label}
@@ -87,36 +89,41 @@ export default function Setup({ onComplete }: Props) {
           </div>
 
           <div className="setup-wizard-field">
-            <label>{t('setup.token')}</label>
+            <label htmlFor={`${id}-token`}>{t('setup.token')}</label>
             <input
+              id={`${id}-token`}
+              aria-describedby={`${id}-token-hint`}
               type="text"
               autoComplete="off"
               value={setupToken}
               onChange={(e) => setSetupToken(e.target.value)}
               disabled={loading}
             />
-            <small style={{ color: 'var(--text-faint)', fontSize: '11px' }}>
+            <small id={`${id}-token-hint`} style={{ color: 'var(--text-faint)', fontSize: '11px' }}>
               {t('setup.tokenHint')}
             </small>
           </div>
 
           <div className="setup-wizard-field">
-            <label>{t('setup.vaultPath')}</label>
+            <label htmlFor={`${id}-vault`}>{t('setup.vaultPath')}</label>
             <input
+              id={`${id}-vault`}
+              aria-describedby={`${id}-vault-hint`}
               type="text"
               placeholder="/home/user/my-vault"
               value={vaultPath}
               onChange={(e) => setVaultPath(e.target.value)}
               disabled={loading}
             />
-            <small style={{ color: 'var(--text-faint)', fontSize: '11px' }}>
+            <small id={`${id}-vault-hint`} style={{ color: 'var(--text-faint)', fontSize: '11px' }}>
               {t('setup.vaultHint')}
             </small>
           </div>
 
           <div className="setup-wizard-field">
-            <label>{t('common.password')}</label>
+            <label htmlFor={`${id}-password`}>{t('common.password')}</label>
             <input
+              id={`${id}-password`}
               type="password"
               placeholder={t('password.min', { n: minPasswordLength })}
               value={password}
@@ -126,8 +133,9 @@ export default function Setup({ onComplete }: Props) {
           </div>
 
           <div className="setup-wizard-field">
-            <label>{t('setup.confirmPassword')}</label>
+            <label htmlFor={`${id}-confirm`}>{t('setup.confirmPassword')}</label>
             <input
+              id={`${id}-confirm`}
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -136,8 +144,9 @@ export default function Setup({ onComplete }: Props) {
           </div>
 
           <div className="setup-wizard-field">
-            <label>{t('setup.port')}</label>
+            <label htmlFor={`${id}-port`}>{t('setup.port')}</label>
             <input
+              id={`${id}-port`}
               type="number"
               value={port}
               onChange={(e) => setPort(e.target.value)}

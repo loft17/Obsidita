@@ -94,7 +94,7 @@ export const ca: Messages = {
   'file.moveError': "No s'ha pogut moure: {error}",
   'file.uploading': 'Pujant fitxers…',
   'file.uploaded': 'Fitxers pujats: {count}',
-  'file.uploadNothing': 'No hi havia notes (.md) ni imatges per pujar',
+  'file.uploadNothing': 'No hi havia fitxers de tipus permesos per pujar',
   'file.uploadError': "No s'han pogut pujar alguns fitxers: {error}",
   'name.empty': 'El nom no pot estar buit',
   'name.invalid': 'El nom conté caràcters no vàlids: \\ / : * ? " < > |',
@@ -299,6 +299,9 @@ export const ca: Messages = {
   'settings.lineNumbers': 'Números de línia',
   'settings.lineNumbers.desc': 'Mostra els números de línia.',
   'settings.attachments': 'Ubicació predeterminada dels fitxers adjunts nous',
+  'settings.uploads': 'Tipus de fitxer permesos en pujar',
+  'settings.uploads.desc':
+    "Extensions que es poden pujar arrossegant fitxers a l'explorador, separades per comes, p. ex. {a}. Per defecte, notes (.md) i imatges.",
   'settings.attachments.desc': "On es desen els fitxers adjunts que s'afegeixen.",
   'settings.attachments.root': 'Carpeta de la caixa forta',
   'settings.attachments.same': 'La mateixa carpeta on és el fitxer',
@@ -342,6 +345,9 @@ export const ca: Messages = {
   'settings.hiddenFolders.example': '_recursos',
   'settings.hiddenFolders.desc':
     "Un patró per línia, p. ex. {a} o {b}. Fes servir * com a comodí. Les carpetes que hi coincideixin (i el seu contingut) no es mostraran a l'arbre.",
+  'settings.hiddenExtensions': 'Amaga extensions de fitxer',
+  'settings.hiddenExtensions.desc':
+    "Separades per comes, p. ex. {a}. Els fitxers amb aquestes extensions no es mostraran a l'arbre.",
 
   // Sincronització
   'sync.service': 'Servei',

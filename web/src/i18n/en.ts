@@ -94,7 +94,7 @@ export const en: Messages = {
   'file.moveError': 'Could not move: {error}',
   'file.uploading': 'Uploading files…',
   'file.uploaded': 'Files uploaded: {count}',
-  'file.uploadNothing': 'There were no notes (.md) or images to upload',
+  'file.uploadNothing': 'There were no files of allowed types to upload',
   'file.uploadError': 'Some files could not be uploaded: {error}',
   'name.empty': 'The name cannot be empty',
   'name.invalid': 'The name contains invalid characters: \\ / : * ? " < > |',
@@ -298,6 +298,9 @@ export const en: Messages = {
   'settings.lineNumbers': 'Line numbers',
   'settings.lineNumbers.desc': 'Show line numbers.',
   'settings.attachments': 'Default location for new attachments',
+  'settings.uploads': 'Allowed upload file types',
+  'settings.uploads.desc':
+    "Extensions you can upload by dragging files into the explorer, comma-separated, e.g. {a}. By default, notes (.md) and images.",
   'settings.attachments.desc': 'Where newly added attachments are placed.',
   'settings.attachments.root': 'Vault folder',
   'settings.attachments.same': 'Same folder as the current file',
@@ -340,6 +343,9 @@ export const en: Messages = {
   'settings.hiddenFolders.example': '_resources',
   'settings.hiddenFolders.desc':
     'One pattern per line, e.g. {a} or {b}. Use * as a wildcard. Matching folders (and their contents) are hidden from the tree.',
+  'settings.hiddenExtensions': 'Hidden file extensions',
+  'settings.hiddenExtensions.desc':
+    "Comma-separated, e.g. {a}. Files with these extensions are hidden from the tree.",
 
   // Sync
   'sync.service': 'Service',

@@ -194,6 +194,9 @@ export const settingsApi = {
   // Cierra todas las sesiones, también la actual
   revokeSessions: () => request('/settings/sessions/revoke', { method: 'POST' }),
   setSiteTitle: (siteTitle: string): Promise<{ siteTitle: string }> => post('/settings/site-title', { siteTitle }),
+  getUploads: (): Promise<UploadExtensions> => request('/settings/uploads'),
+  // Lista vacía = volver a las predeterminadas (notas e imágenes)
+  setUploads: (extensions: string): Promise<UploadExtensions> => post('/settings/uploads', { extensions }),
   getAttachments: (): Promise<{ attachmentFolderPath: string }> => request('/settings/attachments'),
   setAttachments: (attachmentFolderPath: string): Promise<{ attachmentFolderPath: string }> =>
     post('/settings/attachments', { attachmentFolderPath }),
@@ -205,6 +208,11 @@ export const settingsApi = {
     return `${API_URL}/settings/download-vault${qs ? `?${qs}` : ''}`;
   },
 };
+
+export interface UploadExtensions {
+  extensions: string[];
+  defaults: string[];
+}
 
 export type SyncProvider = 'none' | 'github';
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useStore, isUnder, hiddenMatchers, isHiddenPath } from '../store';
+import { useStore, isUnder, hiddenMatchers, isHiddenPath, parseHiddenExtensions, hasHiddenExtension } from '../store';
 import { filesApi } from '../api';
 import { flushPendingSave } from './Editor';
 import { applyPathChange, deletePath, filePathParent, fileName, movedPath, refreshTree, renamedPath } from './fileActions';
@@ -162,6 +162,7 @@ const ITEM_HEIGHT = 27; // px, debe coincidir con min-height en CSS
 export default function FileExplorer() {
   const tree = useStore((s) => s.tree);
   const hiddenFolders = useStore((s) => s.hiddenFolders);
+  const hiddenExtensions = useStore((s) => s.hiddenExtensions);
   const toggleFolder = useStore((s) => s.toggleFolder);
   const collapseAll = useStore((s) => s.collapseAll);
   const expandedFolders = useStore((s) => s.expandedFolders);
@@ -427,11 +428,17 @@ export default function FileExplorer() {
   // con 3000 notas) y el explorador re-renderiza al expandir, al cambiar de pestaña, etc.
   const { roots, grouped } = useMemo(() => {
     const matchers = hiddenMatchers(hiddenFolders);
-    const visibleTree = matchers.length
-      ? tree.filter((item) => !isHiddenPath(item.path, item.type === 'folder', matchers))
-      : tree;
+    const exts = parseHiddenExtensions(hiddenExtensions);
+    const visibleTree =
+      matchers.length || exts.size
+        ? tree.filter(
+            (item) =>
+              !isHiddenPath(item.path, item.type === 'folder', matchers) &&
+              !(item.type !== 'folder' && exts.size && hasHiddenExtension(item.path, exts))
+          )
+        : tree;
     return buildTree(visibleTree);
-  }, [tree, hiddenFolders]);
+  }, [tree, hiddenFolders, hiddenExtensions]);
 
   const flatItems = useMemo(() => {
     return flattenTree(roots, grouped, expandedFolders);

@@ -29,6 +29,8 @@ interface AppStore {
   clearConflict: (path: string) => void;
   hiddenFolders: string;
   setHiddenFolders: (value: string) => void;
+  hiddenExtensions: string;
+  setHiddenExtensions: (value: string) => void;
   tree: TreeItem[];
   setTree: (tree: TreeItem[]) => void;
   tabs: Tab[];
@@ -251,6 +253,30 @@ const initialHiddenFolders = (() => {
   }
 })();
 
+const HIDDEN_EXT_KEY = 'hiddenExtensions';
+const initialHiddenExtensions = (() => {
+  try {
+    return localStorage.getItem(HIDDEN_EXT_KEY) ?? '';
+  } catch {
+    return '';
+  }
+})();
+
+// Extensiones separadas por comas, espacios o saltos de línea; el punto inicial es opcional
+export const parseHiddenExtensions = (value: string): Set<string> =>
+  new Set(
+    value
+      .split(/[\s,;]+/)
+      .map((e) => e.trim().replace(/^\*?\./, '').toLowerCase())
+      .filter(Boolean)
+  );
+
+export const hasHiddenExtension = (path: string, exts: Set<string>) => {
+  const name = path.slice(path.lastIndexOf('/') + 1);
+  const dot = name.lastIndexOf('.');
+  return dot > 0 && exts.has(name.slice(dot + 1).toLowerCase());
+};
+
 // Un patrón por línea; `*` es comodín. Se compara con el nombre de cada carpeta (sin distinguir mayúsculas)
 export const hiddenMatchers = (patterns: string): RegExp[] =>
   patterns
@@ -285,6 +311,15 @@ export const useStore =create<AppStore>((set) => ({
       // almacenamiento no disponible: la preferencia solo dura la sesión
     }
     set({ hiddenFolders: value });
+  },
+  hiddenExtensions: initialHiddenExtensions,
+  setHiddenExtensions: (value) => {
+    try {
+      localStorage.setItem(HIDDEN_EXT_KEY, value);
+    } catch {
+      // almacenamiento no disponible: la preferencia solo dura la sesión
+    }
+    set({ hiddenExtensions: value });
   },
   tree: [],
   setTree: (tree) => set({ tree }),

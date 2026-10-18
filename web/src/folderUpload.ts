@@ -1,10 +1,16 @@
 // Subida de archivos y carpetas arrastrados desde el sistema al explorador de archivos.
-// Solo se suben notas (.md) e imágenes; el resto se ignora. Las carpetas soltadas se
-// recrean dentro de la carpeta destino con su estructura (solo con lo que se sube)
-import { filesApi } from './api';
-import { isImage } from './attachments';
+// Solo se suben las extensiones permitidas en Preferencias (por defecto, notas e imágenes); el
+// resto se ignora. Las carpetas soltadas se recrean dentro de la carpeta destino con su
+// estructura (solo con lo que se sube)
+import { filesApi, settingsApi } from './api';
 
-const isUploadable = (name: string) => /\.md$/i.test(name) || isImage(name);
+const uploadable = (extensions: string[]) => {
+  const allowed = new Set(extensions);
+  return (name: string) => {
+    const dot = name.lastIndexOf('.');
+    return dot > 0 && allowed.has(name.slice(dot + 1).toLowerCase());
+  };
+};
 
 interface PendingFile {
   dir: string; // subcarpeta relativa a la carpeta destino ('' = la propia carpeta)
@@ -27,14 +33,14 @@ const readAllEntries = async (dir: FileSystemDirectoryEntry) => {
 
 const entryFile = (entry: FileSystemFileEntry) => new Promise<File>((resolve, reject) => entry.file(resolve, reject));
 
-async function collect(entry: FileSystemEntry, dir: string, out: PendingFile[]) {
+async function collect(entry: FileSystemEntry, dir: string, out: PendingFile[], isUploadable: (name: string) => boolean) {
   // Ocultos (.git, .obsidian, .DS_Store...) no se suben
   if (entry.name.startsWith('.')) return;
   if (entry.isFile) {
     if (isUploadable(entry.name)) out.push({ dir, file: await entryFile(entry as FileSystemFileEntry) });
   } else if (entry.isDirectory) {
     const sub = dir ? `${dir}/${entry.name}` : entry.name;
-    for (const child of await readAllEntries(entry as FileSystemDirectoryEntry)) await collect(child, sub, out);
+    for (const child of await readAllEntries(entry as FileSystemDirectoryEntry)) await collect(child, sub, out, isUploadable);
   }
 }
 
@@ -56,8 +62,9 @@ export function droppedEntries(dt: DataTransfer) {
 
 // Sube lo soltado a `folder` ('' = raíz). Devuelve cuántos se han subido y los errores
 export async function uploadDropped(folder: string, dropped: ReturnType<typeof droppedEntries>) {
+  const isUploadable = uploadable((await settingsApi.getUploads()).extensions);
   const pending: PendingFile[] = dropped.loose.filter((f) => isUploadable(f.name)).map((file) => ({ dir: '', file }));
-  for (const entry of dropped.entries) await collect(entry, '', pending);
+  for (const entry of dropped.entries) await collect(entry, '', pending, isUploadable);
 
   const errors: string[] = [];
   let uploaded = 0;

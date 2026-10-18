@@ -5,6 +5,7 @@ import * as vault from '../vault.js';
 import { prepareLinkUpdate } from '../links.js';
 import { publicError, scriptHash } from '../security.js';
 import { MAX_UPLOAD_MB } from '../limits.js';
+import { isUploadable } from '../uploads.js';
 import { loadMarkdown, loadZipArchive, ZIP_LEVEL } from '../lazy.js';
 
 // Frontmatter YAML al inicio de la nota (se omite en la exportación)
@@ -28,9 +29,6 @@ const PRINT_STYLES = `
 `;
 
 const escapeHtml = (md, s) => md.utils.escapeHtml(s);
-
-// Archivos que se pueden soltar en el explorador: notas e imágenes
-const UPLOADABLE = /\.(md|png|jpe?g|gif|webp|svg|bmp|avif|ico)$/i;
 
 const PRINT_SCRIPT = "window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 300); });";
 // La página de exportación solo puede ejecutar su script de impresión
@@ -111,7 +109,7 @@ ${md.render(body)}
   }));
 
   // Sube un adjunto de la nota `note` (cuerpo binario); la carpeta destino sale de los ajustes.
-  // Con `folder` (arrastrar archivos al explorador) se guarda en esa carpeta, y solo notas o imágenes
+  // Con `folder` (arrastrar archivos al explorador) se guarda en esa carpeta, y solo con las extensiones permitidas
   router.post(
     '/upload',
     express.raw({ type: () => true, limit: MAX_UPLOAD_MB * 1024 * 1024 }),
@@ -121,7 +119,7 @@ ${md.render(body)}
       if (!name || !Buffer.isBuffer(req.body) || !req.body.length) throw new Error('Archivo vacío');
       let folder;
       if (req.query.folder !== undefined) {
-        if (!UPLOADABLE.test(name)) throw new Error('Solo se pueden subir notas (.md) e imágenes');
+        if (!isUploadable(cfg, name)) throw new Error('Tipo de archivo no permitido');
         folder = String(req.query.folder).replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
       } else {
         folder = vault.attachmentFolder(cfg.vaultPath, note);

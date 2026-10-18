@@ -93,7 +93,7 @@ export const es = {
   'file.moveError': 'No se pudo mover: {error}',
   'file.uploading': 'Subiendo archivos…',
   'file.uploaded': 'Archivos subidos: {count}',
-  'file.uploadNothing': 'No había notas (.md) ni imágenes que subir',
+  'file.uploadNothing': 'No había archivos de tipos permitidos que subir',
   'file.uploadError': 'No se pudieron subir algunos archivos: {error}',
   'name.empty': 'El nombre no puede estar vacío',
   'name.invalid': 'El nombre contiene caracteres no válidos: \\ / : * ? " < > |',
@@ -298,6 +298,9 @@ export const es = {
   'settings.lineNumbers': 'Números de línea',
   'settings.lineNumbers.desc': 'Muestra los números de línea.',
   'settings.attachments': 'Ubicación predeterminada para los archivos adjuntos nuevos',
+  'settings.uploads': 'Tipos de archivo permitidos al subir',
+  'settings.uploads.desc':
+    "Extensiones que se pueden subir arrastrando archivos al explorador, separadas por comas, p. ej. {a}. Por defecto, notas (.md) e imágenes.",
   'settings.attachments.desc': 'Dónde se ubican los archivos adjuntos recién agregados.',
   'settings.attachments.root': 'Carpeta de la bóveda',
   'settings.attachments.same': 'Misma carpeta donde está el archivo',
@@ -341,6 +344,9 @@ export const es = {
   'settings.hiddenFolders.example': '_recursos',
   'settings.hiddenFolders.desc':
     'Un patrón por línea, p. ej. {a} o {b}. Usa * como comodín. Las carpetas que coincidan (y su contenido) no se mostrarán en el árbol.',
+  'settings.hiddenExtensions': 'Ocultar extensiones de archivo',
+  'settings.hiddenExtensions.desc':
+    "Separadas por comas, p. ej. {a}. Los archivos con estas extensiones no se mostrarán en el árbol.",
 
   // Sincronización
   'sync.service': 'Servicio',

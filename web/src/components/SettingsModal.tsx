@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { useStore, type FontKind, type Theme, DEFAULT_FONT_SIZE, DEFAULT_SITE_TITLE, MIN_FONT_SIZE, MAX_FONT_SIZE } from '../store';
-import { settingsApi, syncApi, type NotesConfig, type NotesConfigUpdate, type ServerLimits, type SyncConfig, type SyncConfigUpdate, type SyncProvider, type UpdateStatus } from '../api';
+import { settingsApi, syncApi, type NotesConfig, type NotesConfigUpdate, type ServerLimits, type SyncConfig, type SyncConfigUpdate, type SyncProvider, type UpdateStatus, type UploadExtensions } from '../api';
 import { formatDate as formatMoment, DEFAULT_DAILY_FORMAT, DEFAULT_DATE_FORMAT, DEFAULT_TIME_FORMAT } from '../templates';
 import { getLang, LANGUAGES, Trans, useI18n, useT, type Lang, type MessageKey } from '../i18n';
 import { IconChevronLeft, IconClose, IconEdit, IconEye, IconFolderNew, IconList, IconLock, IconReset, IconSearch, IconSync, IconUserCircle } from './Icons';
@@ -474,6 +474,66 @@ function AttachmentsSetting() {
   );
 }
 
+// Extensiones que se pueden subir arrastrando archivos al explorador (se guarda en el servidor)
+function UploadsSetting() {
+  const [value, setValue] = useState('');
+  const [saved, setSaved] = useState('');
+  const [isDefault, setIsDefault] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState('');
+  const t = useT();
+
+  const apply = (r: UploadExtensions) => {
+    const text = r.extensions.map((e) => `.${e}`).join(', ');
+    setValue(text);
+    setSaved(text);
+    setIsDefault(r.extensions.join() === r.defaults.join());
+    setLoaded(true);
+  };
+
+  useEffect(() => {
+    settingsApi.getUploads().then(apply).catch((err) => setError(err.message));
+  }, []);
+
+  const save = async (text: string) => {
+    if (text.trim() === saved) return setValue(saved);
+    setError('');
+    try {
+      apply(await settingsApi.setUploads(text));
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
+  return (
+    <>
+      <div className="setting-item">
+        <div className="setting-info">
+          <div className="setting-name">{t('settings.uploads')}</div>
+          <div className="setting-desc">
+            <Trans k="settings.uploads.desc" values={{ a: <code>.txt, .pdf</code> }} />
+          </div>
+          {error && <div className="setting-desc" style={{ color: 'var(--text-error, #e5484d)' }}>{error}</div>}
+        </div>
+        <button className="icon-btn" title={t('settings.resetDefault')} disabled={!loaded || isDefault} onClick={() => save('')}>
+          <IconReset size={16} />
+        </button>
+      </div>
+      <div className="setting-item">
+        <input
+          className="setting-input"
+          type="text"
+          disabled={!loaded}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={() => save(value)}
+          onKeyDown={(e) => e.key === 'Enter' && save(value)}
+        />
+      </div>
+    </>
+  );
+}
+
 type NotesGroup = keyof NotesConfig;
 
 // Campo de texto que se guarda al salir de él o al pulsar Intro
@@ -616,6 +676,8 @@ function NotesSettings() {
 function FilesSection() {
   const hiddenFolders = useStore((s) => s.hiddenFolders);
   const setHiddenFolders = useStore((s) => s.setHiddenFolders);
+  const hiddenExtensions = useStore((s) => s.hiddenExtensions);
+  const setHiddenExtensions = useStore((s) => s.setHiddenExtensions);
   const [vaultPath, setVaultPath] = useState('');
   const [savedPath, setSavedPath] = useState('');
   const [vaultPassword, setVaultPassword] = useState('');
@@ -726,6 +788,7 @@ function FilesSection() {
     <h3 className="settings-heading">{t('settings.files.attachments')}</h3>
     <div className="settings-group">
       <AttachmentsSetting />
+      <UploadsSetting />
     </div>
 
     <h3 className="settings-heading">{t('settings.files.explorer')}</h3>
@@ -745,6 +808,23 @@ function FilesSection() {
         value={hiddenFolders}
         onChange={(e) => setHiddenFolders(e.target.value)}
       />
+      <div className="setting-item">
+        <div className="setting-info">
+          <div className="setting-name">{t('settings.hiddenExtensions')}</div>
+          <div className="setting-desc">
+            <Trans k="settings.hiddenExtensions.desc" values={{ a: <code>.txt, .pdf</code> }} />
+          </div>
+        </div>
+      </div>
+      <div className="setting-item">
+        <input
+          className="setting-input"
+          type="text"
+          placeholder=".txt, .pdf"
+          value={hiddenExtensions}
+          onChange={(e) => setHiddenExtensions(e.target.value)}
+        />
+      </div>
     </div>
 
     <NotesSettings />

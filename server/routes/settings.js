@@ -8,6 +8,7 @@ import { sessionCookie } from '../sessions.js';
 import * as limits from '../limits.js';
 import { loadZipArchive, ZIP_LEVEL } from '../lazy.js';
 import { getUpdateStatus } from '../updates.js';
+import { DEFAULT_UPLOAD_EXTENSIONS, parseUploadExtensions, uploadExtensions } from '../uploads.js';
 
 export default (dataDir, getConfig, limiter, sessions) => {
   const router = Router();
@@ -135,6 +136,31 @@ export default (dataDir, getConfig, limiter, sessions) => {
       const { siteTitle: _, ...rest } = cfg;
       writeFileSync(configPath, JSON.stringify(siteTitle ? { ...rest, siteTitle } : rest, null, 2), { mode: 0o600 });
       res.json({ siteTitle });
+    } catch (err) {
+      res.status(500).json({ error: publicError(err, 'No se pudo guardar') });
+    }
+  });
+
+  // Extensiones que se pueden subir al explorador. Vacío o null = las predeterminadas
+  router.get('/uploads', (req, res) => {
+    const cfg = getConfig();
+    if (!cfg) return res.status(400).json({ error: 'Not configured' });
+    res.json({ extensions: uploadExtensions(cfg), defaults: DEFAULT_UPLOAD_EXTENSIONS });
+  });
+
+  router.post('/uploads', (req, res) => {
+    const cfg = getConfig();
+    if (!cfg) return res.status(400).json({ error: 'Not configured' });
+    let extensions;
+    try {
+      extensions = parseUploadExtensions(req.body?.extensions);
+    } catch (err) {
+      return res.status(400).json({ error: publicError(err) });
+    }
+    try {
+      const { uploadExtensions: _, ...rest } = cfg;
+      writeFileSync(configPath, JSON.stringify(extensions.length ? { ...rest, uploadExtensions: extensions } : rest, null, 2), { mode: 0o600 });
+      res.json({ extensions: uploadExtensions(extensions.length ? { uploadExtensions: extensions } : null), defaults: DEFAULT_UPLOAD_EXTENSIONS });
     } catch (err) {
       res.status(500).json({ error: publicError(err, 'No se pudo guardar') });
     }
