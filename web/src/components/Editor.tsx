@@ -17,7 +17,7 @@ import { wikilinkCompletion } from '../wikilinkComplete';
 import { setEmbedContent } from '../noteEmbeds';
 import { subscribePendingScroll, takePendingLine } from '../wikilinks';
 import { notify } from '../toast';
-import { t } from '../i18n';
+import { t, useT } from '../i18n';
 
 interface Props {
   filePath: string;
@@ -168,6 +168,7 @@ export default function Editor({ filePath, content, onContentChange }: Props) {
   const showLineNumbers = useStore((s) => s.showLineNumbers);
   const showInlineTitle = useStore((s) => s.showInlineTitle);
   const rawMode = useStore((s) => s.rawMode);
+  const tr = useT();
   const note = useMemo(() => parseNote(content), [content]);
   // Con un frontmatter inválido se edita el texto completo, sin panel de propiedades
   const body = note.valid ? note.body : content;
@@ -322,6 +323,7 @@ export default function Editor({ filePath, content, onContentChange }: Props) {
       {rawMode && (
         <textarea
           className="editor-raw"
+          aria-label={tr('name.noteText')}
           value={content}
           spellCheck={true}
           autoFocus

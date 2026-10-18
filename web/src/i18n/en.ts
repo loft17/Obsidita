@@ -98,6 +98,8 @@ export const en: Messages = {
   'file.uploadError': 'Some files could not be uploaded: {error}',
   'name.empty': 'The name cannot be empty',
   'name.invalid': 'The name contains invalid characters: \\ / : * ? " < > |',
+  'name.noteTitle': 'Note title',
+  'name.noteText': 'Note text',
 
   // Dialogs
   'move.search': 'Search folders...',

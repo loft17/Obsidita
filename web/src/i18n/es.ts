@@ -97,6 +97,8 @@ export const es = {
   'file.uploadError': 'No se pudieron subir algunos archivos: {error}',
   'name.empty': 'El nombre no puede estar vacío',
   'name.invalid': 'El nombre contiene caracteres no válidos: \\ / : * ? " < > |',
+  'name.noteTitle': 'Título de la nota',
+  'name.noteText': 'Texto de la nota',
 
   // Diálogos
   'move.search': 'Buscar carpeta...',

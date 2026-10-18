@@ -98,6 +98,8 @@ export const ca: Messages = {
   'file.uploadError': "No s'han pogut pujar alguns fitxers: {error}",
   'name.empty': 'El nom no pot estar buit',
   'name.invalid': 'El nom conté caràcters no vàlids: \\ / : * ? " < > |',
+  'name.noteTitle': 'Títol de la nota',
+  'name.noteText': 'Text de la nota',
 
   // Diàlegs
   'move.search': 'Cerca una carpeta...',
