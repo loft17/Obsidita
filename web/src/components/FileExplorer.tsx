@@ -19,6 +19,13 @@ interface TreeItem {
   name: string;
 }
 
+interface FlatItem {
+  item: TreeItem;
+  level: number;
+  isExpanded: boolean;
+  hasChildren: boolean;
+}
+
 type Grouped = Map<string, TreeItem[]>;
 
 // Arrastrar y soltar: `folder` es la carpeta de destino ('' = raíz). Soltar sobre un
@@ -33,6 +40,26 @@ interface DragHandlers {
 
 const displayName = (item: TreeItem) =>
   item.type === 'file' ? item.name.replace(/\.md$/i, '') : item.name;
+
+// Aplana el árbol en lista 1D para virtualización manual
+function flattenTree(
+  items: TreeItem[],
+  grouped: Grouped,
+  expandedFolders: Set<string>,
+  level: number = 0
+): FlatItem[] {
+  const result: FlatItem[] = [];
+  for (const item of items) {
+    const hasChildren = item.type === 'folder' && (grouped.get(item.path)?.length ?? 0) > 0;
+    const isExpanded = expandedFolders.has(item.path);
+    result.push({ item, level, isExpanded, hasChildren });
+    if (isExpanded && hasChildren) {
+      const children = grouped.get(item.path) ?? [];
+      result.push(...flattenTree(children, grouped, expandedFolders, level + 1));
+    }
+  }
+  return result;
+}
 
 function buildTree(items: TreeItem[]) {
   const grouped: Grouped = new Map();
@@ -60,30 +87,24 @@ function buildTree(items: TreeItem[]) {
   return { roots, grouped };
 }
 
-function FileTreeNode({
-  item,
-  grouped,
-  expandedFolders,
+function FileTreeItem({
+  flatItem,
+  activeTab,
   onToggle,
   onSelect,
   onContextMenu,
   drag,
-  depth,
 }: {
-  item: TreeItem;
-  grouped: Grouped;
-  expandedFolders: Set<string>;
+  flatItem: FlatItem;
+  activeTab: string;
   onToggle: (path: string) => void;
   onSelect: (path: string) => void;
   onContextMenu: (at: { x: number; y: number }, path: string, isFolder: boolean) => void;
   drag: DragHandlers;
-  depth: number;
 }) {
+  const { item, level, isExpanded, hasChildren } = flatItem;
   const mobile = useIsMobile();
-  const activeTab = useStore((s) => s.activeTab);
   const isFolder = item.type === 'folder';
-  const isExpanded = expandedFolders.has(item.path);
-  const children = grouped.get(item.path) ?? [];
   const folder = isFolder ? item.path : parentOf(item.path);
   const longPress = useLongPress((x, y) => onContextMenu({ x, y }, item.path, isFolder));
 
@@ -91,8 +112,7 @@ function FileTreeNode({
     <div className={`tree-node ${isFolder && drag.dropTarget === item.path ? 'drop-target' : ''}`}>
       <div
         className={`tree-item ${isFolder ? 'folder' : 'file'} ${activeTab === item.path ? 'active' : ''}`}
-        style={{ paddingLeft: '8px' }}
-        // En pantallas táctiles arrastrar choca con el scroll y la pulsación larga: se mueve con el menú
+        style={{ paddingLeft: `${level * 14 + 8}px` }}
         draggable={!mobile}
         {...longPress.handlers}
         onClick={() => {
@@ -111,29 +131,11 @@ function FileTreeNode({
       >
         {isFolder && (
           <span className="tree-chevron">
-            {isExpanded ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
+            {hasChildren && (isExpanded ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />)}
           </span>
         )}
         <span className="tree-label">{displayName(item)}</span>
       </div>
-
-      {isFolder && isExpanded && children.length > 0 && (
-        <div className="tree-children" style={{ marginLeft: '14px' }}>
-          {children.map((child) => (
-            <FileTreeNode
-              key={child.path}
-              item={child}
-              grouped={grouped}
-              expandedFolders={expandedFolders}
-              onToggle={onToggle}
-              onSelect={onSelect}
-              onContextMenu={onContextMenu}
-              drag={drag}
-              depth={depth + 1}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 }
@@ -359,6 +361,12 @@ export default function FileExplorer() {
     return buildTree(visibleTree);
   }, [tree, hiddenFolders]);
 
+  const flatItems = useMemo(() => {
+    return flattenTree(roots, grouped, expandedFolders);
+  }, [roots, grouped, expandedFolders]);
+
+  const activeTab = useStore((s) => s.activeTab);
+
   return (
     <>
       <div className="sidebar-toolbar">
@@ -384,17 +392,15 @@ export default function FileExplorer() {
           }
         }}
       >
-        {roots.map((item) => (
-          <FileTreeNode
-            key={item.path}
-            item={item}
-            grouped={grouped}
-            expandedFolders={expandedFolders}
+        {flatItems.map((flatItem) => (
+          <FileTreeItem
+            key={flatItem.item.path}
+            flatItem={flatItem}
+            activeTab={activeTab}
             onToggle={toggleFolder}
             onSelect={handleSelect}
             onContextMenu={handleContextMenu}
             drag={drag}
-            depth={0}
           />
         ))}
       </div>
