@@ -156,7 +156,6 @@ function ChipList({
           <input
             className="chip-input"
             value={draft}
-            size={Math.max(draft.length, 1)}
             enterKeyHint="done"
             onChange={(e) => onInput(e.target.value)}
             onKeyDown={onKeyDown}

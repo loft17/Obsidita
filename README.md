@@ -34,6 +34,9 @@ la propia web.
 
 ## ✨ Características
 
+## Importante:
+Ojo con Firefox: field-sizing funciona en Chrome, Edge y Safari recientes, pero puede que no en Firefox. Ahí el input no crecería con el texto, pero seguiría ocupando el hueco libre de la línea gracias a flex: 1, así que se puede usar igual.
+
 ---
 
 ## 🚀 Instalación
