@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { useStore } from '../store';
 import { useT } from '../i18n';
@@ -69,6 +69,50 @@ export default function Tabs() {
   const mobile = useIsMobile();
   const t = useT();
   const [pathToClose, setPathToClose] = useState<string | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const closeTab = (path: string, isDirty?: boolean) => {
+    if (isDirty) setPathToClose(path);
+    else removeTab(path);
+  };
+
+  // Patrón de pestañas de ARIA con activación manual: ←/→ e Inicio/Fin mueven el foco, Intro/Espacio
+  // abren la pestaña enfocada y Supr la cierra. Solo la activa entra en el orden de Tab
+  const onTabKeyDown = (e: KeyboardEvent<HTMLDivElement>, index: number) => {
+    const list = Array.from(listRef.current?.querySelectorAll<HTMLElement>('[role="tab"]') ?? []);
+    const tab = tabs[index];
+    let next: number;
+    switch (e.key) {
+      case 'ArrowRight':
+        next = (index + 1) % list.length;
+        break;
+      case 'ArrowLeft':
+        next = (index - 1 + list.length) % list.length;
+        break;
+      case 'Home':
+        next = 0;
+        break;
+      case 'End':
+        next = list.length - 1;
+        break;
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        setActiveTab(tab.path);
+        return;
+      case 'Delete': {
+        e.preventDefault();
+        // El foco pasa a la pestaña vecina antes de que esta desaparezca
+        if (!tab.isDirty) (list[index + 1] ?? list[index - 1])?.focus();
+        closeTab(tab.path, tab.isDirty);
+        return;
+      }
+      default:
+        return;
+    }
+    e.preventDefault();
+    list[next]?.focus();
+  };
 
   return (
     <div className="tabs">
@@ -78,30 +122,36 @@ export default function Tabs() {
           <IconSidebar size={16} />
         </button>
       )}
-      {tabs.map((tab) => (
-        <div
-          key={tab.path}
-          className={`tab ${activeTab === tab.path ? 'active' : ''}`}
-          onClick={() => setActiveTab(tab.path)}
-        >
-          <span className="tab-title">{tab.name.replace(/\.md$/i, '')}</span>
-          {tab.isDirty && <span className="tab-dirty">●</span>}
+      <div className="tabs-list" role="tablist" ref={listRef}>
+        {tabs.map((tab, index) => (
           <div
-            className="tab-close"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (tab.isDirty) {
-                setPathToClose(tab.path);
-              } else {
-                removeTab(tab.path);
-              }
-            }}
-            title={t('common.close')}
+            key={tab.path}
+            className={`tab ${activeTab === tab.path ? 'active' : ''}`}
+            role="tab"
+            aria-selected={activeTab === tab.path}
+            tabIndex={activeTab === tab.path || (!activeTab && index === 0) ? 0 : -1}
+            onClick={() => setActiveTab(tab.path)}
+            onKeyDown={(e) => onTabKeyDown(e, index)}
           >
-            <IconClose size={14} />
+            <span className="tab-title">{tab.name.replace(/\.md$/i, '')}</span>
+            {tab.isDirty && <span className="tab-dirty">●</span>}
+            {/* Fuera del orden de Tab (no puede haber controles dentro de una pestaña): con el teclado, Supr */}
+            <button
+              type="button"
+              className="tab-close"
+              tabIndex={-1}
+              onClick={(e) => {
+                e.stopPropagation();
+                closeTab(tab.path, tab.isDirty);
+              }}
+              title={t('common.close')}
+              aria-label={t('common.close')}
+            >
+              <IconClose size={14} />
+            </button>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
       <div className="tab-new" title={t('tabs.new')}>
         <IconPlus size={16} />
       </div>

@@ -12,6 +12,8 @@ import { IconChevronRight, IconChevronDown, IconCollapseAll, IconFileNew, IconFo
 import { isMobile, useIsMobile, useLongPress } from '../mobile';
 import { hasExternalFiles, droppedEntries, uploadDropped } from '../folderUpload';
 import { notify } from '../toast';
+import { MenuItem, focusMenuItem, onMenuKeyDown } from './menuNav';
+import { fileShortcutFor } from '../fileShortcuts';
 
 interface TreeItem {
   type: 'folder' | 'file' | 'other';
@@ -93,13 +95,20 @@ function FileTreeItem({
   onToggle,
   onSelect,
   onContextMenu,
+  onKeyDown,
+  onFocus,
+  tabStop,
   drag,
 }: {
   flatItem: FlatItem;
-  activeTab: string;
+  activeTab: string | null;
   onToggle: (path: string) => void;
   onSelect: (path: string) => void;
   onContextMenu: (at: { x: number; y: number }, path: string, isFolder: boolean) => void;
+  onKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => void;
+  onFocus: (path: string) => void;
+  // Único elemento del árbol alcanzable con Tab; el resto se recorre con las flechas
+  tabStop: boolean;
   drag: DragHandlers;
 }) {
   const { item, level, isExpanded, hasChildren } = flatItem;
@@ -109,10 +118,18 @@ function FileTreeItem({
   const longPress = useLongPress((x, y) => onContextMenu({ x, y }, item.path, isFolder));
 
   return (
-    <div className={`tree-node ${isFolder && drag.dropTarget === item.path ? 'drop-target' : ''}`}>
+    <div className={`tree-node ${isFolder && drag.dropTarget === item.path ? 'drop-target' : ''}`} role="none">
       <div
         className={`tree-item ${isFolder ? 'folder' : 'file'} ${activeTab === item.path ? 'active' : ''}`}
         style={{ paddingLeft: `${level * 14 + 8}px` }}
+        role="treeitem"
+        aria-level={level + 1}
+        aria-expanded={isFolder && hasChildren ? isExpanded : undefined}
+        aria-selected={activeTab === item.path}
+        tabIndex={tabStop ? 0 : -1}
+        data-path={item.path}
+        onKeyDown={onKeyDown}
+        onFocus={() => onFocus(item.path)}
         draggable={!mobile}
         {...longPress.handlers}
         onClick={() => {
@@ -151,7 +168,14 @@ export default function FileExplorer() {
   const addTab = useStore((s) => s.addTab);
   const openFile = useStore((s) => s.openFile);
   const setActiveTab = useStore((s) => s.setActiveTab);
-  const [menu, setMenu] = useState<{ x: number; y: number; path: string; isFolder: boolean } | null>(null);
+  // keyboard: abierto con el teclado (tecla de menú o Shift+F10), el foco va al primer elemento
+  const [menu, setMenu] = useState<{ x: number; y: number; path: string; isFolder: boolean; keyboard: boolean } | null>(
+    null
+  );
+  // Elemento del árbol con el foco (o el último que lo tuvo): es la parada de Tab del árbol
+  const [focusedPath, setFocusedPath] = useState<string | null>(null);
+  // Elemento que debe recibir el foco en cuanto la virtualización lo pinte
+  const pendingFocus = useRef<string | null>(null);
   const [dialog, setDialog] = useState<{
     kind: 'rename' | 'move' | 'delete' | 'new-note' | 'new-folder';
     path: string;
@@ -163,13 +187,20 @@ export default function FileExplorer() {
   const t = useT();
 
   // Virtualización manual: calcula qué items son visibles basándose en scroll
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const container = e.currentTarget;
+  const updateRange = (container: HTMLDivElement) => {
     const scrollTop = container.scrollTop;
     const clientHeight = container.clientHeight;
     const start = Math.max(0, Math.floor(scrollTop / ITEM_HEIGHT) - 10);
     const end = Math.ceil((scrollTop + clientHeight) / ITEM_HEIGHT) + 10;
     setVisibleRange({ start, end });
+  };
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => updateRange(e.currentTarget);
+
+  const focusTreeItem = (path: string) => {
+    const el = explorerRef.current?.querySelector<HTMLElement>(`[data-path="${CSS.escape(path)}"]`);
+    el?.focus();
+    return !!el;
   };
 
   const handleSelect = (path: string) => {
@@ -183,17 +214,24 @@ export default function FileExplorer() {
     setActiveTab(path);
   };
 
-  const handleContextMenu = (at: { x: number; y: number }, path: string, isFolder: boolean) => {
+  const handleContextMenu = (at: { x: number; y: number }, path: string, isFolder: boolean, keyboard = false) => {
     // Mantener el menú dentro de la ventana
     const x = Math.max(4, Math.min(at.x, window.innerWidth - 220));
     const y = Math.max(4, Math.min(at.y, window.innerHeight - 240));
-    setMenu({ x, y, path, isFolder });
+    setMenu({ x, y, path, isFolder, keyboard });
+  };
+
+  const closeMenu = () => {
+    if (!menu) return;
+    setMenu(null);
+    focusTreeItem(menu.path);
   };
 
   const runMenuAction = (action: (path: string) => void) => {
     if (!menu) return;
     const path = menu.path;
-    setMenu(null);
+    // El foco vuelve antes al elemento del árbol: así el diálogo que se abra lo devuelve allí al cerrarse
+    closeMenu();
     action(path);
   };
 
@@ -355,7 +393,14 @@ export default function FileExplorer() {
     const onDown = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenu(null);
     };
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setMenu(null);
+    // Escape también cierra el menú abierto con el ratón; si el foco estaba en él, vuelve al árbol
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      const inMenu = menuRef.current?.contains(document.activeElement);
+      setMenu(null);
+      if (inMenu) focusTreeItem(menu.path);
+    };
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
     return () => {
@@ -363,6 +408,19 @@ export default function FileExplorer() {
       document.removeEventListener('keydown', onKey);
     };
   }, [menu]);
+
+  // Al abrirse, el foco entra en el menú para recorrerlo con las flechas: con el teclado, en su
+  // primer elemento; con el ratón, en el contenedor, sin resaltar ninguno
+  useEffect(() => {
+    if (!menu) return;
+    if (menu.keyboard) focusMenuItem(menuRef.current, 'first');
+    else menuRef.current?.focus();
+  }, [menu]);
+
+  // Sin dependencias: el elemento pendiente aparece cuando el scroll actualiza el rango visible
+  useEffect(() => {
+    if (pendingFocus.current && focusTreeItem(pendingFocus.current)) pendingFocus.current = null;
+  });
 
   // `tree` solo se reemplaza entero (nunca se muta en sitio), así que memoizar por identidad
   // es seguro. Sin esto, filtrar y reconstruir el árbol completo corría en CADA render (~3 ms
@@ -381,6 +439,81 @@ export default function FileExplorer() {
 
   const activeTab = useStore((s) => s.activeTab);
 
+  // Lleva el foco a un elemento del árbol, aunque la virtualización aún no lo haya pintado
+  const moveFocus = (index: number) => {
+    const target = flatItems[index];
+    const container = explorerRef.current;
+    if (!target || !container) return;
+    setFocusedPath(target.item.path);
+    if (focusTreeItem(target.item.path)) return;
+    container.scrollTop = Math.max(0, index * ITEM_HEIGHT - container.clientHeight / 2);
+    updateRange(container);
+    pendingFocus.current = target.item.path;
+  };
+
+  // Patrón de árbol de ARIA: ↑/↓ e Inicio/Fin recorren, → despliega o entra en la carpeta, ← la
+  // pliega o sube a la carpeta padre, Intro/Espacio abren, y la tecla de menú o Shift+F10 sacan el
+  // menú contextual. F2, Supr y los atajos de mover/borrar abren su diálogo para ese elemento
+  const handleTreeKeyDown = (e: React.KeyboardEvent<HTMLDivElement>, index: number) => {
+    const { item, isExpanded, hasChildren } = flatItems[index];
+    const isFolder = item.type === 'folder';
+    if (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) {
+      e.preventDefault();
+      const r = e.currentTarget.getBoundingClientRect();
+      handleContextMenu({ x: r.left + 24, y: r.bottom }, item.path, isFolder, true);
+      return;
+    }
+    // En el árbol, los atajos de archivo actúan sobre el elemento enfocado y no sobre la nota abierta
+    const action = fileShortcutFor(e) ?? (e.key === 'Delete' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey ? 'delete' : null);
+    if (action) {
+      e.preventDefault();
+      e.stopPropagation();
+      setDialog({ kind: action, path: item.path, isFolder });
+      return;
+    }
+    if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    switch (e.key) {
+      case 'ArrowDown':
+        moveFocus(Math.min(index + 1, flatItems.length - 1));
+        break;
+      case 'ArrowUp':
+        moveFocus(Math.max(index - 1, 0));
+        break;
+      case 'Home':
+        moveFocus(0);
+        break;
+      case 'End':
+        moveFocus(flatItems.length - 1);
+        break;
+      case 'ArrowRight':
+        if (!isFolder || !hasChildren) break;
+        if (isExpanded) moveFocus(index + 1);
+        else toggleFolder(item.path);
+        break;
+      case 'ArrowLeft':
+        if (isFolder && isExpanded) toggleFolder(item.path);
+        else {
+          const parent = parentOf(item.path);
+          const parentIndex = flatItems.findIndex((f) => f.item.path === parent);
+          if (parentIndex >= 0) moveFocus(parentIndex);
+        }
+        break;
+      case 'Enter':
+      case ' ':
+        if (isFolder) toggleFolder(item.path);
+        else handleSelect(item.path);
+        break;
+      default:
+        return;
+    }
+    e.preventDefault();
+  };
+
+  const visibleItems = flatItems.slice(visibleRange.start, visibleRange.end);
+  // Parada de Tab: el último elemento enfocado, si no la nota abierta y si no el primero visible
+  const isVisible = (path: string | null) => visibleItems.some((f) => f.item.path === path);
+  const tabStop = isVisible(focusedPath) ? focusedPath : isVisible(activeTab) ? activeTab : visibleItems[0]?.item.path;
+
   return (
     <>
       <div className="sidebar-toolbar">
@@ -397,6 +530,8 @@ export default function FileExplorer() {
       <div
         ref={explorerRef}
         className={`file-explorer ${dropTarget === '' ? 'drop-target' : ''}`}
+        role="tree"
+        aria-label={t('sidebar.files')}
         // El hueco libre del explorador es la raíz de la bóveda
         onDragOver={(e) => drag.onDragOver(e, '')}
         onDrop={(e) => drag.onDrop(e, '')}
@@ -409,10 +544,10 @@ export default function FileExplorer() {
         onScroll={handleScroll}
       >
         {/* Spacer arriba */}
-        <div style={{ height: `${visibleRange.start * ITEM_HEIGHT}px` }} />
+        <div role="none" style={{ height: `${visibleRange.start * ITEM_HEIGHT}px` }} />
 
         {/* Items visibles */}
-        {flatItems.slice(visibleRange.start, visibleRange.end).map((flatItem, idx) => (
+        {visibleItems.map((flatItem, idx) => (
           <FileTreeItem
             key={flatItem.item.path}
             flatItem={flatItem}
@@ -420,48 +555,55 @@ export default function FileExplorer() {
             onToggle={toggleFolder}
             onSelect={handleSelect}
             onContextMenu={handleContextMenu}
+            onKeyDown={(e) => handleTreeKeyDown(e, visibleRange.start + idx)}
+            onFocus={setFocusedPath}
+            tabStop={flatItem.item.path === tabStop}
             drag={drag}
           />
         ))}
 
         {/* Spacer abajo */}
-        <div style={{ height: `${Math.max(0, (flatItems.length - visibleRange.end) * ITEM_HEIGHT)}px` }} />
+        <div role="none" style={{ height: `${Math.max(0, (flatItems.length - visibleRange.end) * ITEM_HEIGHT)}px` }} />
       </div>
       {menu && (
-        <div ref={menuRef} className="context-menu" style={{ top: menu.y, left: menu.x }}>
+        <div
+          ref={menuRef}
+          className="context-menu"
+          role="menu"
+          aria-label={fileName(menu.path)}
+          tabIndex={-1}
+          style={{ top: menu.y, left: menu.x }}
+          // Tab cierra el menú y devuelve el foco al árbol: el menú está al final del documento
+          onKeyDown={(e) =>
+            onMenuKeyDown(e, (ev) => {
+              ev.preventDefault();
+              closeMenu();
+            })
+          }
+          // La tecla de menú dispara también el `contextmenu` nativo, ya sobre el menú abierto
+          onContextMenu={(e) => e.preventDefault()}
+        >
           {menu.isFolder ? (
             <>
-              <div className="dropdown-item" onClick={() => openDialog('new-note')}>
-                {t('file.newNote')}
-              </div>
-              <div className="dropdown-item" onClick={() => openDialog('new-folder')}>
-                {t('file.newFolder')}
-              </div>
+              <MenuItem onClick={() => openDialog('new-note')}>{t('file.newNote')}</MenuItem>
+              <MenuItem onClick={() => openDialog('new-folder')}>{t('file.newFolder')}</MenuItem>
             </>
           ) : (
-            <div className="dropdown-item" onClick={() => runMenuAction(handleOpenInNewTab)}>
-              {t('file.openInNewTab')}
-            </div>
+            <MenuItem onClick={() => runMenuAction(handleOpenInNewTab)}>{t('file.openInNewTab')}</MenuItem>
           )}
           <hr className="dropdown-divider" />
-          <div className="dropdown-item" onClick={() => runMenuAction(handleCopy)}>
-            {t('file.makeCopy')}
-          </div>
+          <MenuItem onClick={() => runMenuAction(handleCopy)}>{t('file.makeCopy')}</MenuItem>
           {menu.isFolder && (
-            <div className="dropdown-item" onClick={() => runMenuAction(handleDownloadFolder)}>
-              {t('file.downloadFolder')}
-            </div>
+            <MenuItem onClick={() => runMenuAction(handleDownloadFolder)}>{t('file.downloadFolder')}</MenuItem>
           )}
-          <div className="dropdown-item" onClick={() => openDialog('move')}>
+          <MenuItem onClick={() => openDialog('move')}>
             {menu.isFolder ? t('file.moveFolder') : t('file.moveFile')}
-          </div>
-          <div className="dropdown-item" onClick={() => openDialog('rename')}>
-            {t('file.rename')}
-          </div>
+          </MenuItem>
+          <MenuItem onClick={() => openDialog('rename')}>{t('file.rename')}</MenuItem>
           <hr className="dropdown-divider" />
-          <div className="dropdown-item danger" onClick={() => openDialog('delete')}>
+          <MenuItem danger onClick={() => openDialog('delete')}>
             {t('common.delete')}
-          </div>
+          </MenuItem>
         </div>
       )}
       {(dialog?.kind === 'new-note' || dialog?.kind === 'new-folder') && (

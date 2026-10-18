@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
+import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import type { EditorView } from '@codemirror/view';
 import { undo, redo } from '@codemirror/commands';
 import {
@@ -224,47 +224,130 @@ interface MenuItem {
   run: () => void;
 }
 
+// Desplegable con el patrón de menú de ARIA: con el teclado se abre con Intro/Espacio/↓/↑, se recorre
+// con las flechas e Inicio/Fin, Escape lo cierra devolviendo el foco al botón y Tab lo cierra sin más.
+// Con el ratón el foco se queda en el editor, como en el resto de botones
 function ToolMenu({ title, icon, items }: { title: string; icon: ReactNode; items: MenuItem[] }) {
   const [open, setOpen] = useState(false);
+  // Elemento que recibe el foco al abrir con el teclado (null: abierto con el ratón, el foco no se mueve)
+  const [focusOnOpen, setFocusOnOpen] = useState<'first' | 'last' | null>(null);
   // En el móvil la barra se desliza en horizontal y recortaría el desplegable: se coloca fijo bajo el botón
   const [fixedAt, setFixedAt] = useState<CSSProperties>();
   const ref = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuId = useId();
+
+  const menuItems = () => Array.from(menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []);
 
   useEffect(() => {
     if (!open) return;
     const close = (e: MouseEvent) => {
       if (!ref.current?.contains(e.target as Node)) setOpen(false);
     };
+    // Escape también cierra el menú abierto con el ratón, con el foco aún en el editor
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      e.stopPropagation();
+      const inMenu = menuRef.current?.contains(document.activeElement);
+      setOpen(false);
+      if (inMenu) buttonRef.current?.focus();
+    };
     document.addEventListener('mousedown', close);
-    return () => document.removeEventListener('mousedown', close);
+    document.addEventListener('keydown', onKey, true);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      document.removeEventListener('keydown', onKey, true);
+    };
   }, [open]);
+
+  useEffect(() => {
+    if (!open || !focusOnOpen) return;
+    const list = menuItems();
+    (focusOnOpen === 'first' ? list[0] : list[list.length - 1])?.focus();
+  }, [open, focusOnOpen]);
+
+  const show = (focus: 'first' | 'last' | null) => {
+    if (isMobile() && buttonRef.current) {
+      const r = buttonRef.current.getBoundingClientRect();
+      setFixedAt({ position: 'fixed', top: r.bottom + 4, left: Math.max(4, Math.min(r.left, window.innerWidth - 200)) });
+    } else setFixedAt(undefined);
+    setFocusOnOpen(focus);
+    setOpen(true);
+  };
+
+  const onButtonKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    show(e.key === 'ArrowDown' ? 'first' : 'last');
+  };
+
+  const onMenuKeyDown = (e: React.KeyboardEvent) => {
+    const list = menuItems();
+    const i = list.indexOf(document.activeElement as HTMLElement);
+    let next: number;
+    switch (e.key) {
+      case 'ArrowDown':
+        next = (i + 1) % list.length;
+        break;
+      case 'ArrowUp':
+        next = (i - 1 + list.length) % list.length;
+        break;
+      case 'Home':
+        next = 0;
+        break;
+      case 'End':
+        next = list.length - 1;
+        break;
+      case 'Tab':
+        setOpen(false);
+        return;
+      default:
+        return;
+    }
+    e.preventDefault();
+    list[next]?.focus();
+  };
 
   return (
     <div className="toolbar-menu" ref={ref}>
       <button
+        ref={buttonRef}
         type="button"
         className={'toolbar-btn' + (open ? ' active' : '')}
         title={title}
         aria-label={title}
+        aria-haspopup="menu"
         aria-expanded={open}
+        aria-controls={open ? menuId : undefined}
         onMouseDown={keepFocus}
+        onKeyDown={onButtonKeyDown}
         onClick={(e) => {
-          if (!open && isMobile()) {
-            const r = e.currentTarget.getBoundingClientRect();
-            setFixedAt({ position: 'fixed', top: r.bottom + 4, left: Math.max(4, Math.min(r.left, window.innerWidth - 200)) });
-          } else setFixedAt(undefined);
-          setOpen(!open);
+          // detail === 0: activado con Intro/Espacio, no con el ratón
+          if (open) setOpen(false);
+          else show(e.detail === 0 ? 'first' : null);
         }}
       >
         {icon}
         <IconChevronDown size={10} className="toolbar-caret" />
       </button>
       {open && (
-        <div className="toolbar-dropdown" style={fixedAt}>
+        <div
+          ref={menuRef}
+          id={menuId}
+          className="toolbar-dropdown"
+          role="menu"
+          aria-label={title}
+          style={fixedAt}
+          onKeyDown={onMenuKeyDown}
+        >
           {items.map((item) => (
             <button
               key={item.title}
               type="button"
+              role="menuitem"
+              tabIndex={-1}
               className="toolbar-dropdown-item"
               onMouseDown={keepFocus}
               onClick={() => {

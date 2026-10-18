@@ -1,18 +1,22 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { flushPendingSave } from './Editor';
 import { noteImageUsage } from '../attachments';
 import { syncApi, type NoteCommit } from '../api';
 import { getLang, Trans, useT } from '../i18n';
 
-function useEscape(onClose: () => void) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
-}
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+// Diálogos abiertos, el último encima: solo ese responde a Escape y retiene el foco
+const dialogStack: HTMLElement[] = [];
+const isTopDialog = (el: HTMLElement | null) => !!el && dialogStack[dialogStack.length - 1] === el;
+
+const focusableIn = (root: HTMLElement) =>
+  Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((el) => el.getClientRects().length > 0);
+
+// Diálogo modal: role="dialog" + aria-modal, foco atrapado dentro mientras está abierto y, al
+// cerrarse, de vuelta al elemento que lo tenía antes (si nadie lo ha movido a otro sitio)
 function DialogShell({
   title,
   error,
@@ -24,14 +28,83 @@ function DialogShell({
   onClose: () => void;
   children: React.ReactNode;
 }) {
-  useEscape(onClose);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  // Se lee al renderizar: antes de que el autoFocus o los efectos de los hijos muevan el foco
+  const [returnFocus] = useState(() => document.activeElement as HTMLElement | null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    const dialog = dialogRef.current!;
+    dialogStack.push(dialog);
+    // Los hijos (autoFocus, select() del nombre...) ya han colocado el foco si querían
+    if (!dialog.contains(document.activeElement)) (focusableIn(dialog)[0] ?? dialog).focus();
+
+    const onKey = (e: KeyboardEvent) => {
+      if (!isTopDialog(dialog)) return;
+      if (e.key === 'Escape') {
+        onCloseRef.current();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const list = focusableIn(dialog);
+      if (list.length === 0) {
+        e.preventDefault();
+        dialog.focus();
+        return;
+      }
+      const first = list[0];
+      const last = list[list.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || !dialog.contains(active))) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (active === last || !dialog.contains(active))) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    // Por si el foco llega al fondo por otra vía (clic programático, un script...)
+    const onFocusIn = (e: FocusEvent) => {
+      if (isTopDialog(dialog) && !dialog.contains(e.target as Node)) (focusableIn(dialog)[0] ?? dialog).focus();
+    };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('focusin', onFocusIn);
+
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('focusin', onFocusIn);
+      dialogStack.splice(dialogStack.indexOf(dialog), 1);
+      // Solo si el foco se ha quedado en el diálogo (o perdido al desmontarlo): una acción que
+      // lo haya llevado a otro sitio (abrir la nota en el editor...) manda
+      const active = document.activeElement;
+      if ((!active || active === document.body || dialog.contains(active)) && returnFocus?.isConnected) {
+        returnFocus.focus();
+      }
+    };
+  }, [returnFocus]);
+
   // Portal: un ancestro con `transform` rompería el `position: fixed` del overlay
   return createPortal(
     <div className="modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal file-dialog">
-        <div className="file-dialog-title">{title}</div>
+      <div
+        ref={dialogRef}
+        className="modal file-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+      >
+        <div className="file-dialog-title" id={titleId}>
+          {title}
+        </div>
         {children}
-        {error && <div className="error">{error}</div>}
+        {error && (
+          <div className="error" role="alert">
+            {error}
+          </div>
+        )}
       </div>
     </div>,
     document.body

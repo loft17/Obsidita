@@ -76,52 +76,64 @@ export default function Ribbon() {
   return (
     <div className="ribbon">
       <div className="ribbon-group">
-        <div className="ribbon-item" title={t('sidebar.toggle')} onClick={toggleSidebar}>
+        <button type="button" className="ribbon-item" title={t('sidebar.toggle')} aria-label={t('sidebar.toggle')} onClick={toggleSidebar}>
           <IconSidebar />
-        </div>
-        <div
+        </button>
+        <button
+          type="button"
           className={`ribbon-item ${sidebarOpen && sidebarView === 'files' ? 'active' : ''}`}
           title={t('sidebar.files')}
+          aria-label={t('sidebar.files')}
+          aria-pressed={sidebarOpen && sidebarView === 'files'}
           onClick={() => showSidebarView('files')}
         >
           <IconFolderOpen />
-        </div>
-        <div
+        </button>
+        <button
+          type="button"
           className={`ribbon-item ${sidebarOpen && sidebarView === 'search' ? 'active' : ''}`}
           title={`${t('sidebar.search')} (Ctrl+Shift+F)`}
+          aria-label={`${t('sidebar.search')} (Ctrl+Shift+F)`}
+          aria-pressed={sidebarOpen && sidebarView === 'search'}
           onClick={() => showSidebarView('search')}
         >
           <IconSearch />
-        </div>
-        <div
+        </button>
+        <button
+          type="button"
           className={`ribbon-item ${sidebarOpen && sidebarView === 'tags' ? 'active' : ''}`}
           title={t('sidebar.tags')}
+          aria-label={t('sidebar.tags')}
+          aria-pressed={sidebarOpen && sidebarView === 'tags'}
           onClick={() => showSidebarView('tags')}
         >
           <IconTag />
-        </div>
-        <div
+        </button>
+        <button
+          type="button"
           className={`ribbon-item ${sidebarOpen && sidebarView === 'trash' ? 'active' : ''}`}
           title={t('sidebar.trash')}
+          aria-label={t('sidebar.trash')}
+          aria-pressed={sidebarOpen && sidebarView === 'trash'}
           onClick={() => showSidebarView('trash')}
         >
           <IconTrash />
-        </div>
-        <div className="ribbon-item" title={t('daily.open')} onClick={openToday}>
+        </button>
+        <button type="button" className="ribbon-item" title={t('daily.open')} aria-label={t('daily.open')} onClick={openToday}>
           <IconCalendarDays />
-        </div>
-        <div className="ribbon-item" title={t('templates.insert')} onClick={templates.open}>
+        </button>
+        <button type="button" className="ribbon-item" title={t('templates.insert')} aria-label={t('templates.insert')} onClick={templates.open}>
           <IconTemplate />
-        </div>
+        </button>
       </div>
 
       <div className="ribbon-group bottom">
-        <div className="ribbon-item" title={t('settings.open')} onClick={() => setSettingsOpen(true)}>
+        <button type="button" className="ribbon-item" title={t('settings.open')} aria-label={t('settings.open')} onClick={() => setSettingsOpen(true)}>
           <IconSettings />
-        </div>
-        <div className="ribbon-item" title={t('auth.logout')} onClick={logout}>
+        </button>
+        <button type="button" className="ribbon-item" title={t('auth.logout')} aria-label={t('auth.logout')} onClick={logout}>
           <IconLogout />
-        </div>
+        </button>
       </div>
       {templates.dialog}
     </div>

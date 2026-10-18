@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useId, useRef, useMemo } from 'react';
 import { EditorView } from '@codemirror/view';
 import { useStore } from '../store';
 import { filesApi, syncApi, ConflictError } from '../api';
@@ -8,6 +8,7 @@ import { RenameDialog, MoveDialog, DeleteFileDialog, HistoryDialog } from './Fil
 import { isImage } from '../attachments';
 import { t as translate, useT } from '../i18n';
 import { notify } from '../toast';
+import { MenuItem, focusMenuItem, onMenuKeyDown } from './menuNav';
 
 const fileName = (path: string) => path.split('/').pop() || path;
 const parentFolder = (path: string) => (path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '');
@@ -28,6 +29,11 @@ export default function NoteMenu() {
   const setGitSyncProvider = useStore((s) => s.setGitSyncProvider);
 
   const ref = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuId = useId();
+  // Elemento que recibe el foco al abrir con el teclado (null: abierto con el ratón, el foco no se mueve)
+  const [focusOnOpen, setFocusOnOpen] = useState<'first' | 'last' | null>(null);
   const t = useT();
 
   // Cargar estado de sincronización una sola vez y cachearlo
@@ -44,7 +50,14 @@ export default function NoteMenu() {
     const onDown = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    // Escape cierra el menú; si el foco estaba dentro, vuelve al botón
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      const inMenu = menuRef.current?.contains(document.activeElement);
+      setOpen(false);
+      if (inMenu) buttonRef.current?.focus();
+    };
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
     return () => {
@@ -52,6 +65,10 @@ export default function NoteMenu() {
       document.removeEventListener('keydown', onKey);
     };
   }, [open]);
+
+  useEffect(() => {
+    if (open && focusOnOpen) focusMenuItem(menuRef.current, focusOnOpen);
+  }, [open, focusOnOpen]);
 
   // La búsqueda y los diálogos pertenecen al documento mostrado
   useEffect(() => {
@@ -75,8 +92,20 @@ export default function NoteMenu() {
   if (!activeTab) return null;
   const activeIsImage = isImage(activeTab);
 
-  const openDialog = (kind: NonNullable<typeof dialog>) => {
+  const show = (focus: 'first' | 'last' | null) => {
+    setFocusOnOpen(focus);
+    setOpen(true);
+  };
+
+  // Antes de cerrar, el foco vuelve al botón si estaba en el menú: así el diálogo que se abra lo
+  // devuelve allí al cerrarse, en vez de perderse con el menú desmontado
+  const closeMenu = () => {
+    if (menuRef.current?.contains(document.activeElement)) buttonRef.current?.focus();
     setOpen(false);
+  };
+
+  const openDialog = (kind: NonNullable<typeof dialog>) => {
+    closeMenu();
     setDialog(kind);
   };
 
@@ -125,7 +154,7 @@ export default function NoteMenu() {
   };
 
   const handleDownloadMd = async () => {
-    setOpen(false);
+    closeMenu();
     try {
       await flushPendingSave(activeTab);
       const data = await filesApi.readFile(activeTab);
@@ -145,7 +174,7 @@ export default function NoteMenu() {
   };
 
   const handleExportPDF = async () => {
-    setOpen(false);
+    closeMenu();
     // Abrir antes del await: tras él ya no cuenta como gesto del usuario y se bloquea el popup
     const win = window.open('', '_blank');
     await flushPendingSave(activeTab);
@@ -165,56 +194,71 @@ export default function NoteMenu() {
 
   return (
     <div className="dropdown" ref={ref}>
-      <button className="icon-btn" title={t('note.moreOptions')} aria-expanded={open} onClick={() => setOpen(!open)}>
+      <button
+        ref={buttonRef}
+        className="icon-btn"
+        title={t('note.moreOptions')}
+        aria-label={t('note.moreOptions')}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? menuId : undefined}
+        // Con el teclado: Intro/Espacio/↓ abren en el primer elemento y ↑ en el último
+        onKeyDown={(e) => {
+          if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+          e.preventDefault();
+          show(e.key === 'ArrowDown' ? 'first' : 'last');
+        }}
+        onClick={(e) => {
+          // detail === 0: activado con Intro/Espacio, no con el ratón
+          if (open) setOpen(false);
+          else show(e.detail === 0 ? 'first' : null);
+        }}
+      >
         <IconMenu />
       </button>
       {open && (
-        <div className="dropdown-menu">
-          <div className="dropdown-item" onClick={() => openDialog('rename')}>
-            {t('file.rename')}
-          </div>
-          <div className="dropdown-item" onClick={() => openDialog('move')}>
-            {t('file.moveFile')}
-          </div>
+        <div
+          ref={menuRef}
+          id={menuId}
+          className="dropdown-menu"
+          role="menu"
+          aria-label={t('note.moreOptions')}
+          // Tab cierra el menú y sigue con el foco desde el botón
+          onKeyDown={(e) => onMenuKeyDown(e, () => setOpen(false))}
+        >
+          <MenuItem onClick={() => openDialog('rename')}>{t('file.rename')}</MenuItem>
+          <MenuItem onClick={() => openDialog('move')}>{t('file.moveFile')}</MenuItem>
           {!activeIsImage && (
             <>
               {editMode && (
-                <div
-                  className="dropdown-item"
+                <MenuItem
                   onClick={() => {
-                    setOpen(false);
+                    closeMenu();
                     setRawMode(!rawMode);
                   }}
                 >
                   {rawMode ? t('note.exitRawMode') : t('note.rawMode')}
-                </div>
+                </MenuItem>
               )}
-              <div className="dropdown-item" onClick={handleExportPDF}>
-                {t('note.exportPdf')}
-              </div>
-              <div className="dropdown-item" onClick={handleDownloadMd}>
-                {t('note.downloadMd')}
-              </div>
-              <div
-                className="dropdown-item"
+              <MenuItem onClick={handleExportPDF}>{t('note.exportPdf')}</MenuItem>
+              <MenuItem onClick={handleDownloadMd}>{t('note.downloadMd')}</MenuItem>
+              <MenuItem
                 onClick={() => {
-                  setOpen(false);
+                  closeMenu();
                   setSearchOpen(true);
                 }}
               >
                 {t('note.find')}
-              </div>
+              </MenuItem>
               {gitSyncProvider === 'github' && (
-                <div className="dropdown-item" onClick={() => openDialog('history')}>
-                  {t('note.history')}
-                </div>
+                <MenuItem onClick={() => openDialog('history')}>{t('note.history')}</MenuItem>
               )}
             </>
           )}
           <hr className="dropdown-divider" />
-          <div className="dropdown-item danger" onClick={() => openDialog('delete')}>
+          <MenuItem danger onClick={() => openDialog('delete')}>
             {t('file.deleteFile')}
-          </div>
+          </MenuItem>
         </div>
       )}
       {searchOpen && <SearchBar onClose={() => setSearchOpen(false)} />}
