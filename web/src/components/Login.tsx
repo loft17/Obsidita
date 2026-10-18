@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { authApi } from '../api';
+import { authApi, ApiError } from '../api';
 import { useT } from '../i18n';
 import { useStore, DEFAULT_SITE_TITLE } from '../store';
 
@@ -30,8 +30,8 @@ export default function Login({ onComplete, startupError }: Props) {
     try {
       await authApi.login(password);
       onComplete();
-    } catch (err: any) {
-      setError(err?.error || t('login.wrong'));
+    } catch (err) {
+      setError((err instanceof ApiError && err.data.error) || t('login.wrong'));
     } finally {
       setLoading(false);
     }

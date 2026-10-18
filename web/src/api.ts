@@ -2,6 +2,77 @@ import { t } from './i18n';
 
 const API_URL = '/api';
 
+// Error de una respuesta HTTP no satisfactoria. `status` permite reaccionar al código (401, 409,
+// 429...) y `data` guarda el cuerpo JSON tal cual lo envió el servidor
+export class ApiError extends Error {
+  constructor(message: string, public status: number, public data: Record<string, any> = {}) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+// La nota ha cambiado en el servidor desde la versión que se leyó: trae la versión actual
+export class ConflictError extends ApiError {
+  constructor(public content: string, public version: string, data: Record<string, any> = {}) {
+    super(t('conflict.title'), 409, data);
+    this.name = 'ConflictError';
+  }
+}
+
+// El servidor limita las búsquedas por minuto (SEARCH_RATE_MAX) y responde 429 con `Retry-After`
+// (segundos). Se distingue del resto de errores para no perder lo que ya se tenía en pantalla
+export class RateLimitError extends ApiError {
+  constructor(message: string, public retryAfterMs: number, data: Record<string, any> = {}) {
+    super(message, 429, data);
+    this.name = 'RateLimitError';
+  }
+}
+
+// `Retry-After` → milisegundos. Admite también la forma con fecha HTTP. Sin cabecera válida se
+// usa un minuto, que es la ventana del servidor
+export function parseRetryAfter(value: string | null, fallbackMs = 60_000): number {
+  if (value === null || value.trim() === '') return fallbackMs;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
+  const date = Date.parse(value);
+  return Number.isNaN(date) ? fallbackMs : Math.max(0, date - Date.now());
+}
+
+// Convierte una respuesta de error en la subclase de ApiError que corresponda. El cuerpo puede no
+// ser JSON (proxy, 502...): entonces el mensaje es `HTTP <código>`
+const toApiError = async (res: Response): Promise<ApiError> => {
+  const data = await res.json().catch(() => ({}));
+  const message = data.error || `HTTP ${res.status}`;
+  if (res.status === 429) return new RateLimitError(message, parseRetryAfter(res.headers.get('Retry-After')), data);
+  if (res.status === 409 && typeof data.version === 'string') return new ConflictError(data.content, data.version, data);
+  return new ApiError(message, res.status, data);
+};
+
+type RequestOptions = Omit<RequestInit, 'headers'> & {
+  headers?: Record<string, string>;
+  // Se serializa como JSON y añade la cabecera Content-Type
+  json?: unknown;
+};
+
+// Igual que request() pero devuelve la Response, para los casos que miran el código antes (304)
+async function send(path: string, { json, headers, ...init }: RequestOptions = {}): Promise<Response> {
+  const res = await fetch(`${API_URL}${path}`, {
+    ...init,
+    headers: json !== undefined ? { 'Content-Type': 'application/json', ...headers } : headers,
+    body: json !== undefined ? JSON.stringify(json) : init.body,
+  });
+  if (!res.ok && res.status !== 304) throw await toApiError(res);
+  return res;
+}
+
+// Petición a la API: lanza ApiError (o una subclase) si la respuesta no es ok; si no, devuelve el JSON
+async function request<T = any>(path: string, opts: RequestOptions = {}): Promise<T> {
+  const res = await send(path, opts);
+  return res.json();
+}
+
+const post = <T = any>(path: string, json?: unknown) => request<T>(path, { method: 'POST', json: json ?? {} });
+
 export interface ServerLimits {
   maxNoteMB: number;
   maxUploadMB: number;
@@ -19,153 +90,59 @@ export interface ServerLimits {
 export const setupApi = {
   // minPasswordLength: mínimo que exige el servidor (configurable con MIN_PASSWORD_LENGTH)
   // siteTitle: título de la web elegido en Preferencias (vacío = el predeterminado)
-  checkStatus: async (): Promise<{ configured: boolean; minPasswordLength?: number; siteTitle?: string }> => {
-    const res = await fetch(`${API_URL}/setup/status`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
-  },
-  // Lanza si el servidor rechaza la configuración: sin comprobar res.ok, una respuesta de error
-  // (403 del token, 400 del puerto...) podría darse por buena
-  init: async (setupToken: string, vaultPath: string, password: string, port: number = 3000) => {
-    const res = await fetch(`${API_URL}/setup/init`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ setupToken, vaultPath, password, port }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-    return data;
-  },
+  checkStatus: (): Promise<{ configured: boolean; minPasswordLength?: number; siteTitle?: string }> =>
+    request('/setup/status'),
+  // Lanza ApiError si el servidor rechaza la configuración (403 del token, 400 del puerto...)
+  init: (setupToken: string, vaultPath: string, password: string, port: number = 3000) =>
+    post('/setup/init', { setupToken, vaultPath, password, port }),
 };
 
 export const authApi = {
-  login: async (password: string) => {
-    const res = await fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
-    });
-    // El formulario muestra `error` (contraseña incorrecta, demasiados intentos...)
-    if (!res.ok) throw await res.json().catch(() => ({}));
-    return res.json();
-  },
-  logout: async () => {
-    const res = await fetch(`${API_URL}/auth/logout`, {
-      method: 'POST',
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
-  },
+  // El formulario muestra el `error` del servidor (contraseña incorrecta, demasiados intentos...)
+  login: (password: string) => post('/auth/login', { password }),
+  logout: () => request('/auth/logout', { method: 'POST' }),
 };
 
-// La nota ha cambiado en el servidor desde la versión que se leyó: trae la versión actual
-export class ConflictError extends Error {
-  constructor(public content: string, public version: string) {
-    super(t('conflict.title'));
-  }
-}
-
 export const filesApi = {
-  getTree: async () => {
-    const res = await fetch(`${API_URL}/files/tree`);
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
+  getTree: () => request('/files/tree'),
   // `version` identifica el contenido leído; se pasa al guardar para detectar conflictos.
   // Con `knownVersion` (ya se tiene la nota), el servidor responde `unchanged` si sigue igual,
   // sin devolver el contenido
   readFile: async (filePath: string, knownVersion?: string): Promise<{ content: string; version: string; unchanged?: boolean }> => {
     const query = knownVersion ? `?version=${encodeURIComponent(knownVersion)}` : '';
-    const res = await fetch(`${API_URL}/files/read/${encodeURIComponent(filePath)}${query}`);
+    const res = await send(`/files/read/${encodeURIComponent(filePath)}${query}`);
     if (res.status === 304) return { content: '', version: knownVersion!, unchanged: true };
-    if (!res.ok) throw new Error((await res.json()).error);
     return res.json();
   },
   // Con `baseVersion`, lanza ConflictError si la nota ha cambiado en el servidor desde entonces
-  writeFile: async (filePath: string, content: string, baseVersion?: string): Promise<{ version: string }> => {
-    const res = await fetch(`${API_URL}/files/write/${encodeURIComponent(filePath)}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content, baseVersion }),
-    });
-    if (res.status === 409) {
-      const data = await res.json();
-      throw new ConflictError(data.content, data.version);
-    }
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
-  deleteFile: async (filePath: string) => {
-    const res = await fetch(`${API_URL}/files/${encodeURIComponent(filePath)}`, {
-      method: 'DELETE',
-    });
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
+  writeFile: (filePath: string, content: string, baseVersion?: string): Promise<{ version: string }> =>
+    post(`/files/write/${encodeURIComponent(filePath)}`, { content, baseVersion }),
+  deleteFile: (filePath: string) => request(`/files/${encodeURIComponent(filePath)}`, { method: 'DELETE' }),
   // `updated`: notas cuyos enlaces ha reescrito el servidor para seguir el cambio de ruta
-  renameFile: async (oldPath: string, newPath: string): Promise<{ updated: string[] }> => {
-    const res = await fetch(`${API_URL}/files/rename`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ oldPath, newPath }),
-    });
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
-  copyFile: async (path: string): Promise<{ path: string }> => {
-    const res = await fetch(`${API_URL}/files/copy`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path }),
-    });
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
+  renameFile: (oldPath: string, newPath: string): Promise<{ updated: string[] }> =>
+    post('/files/rename', { oldPath, newPath }),
+  copyFile: (path: string): Promise<{ path: string }> => post('/files/copy', { path }),
   // `content`: contenido inicial (vacía si se omite)
-  createNote: async (path: string, content?: string) => {
-    const res = await fetch(`${API_URL}/files/create-note`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path, content }),
-    });
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
+  createNote: (path: string, content?: string) => post('/files/create-note', { path, content }),
   // Devuelve la ruta dentro del vault donde se ha guardado el adjunto
-  uploadAttachment: async (notePath: string, file: Blob, name: string): Promise<{ path: string }> => {
-    const params = new URLSearchParams({ note: notePath, name });
-    const res = await fetch(`${API_URL}/files/upload?${params}`, {
-      method: 'POST',
-      headers: { 'Content-Type': file.type || 'application/octet-stream' },
-      body: file,
-    });
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
+  uploadAttachment: (notePath: string, file: Blob, name: string): Promise<{ path: string }> =>
+    upload(new URLSearchParams({ note: notePath, name }), file),
   // Sube un archivo (nota o imagen) a la carpeta `folder` ('' = raíz); devuelve la ruta guardada
-  uploadToFolder: async (folder: string, file: Blob, name: string): Promise<{ path: string }> => {
-    const params = new URLSearchParams({ folder, name });
-    const res = await fetch(`${API_URL}/files/upload?${params}`, {
-      method: 'POST',
-      headers: { 'Content-Type': file.type || 'application/octet-stream' },
-      body: file,
-    });
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
-  createFolder: async (path: string) => {
-    const res = await fetch(`${API_URL}/files/create-folder`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path }),
-    });
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
+  uploadToFolder: (folder: string, file: Blob, name: string): Promise<{ path: string }> =>
+    upload(new URLSearchParams({ folder, name }), file),
+  createFolder: (path: string) => post('/files/create-folder', { path }),
   downloadFolder: (path: string) => {
     return `${API_URL}/files/download-folder/${encodeURIComponent(path)}`;
   },
 };
+
+// El archivo va tal cual en el cuerpo; nombre y destino, en la query
+const upload = (params: URLSearchParams, file: Blob) =>
+  request(`/files/upload?${params}`, {
+    method: 'POST',
+    headers: { 'Content-Type': file.type || 'application/octet-stream' },
+    body: file,
+  });
 
 export interface TrashItem {
   id: string; // nombre dentro de .trash
@@ -175,26 +152,12 @@ export interface TrashItem {
   deletedAt: number;
 }
 
-const postJson = async (url: string, body?: unknown) => {
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body ?? {}),
-  });
-  if (!res.ok) throw new Error((await res.json()).error);
-  return res.json();
-};
-
 export const trashApi = {
-  list: async (): Promise<TrashItem[]> => {
-    const res = await fetch(`${API_URL}/files/trash`);
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
+  list: (): Promise<TrashItem[]> => request('/files/trash'),
   // Devuelve la ruta donde ha quedado (otro nombre si la original ya estaba ocupada)
-  restore: (id: string): Promise<{ path: string }> => postJson(`${API_URL}/files/trash/restore`, { id }),
-  purge: (id: string) => postJson(`${API_URL}/files/trash/delete`, { id }),
-  empty: () => postJson(`${API_URL}/files/trash/empty`),
+  restore: (id: string): Promise<{ path: string }> => post('/files/trash/restore', { id }),
+  purge: (id: string) => post('/files/trash/delete', { id }),
+  empty: () => post('/files/trash/empty'),
 };
 
 // Ajustes de los plugins de notas diarias y plantillas de Obsidian ('' = valor por defecto)
@@ -217,76 +180,23 @@ export interface UpdateStatus {
 }
 
 export const settingsApi = {
-  getUpdate: async (): Promise<UpdateStatus> => {
-    const res = await fetch(`${API_URL}/settings/update`);
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
-  getNotes: async (): Promise<NotesConfig> => {
-    const res = await fetch(`${API_URL}/settings/notes`);
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
-  setNotes: (changes: NotesConfigUpdate): Promise<NotesConfig> => postJson(`${API_URL}/settings/notes`, changes),
-  getLimits: async (): Promise<ServerLimits> => {
-    const res = await fetch(`${API_URL}/settings/limits`);
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
-  getVault: async (): Promise<{ vaultPath: string }> => {
-    const res = await fetch(`${API_URL}/settings/vault`);
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
+  getUpdate: (): Promise<UpdateStatus> => request('/settings/update'),
+  getNotes: (): Promise<NotesConfig> => request('/settings/notes'),
+  setNotes: (changes: NotesConfigUpdate): Promise<NotesConfig> => post('/settings/notes', changes),
+  getLimits: (): Promise<ServerLimits> => request('/settings/limits'),
+  getVault: (): Promise<{ vaultPath: string }> => request('/settings/vault'),
   // Exige la contraseña actual además de la sesión
-  setVault: async (vaultPath: string, password: string): Promise<{ vaultPath: string }> => {
-    const res = await fetch(`${API_URL}/settings/vault`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ vaultPath, password }),
-    });
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
+  setVault: (vaultPath: string, password: string): Promise<{ vaultPath: string }> =>
+    post('/settings/vault', { vaultPath, password }),
   // Cierra las demás sesiones; la actual recibe una cookie nueva
-  changePassword: async (currentPassword: string, newPassword: string) => {
-    const res = await fetch(`${API_URL}/settings/password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ currentPassword, newPassword }),
-    });
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
+  changePassword: (currentPassword: string, newPassword: string) =>
+    post('/settings/password', { currentPassword, newPassword }),
   // Cierra todas las sesiones, también la actual
-  revokeSessions: async () => {
-    const res = await fetch(`${API_URL}/settings/sessions/revoke`, { method: 'POST' });
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
-  setSiteTitle: async (siteTitle: string): Promise<{ siteTitle: string }> => {
-    const res = await fetch(`${API_URL}/settings/site-title`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ siteTitle }),
-    });
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
-  getAttachments: async (): Promise<{ attachmentFolderPath: string }> => {
-    const res = await fetch(`${API_URL}/settings/attachments`);
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
-  setAttachments: async (attachmentFolderPath: string): Promise<{ attachmentFolderPath: string }> => {
-    const res = await fetch(`${API_URL}/settings/attachments`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ attachmentFolderPath }),
-    });
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
+  revokeSessions: () => request('/settings/sessions/revoke', { method: 'POST' }),
+  setSiteTitle: (siteTitle: string): Promise<{ siteTitle: string }> => post('/settings/site-title', { siteTitle }),
+  getAttachments: (): Promise<{ attachmentFolderPath: string }> => request('/settings/attachments'),
+  setAttachments: (attachmentFolderPath: string): Promise<{ attachmentFolderPath: string }> =>
+    post('/settings/attachments', { attachmentFolderPath }),
   downloadVaultUrl: (opts: { git?: boolean; trash?: boolean } = {}) => {
     const params = new URLSearchParams();
     if (opts.git) params.set('git', '1');
@@ -328,38 +238,15 @@ export interface NoteCommit {
 }
 
 export const syncApi = {
-  get: async (): Promise<SyncConfig> => {
-    const res = await fetch(`${API_URL}/sync`);
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
-  configure: async (changes: SyncConfigUpdate): Promise<SyncConfig> => {
-    const res = await fetch(`${API_URL}/sync/config`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(changes),
-    });
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
+  get: (): Promise<SyncConfig> => request('/sync'),
+  configure: (changes: SyncConfigUpdate): Promise<SyncConfig> => post('/sync/config', changes),
   // Espera a que termine; el resultado va en status (lastError / lastMessage)
-  run: async (): Promise<SyncConfig> => {
-    const res = await fetch(`${API_URL}/sync/run`, { method: 'POST' });
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
+  run: (): Promise<SyncConfig> => request('/sync/run', { method: 'POST' }),
   // Historial de versiones de una nota (solo con la sincronización con GitHub activa)
-  history: async (path: string): Promise<NoteCommit[]> => {
-    const res = await fetch(`${API_URL}/sync/history?${new URLSearchParams({ path })}`);
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
+  history: (path: string): Promise<NoteCommit[]> => request(`/sync/history?${new URLSearchParams({ path })}`),
   // Contenido de la nota en ese commit y los cambios que introdujo (diff de git)
-  version: async (path: string, commit: string): Promise<NoteCommit & { content: string; diff: string }> => {
-    const res = await fetch(`${API_URL}/sync/history/version?${new URLSearchParams({ path, commit })}`);
-    if (!res.ok) throw new Error((await res.json()).error);
-    return res.json();
-  },
+  version: (path: string, commit: string): Promise<NoteCommit & { content: string; diff: string }> =>
+    request(`/sync/history/version?${new URLSearchParams({ path, commit })}`),
 };
 
 export interface SearchMatch {
@@ -381,35 +268,6 @@ export interface VaultTag {
   tag: string;
   paths: string[];
 }
-
-// El servidor limita las búsquedas por minuto (SEARCH_RATE_MAX) y responde 429 con `Retry-After`
-// (segundos). Se distingue del resto de errores para no perder lo que ya se tenía en pantalla
-export class RateLimitError extends Error {
-  constructor(message: string, public retryAfterMs: number) {
-    super(message);
-    this.name = 'RateLimitError';
-  }
-}
-
-// `Retry-After` → milisegundos. Admite también la forma con fecha HTTP. Sin cabecera válida se
-// usa un minuto, que es la ventana del servidor
-export function parseRetryAfter(value: string | null, fallbackMs = 60_000): number {
-  if (value === null || value.trim() === '') return fallbackMs;
-  const seconds = Number(value);
-  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
-  const date = Date.parse(value);
-  return Number.isNaN(date) ? fallbackMs : Math.max(0, date - Date.now());
-}
-
-const isRateLimitError = (err: unknown) => (err as Error | null)?.name === 'RateLimitError';
-
-// Lanza el error del servidor: RateLimitError si fue un 429, Error normal si no
-const throwHttpError = async (res: Response) => {
-  const data = await res.json().catch(() => ({}));
-  const message = data.error || `HTTP ${res.status}`;
-  if (res.status === 429) throw new RateLimitError(message, parseRetryAfter(res.headers.get('Retry-After')));
-  throw new Error(message);
-};
 
 // Espera cancelable: se rechaza con AbortError si se aborta antes (al cambiar la consulta o
 // cerrar el panel), para no seguir reintentando en segundo plano
@@ -439,8 +297,8 @@ async function withRetry<T>(
     try {
       return await run();
     } catch (err) {
-      if (!isRateLimitError(err) || attempt >= retries) throw err;
-      const wait = Math.min((err as RateLimitError).retryAfterMs + 250, 5 * 60_000);
+      if (!(err instanceof RateLimitError) || attempt >= retries) throw err;
+      const wait = Math.min(err.retryAfterMs + 250, 5 * 60_000);
       onWait?.(wait);
       await sleep(wait, signal);
     }
@@ -456,11 +314,7 @@ export const searchApi = {
   ): Promise<SearchResult[]> => {
     const { retries = 1, onWait } = opts;
     return withRetry(
-      async () => {
-        const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(q)}`, { signal });
-        if (!res.ok) await throwHttpError(res);
-        return res.json();
-      },
+      () => request(`/search?q=${encodeURIComponent(q)}`, { signal }),
       signal,
       retries,
       onWait
@@ -472,11 +326,7 @@ export const searchApi = {
   ): Promise<VaultTag[]> => {
     const { signal, retries = 1, onWait } = opts;
     return withRetry(
-      async () => {
-        const res = await fetch(`${API_URL}/search/tags`, { signal });
-        if (!res.ok) await throwHttpError(res);
-        return res.json();
-      },
+      () => request('/search/tags', { signal }),
       signal,
       retries,
       onWait
