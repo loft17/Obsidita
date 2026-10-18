@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { EditorView } from '@codemirror/view';
 import { useStore } from '../store';
 import { filesApi, syncApi, ConflictError } from '../api';
@@ -15,8 +15,6 @@ export default function NoteMenu() {
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [dialog, setDialog] = useState<'rename' | 'move' | 'delete' | 'history' | null>(null);
-  // El historial de versiones sale de git: solo con la sincronización con GitHub activa
-  const [gitSync, setGitSync] = useState(false);
 
   const activeTab = useStore((s) => s.activeTab);
   const tree = useStore((s) => s.tree);
@@ -25,17 +23,20 @@ export default function NoteMenu() {
   const editMode = useStore((s) => s.editMode);
   const rawMode = useStore((s) => s.rawMode);
   const setRawMode = useStore((s) => s.setRawMode);
+  const gitSyncProvider = useStore((s) => s.gitSyncProvider);
+  const setGitSyncProvider = useStore((s) => s.setGitSyncProvider);
 
   const ref = useRef<HTMLDivElement>(null);
   const t = useT();
 
+  // Cargar estado de sincronización una sola vez y cachearlo
   useEffect(() => {
-    if (!open) return;
+    if (gitSyncProvider !== null) return;
     syncApi.get().then(
-      (cfg) => setGitSync(cfg.provider === 'github'),
-      () => setGitSync(false)
+      (cfg) => setGitSyncProvider(cfg.provider),
+      () => setGitSyncProvider('')
     );
-  }, [open]);
+  }, [gitSyncProvider, setGitSyncProvider]);
 
   useEffect(() => {
     if (!open) return;
@@ -152,10 +153,14 @@ export default function NoteMenu() {
     else alert(translate('note.popupBlocked'));
   };
 
-  const folders = tree
-    .filter((i) => i.type === 'folder')
-    .map((i) => i.path)
-    .sort((a, b) => a.localeCompare(b));
+  const folders = useMemo(
+    () =>
+      tree
+        .filter((i) => i.type === 'folder')
+        .map((i) => i.path)
+        .sort((a, b) => a.localeCompare(b)),
+    [tree]
+  );
 
   return (
     <div className="dropdown" ref={ref}>
@@ -198,7 +203,7 @@ export default function NoteMenu() {
               >
                 {t('note.find')}
               </div>
-              {gitSync && (
+              {gitSyncProvider === 'github' && (
                 <div className="dropdown-item" onClick={() => openDialog('history')}>
                   {t('note.history')}
                 </div>

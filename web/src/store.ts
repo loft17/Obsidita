@@ -82,6 +82,8 @@ interface AppStore {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   searchTag: (tag: string) => void;
+  gitSyncProvider: string | null;
+  setGitSyncProvider: (provider: string | null) => void;
 }
 
 export type SidebarView = 'files' | 'search' | 'tags' | 'trash';
@@ -467,4 +469,6 @@ export const useStore =create<AppStore>((set) => ({
       }
       return { expandedFolders: expanded };
     }),
+  gitSyncProvider: null,
+  setGitSyncProvider: (provider) => set({ gitSyncProvider: provider }),
 }));
