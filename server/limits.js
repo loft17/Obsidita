@@ -1,3 +1,7 @@
+import { createLogger } from './logger.js';
+
+const log = createLogger('Config');
+
 // Límites configurables con variables de entorno (ver .env.example y el README).
 // Un valor ausente o no válido (no numérico, cero o negativo) usa el de por defecto
 const num = (name, fallback) => {
@@ -5,7 +9,7 @@ const num = (name, fallback) => {
   if (raw === undefined || raw.trim() === '') return fallback;
   const n = Number(raw);
   if (Number.isFinite(n) && n > 0) return n;
-  console.warn(`[Config] ${name}=${raw} no es válido; se usa ${fallback}`);
+  log.warn(`${name}=${raw} no es válido; se usa ${fallback}`);
   return fallback;
 };
 const int = (name, fallback) => Math.floor(num(name, fallback));

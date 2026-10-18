@@ -3,6 +3,7 @@ import { filesApi } from './api';
 import { useStore } from './store';
 import { flushPendingSave, noteVersions } from './components/Editor';
 import { isNote } from './paths';
+import log from './logger';
 
 // Contenido de la nota abierta: se lee del servidor al cambiar de pestaña y se guardan ya los
 // autoguardados pendientes al ocultar o cerrar la pestaña del navegador
@@ -39,7 +40,7 @@ export function useNoteLoader(activeTab: string | null) {
         setContent(data.content);
         setContentPath(path);
       } catch (err) {
-        console.error('Error loading file:', err);
+        log.error('Error loading file:', err);
         if (!cancelled) setContentPath(path);
       } finally {
         if (!cancelled) setLoading(false);

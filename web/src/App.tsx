@@ -4,6 +4,7 @@ import Setup from './components/Setup';
 import Login from './components/Login';
 import { useStore } from './store';
 import { t, useT } from './i18n';
+import log from './logger';
 
 // La pantalla principal (editor, CodeMirror, markdown-it...) va en su propio archivo: el login
 // y el setup cargan sin ella. Se empieza a descargar en cuanto se sabe que el vault está configurado
@@ -39,7 +40,7 @@ export default function App() {
           setAppState('setup');
         }
       } catch (err) {
-        console.error('Init error:', err);
+        log.error('Init error:', err);
         setError(`Error: ${(err instanceof Error && err.message) || t('app.connectError')}`);
         setAppState('setup');
       } finally {
@@ -65,7 +66,7 @@ export default function App() {
       setAppState('main');
     } catch (err) {
       // Sin esto, un fallo al cargar el árbol dejaba al usuario en el login sin explicación
-      console.error('Failed to load tree:', err);
+      log.error('Failed to load tree:', err);
       setError(`Error: ${(err instanceof Error && err.message) || t('app.connectError')}`);
     }
   };

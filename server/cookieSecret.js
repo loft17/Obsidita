@@ -1,5 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import crypto from 'crypto';
+import { createLogger } from './logger.js';
+const log = createLogger('Security');
 
 // El secreto firma la cookie de sesión (cookie-parser). Si es vacío o débil, la firma
 // deja de ser una garantía:
@@ -29,8 +31,8 @@ export const loadCookieSecret = (secretPath) => {
   if (fromEnv !== undefined && fromEnv.trim() !== '') {
     const secret = validSecret(fromEnv);
     if (secret) return secret;
-    console.warn(
-      `[Security] COOKIE_SECRET no es válido (se esperan ${SECRET_BYTES * 2} caracteres hexadecimales); se ignora`
+    log.warn(
+      `COOKIE_SECRET no es válido (se esperan ${SECRET_BYTES * 2} caracteres hexadecimales); se ignora`
     );
   }
 
@@ -39,8 +41,8 @@ export const loadCookieSecret = (secretPath) => {
     const secret = validSecret(raw);
     if (secret) return secret;
     // Existe pero no sirve (vacío, truncado o corrupto): se regenera en lugar de aceptarlo
-    console.warn(
-      `[Security] ${secretPath} no contiene un secreto válido (se esperan ${SECRET_BYTES * 2} caracteres ` +
+    log.warn(
+      `${secretPath} no contiene un secreto válido (se esperan ${SECRET_BYTES * 2} caracteres ` +
         'hexadecimales); se genera uno nuevo y las sesiones abiertas dejarán de valer'
     );
   }

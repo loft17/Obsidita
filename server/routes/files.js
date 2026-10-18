@@ -7,6 +7,8 @@ import { publicError, scriptHash } from '../security.js';
 import { MAX_UPLOAD_MB } from '../limits.js';
 import { isUploadable } from '../uploads.js';
 import { loadMarkdown, loadZipArchive, ZIP_LEVEL } from '../lazy.js';
+import { createLogger } from '../logger.js';
+const log = createLogger('Files');
 
 // Frontmatter YAML al inicio de la nota (se omite en la exportación)
 const FRONTMATTER = /^---[ \t]*\r?\n(?:[\s\S]*?\r?\n)?---[ \t]*(?:\r?\n|$)/;
@@ -196,7 +198,7 @@ ${md.render(body)}
     const archive = new ZipArchive({ zlib: { level: ZIP_LEVEL } });
 
     archive.on('error', (err) => {
-      console.error('Archiver error:', err);
+      log.error('Archiver error:', err);
       if (!res.headersSent) {
         res.status(500).json({ error: publicError(err, 'No se pudo crear el archivo ZIP') });
       } else {

@@ -12,6 +12,7 @@ import { t as translate, useT } from '../i18n';
 import { notify } from '../toast';
 import { MenuItem, focusMenuItem, onMenuKeyDown } from './menuNav';
 import { useLatest } from '../latestRef';
+import log from '../logger';
 
 export default function NoteMenu() {
   const [open, setOpen] = useState(false);
@@ -165,7 +166,7 @@ export default function NoteMenu() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('Error downloading markdown:', err);
+      log.error('Error downloading markdown:', err);
     }
   };
 

@@ -3,6 +3,8 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { sessionCookie } from '../sessions.js';
 import { verifyPassword } from '../password.js';
+import { createLogger } from '../logger.js';
+const log = createLogger('Auth');
 
 export default (dataDir, sessions, limiter) => {
   const router = Router();
@@ -36,7 +38,7 @@ export default (dataDir, sessions, limiter) => {
 
       res.json({ success: true });
     } catch (err) {
-      console.error('[Auth] Login error:', err);
+      log.error('Login error:', err);
       res.status(500).json({ error: 'Error al iniciar sesión' });
     } finally {
       attempt.release();

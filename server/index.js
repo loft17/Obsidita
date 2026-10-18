@@ -17,6 +17,8 @@ import { createSessionStore, createLoginLimiter } from './sessions.js';
 import { loadCookieSecret } from './cookieSecret.js';
 import { securityHeaders, csrfGuard } from './security.js';
 import { MAX_NOTE_MB, MAX_UPLOAD_MB } from './limits.js';
+import { createLogger } from './logger.js';
+const log = createLogger('Server');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -34,7 +36,7 @@ try {
     if (lstatSync(file).isFile()) chmodSync(file, 0o600);
   }
 } catch (err) {
-  console.warn('[Security] No se pudieron ajustar los permisos de data/:', err.message);
+  createLogger('Security').warn('No se pudieron ajustar los permisos de data/:', err.message);
 }
 // COOKIE_SECRET tiene prioridad sobre data/.secret (ver server/cookieSecret.js). Un archivo
 // vacío, truncado o corrupto se regenera: aceptarlo tal cual rompía el login (secreto vacío)
@@ -86,7 +88,7 @@ const getConfig = () => {
   try {
     value = JSON.parse(readFileSync(configPath, 'utf8'));
   } catch (e) {
-    console.error('Error reading config:', e);
+    log.error('Error reading config:', e);
   }
   configCache = { key, value };
   return value;
@@ -155,7 +157,7 @@ app.use('/api/auth', authRoutes(dataDir, sessions, loginLimiter));
 app.use('/api', (req, res, next) => {
   if (!getConfig()) return res.status(503).json({ error: 'Not configured' });
   if (!sessions.isValid(req.signedCookies.token)) {
-    console.log(`[Auth] Unauthorized access attempt to ${req.method} ${req.originalUrl}`);
+    createLogger('Auth').info(`Unauthorized access attempt to ${req.method} ${req.originalUrl}`);
     return res.status(401).json({ error: 'Unauthorized' });
   }
   next();
@@ -202,7 +204,7 @@ if (existsSync(distPath)) {
 app.use((err, req, res, next) => {
   if (res.headersSent) return next(err);
   const status = err.status || err.statusCode || 500;
-  if (status >= 500) console.error('[Error]', err);
+  if (status >= 500) createLogger('Error').error(err);
   if (status === 413) {
     if (!isFilesApi(req)) return res.status(413).json({ error: 'Petición demasiado grande' });
     const max = apiPath(req).startsWith('/api/files/upload') ? MAX_UPLOAD_MB : MAX_NOTE_MB;
@@ -222,17 +224,17 @@ const port = validPort(getConfig()?.port) ?? validPort(process.env.PORT) ?? 3000
 const host = process.env.HOST || undefined;
 app.listen(port, host, () => {
   const cfg = getConfig();
-  console.log(`Obsidita listening on http://${host || 'localhost'}:${port}`);
+  log.info(`Obsidita listening on http://${host || 'localhost'}:${port}`);
   if (cfg) {
-    console.log(`Vault: ${cfg.vaultPath}`);
+    log.info(`Vault: ${cfg.vaultPath}`);
   } else {
-    console.log('Setup required');
+    log.info('Setup required');
   }
   // Avisos de despliegue inseguro
   if (process.getuid?.() === 0) {
-    console.warn('[Security] La app se está ejecutando como root: si alguien consigue entrar, controla todo el servidor. Usa un usuario sin privilegios.');
+    createLogger('Security').warn('La app se está ejecutando como root: si alguien consigue entrar, controla todo el servidor. Usa un usuario sin privilegios.');
   }
   if (!host) {
-    console.warn('[Security] Escuchando en todas las interfaces por HTTP (sin cifrar). Define HOST=127.0.0.1 y pon delante un proxy con HTTPS (Caddy, nginx).');
+    createLogger('Security').warn('Escuchando en todas las interfaces por HTTP (sin cifrar). Define HOST=127.0.0.1 y pon delante un proxy con HTTPS (Caddy, nginx).');
   }
 });

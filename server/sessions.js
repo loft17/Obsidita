@@ -3,6 +3,8 @@ import { join } from 'path';
 import crypto from 'crypto';
 
 import { SESSION_MAX_AGE, SESSION_IDLE } from './limits.js';
+import { createLogger } from './logger.js';
+const log = createLogger('Auth');
 
 export { SESSION_MAX_AGE, SESSION_IDLE }; // 30 días como máximo / 7 sin usarse (configurables)
 const TOUCH_EVERY = 60 * 60 * 1000; // la última actividad se guarda en disco como mucho cada hora
@@ -144,7 +146,7 @@ export const createLoginLimiter = () => {
       global.lockedUntil = now + GLOBAL_LOCK;
       global.fails = 0;
       global.first = now;
-      console.warn('[Auth] Demasiados intentos fallidos en total: login bloqueado temporalmente para todos');
+      log.warn('Demasiados intentos fallidos en total: login bloqueado temporalmente para todos');
     }
     let a = attempts.get(key);
     if (!a || now - a.first > WINDOW) {

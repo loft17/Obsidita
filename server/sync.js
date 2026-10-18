@@ -2,6 +2,8 @@ import { spawn } from 'child_process';
 import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync } from 'fs';
 import { opendir } from 'fs/promises';
 import { join } from 'path';
+import { createLogger } from './logger.js';
+const log = createLogger('Sync');
 
 // Sincronización del vault con un repositorio de GitHub (git).
 // La configuración y el token viven en data/sync.json; el token nunca sale hacia el cliente
@@ -227,7 +229,7 @@ export const createSyncManager = (dataDir, getConfig) => {
     try {
       if (existsSync(configPath)) saved = JSON.parse(readFileSync(configPath, 'utf8'));
     } catch (err) {
-      console.error('[Sync] No se pudo leer sync.json:', err.message);
+      log.error('No se pudo leer sync.json:', err.message);
     }
     return {
       provider: PROVIDERS.includes(saved.provider) ? saved.provider : 'none',
@@ -313,7 +315,7 @@ export const createSyncManager = (dataDir, getConfig) => {
         updateStatus({ lastSync: new Date().toISOString(), lastAttempt: startedAt, lastError: null, lastMessage: message });
       })
       .catch((err) => {
-        console.error('[Sync]', err.message);
+        log.error(err.message);
         updateStatus({ lastAttempt: startedAt, lastError: err.message });
       })
       .finally(() => {

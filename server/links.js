@@ -6,6 +6,8 @@ import { readFileSync, writeFileSync } from 'fs';
 import { posix } from 'path';
 import * as vault from './vault.js';
 import { resolveWikilink as resolveInVault } from '../shared/wikilinks.js';
+import { createLogger } from './logger.js';
+const log = createLogger('Links');
 
 const lower = (s) => s.toLowerCase();
 const parentDir = (p) => p.split('/').slice(0, -1).join('/');
@@ -126,7 +128,7 @@ export function prepareLinkUpdate(vaultPath, oldPath, newPath) {
           updated.push(newNote);
         }
       } catch (err) {
-        console.error(`No se pudieron actualizar los enlaces de ${newNote}:`, err.message);
+        log.error(`No se pudieron actualizar los enlaces de ${newNote}:`, err.message);
       }
     }
     return updated;

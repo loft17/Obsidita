@@ -4,6 +4,7 @@ import { filesApi } from './api';
 import { rawFileUrl } from './attachments';
 import { resolveWikilink as resolveInVault } from '../../shared/wikilinks.js';
 import { fileName } from './paths';
+import log from './logger';
 
 export interface Wikilink {
   target: string; // ruta o nombre de la nota, sin #encabezado ('' = la propia nota)
@@ -108,7 +109,7 @@ export async function followWikilink(inner: string, notePath: string, newTab = f
       await filesApi.createNote(path);
       useStore.getState().setTree(await filesApi.getTree());
     } catch (err) {
-      console.error('No se pudo crear la nota enlazada:', err);
+      log.error('No se pudo crear la nota enlazada:', err);
       return;
     }
   }

@@ -3,6 +3,8 @@ import { mkdirSync, readdirSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, extname, join, resolve, basename } from 'path';
 import { publicError } from '../security.js';
+import { createLogger } from '../logger.js';
+const log = createLogger('Fonts');
 
 // Fuentes propias: basta con copiar los archivos en esta carpeta (y recargar la web), que los
 // registra con @font-face y los ofrece en Ajustes > Apariencia > Fuente.
@@ -83,7 +85,7 @@ export default () => {
   try {
     mkdirSync(FONTS_DIR, { recursive: true });
   } catch (err) {
-    console.warn(`[Fonts] No se pudo crear ${FONTS_DIR}:`, err.message);
+    log.warn(`No se pudo crear ${FONTS_DIR}:`, err.message);
   }
 
   router.get('/', (req, res) => {

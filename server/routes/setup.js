@@ -5,6 +5,8 @@ import crypto from 'crypto';
 import { checkVaultPath } from '../vault.js';
 import { hashPassword, MIN_PASSWORD_LENGTH } from '../password.js';
 import { publicError } from '../security.js';
+import { createLogger } from '../logger.js';
+const log = createLogger('Setup');
 
 export default (dataDir, sessions) => {
   const router = Router();
@@ -22,11 +24,10 @@ export default (dataDir, sessions) => {
     }
     if (setupToken) return;
     setupToken = crypto.randomBytes(12).toString('hex');
-    console.log('');
-    console.log('==================================================');
-    console.log(`  Token de configuración inicial: ${setupToken}`);
-    console.log('==================================================');
-    console.log('');
+    // En warn para que se vea también en producción (con LOG_LEVEL=warn): sin él no se puede configurar
+    log.warn(
+      `\n==================================================\n  Token de configuración inicial: ${setupToken}\n==================================================`
+    );
   };
   ensureSetupToken();
 
@@ -79,18 +80,18 @@ export default (dataDir, sessions) => {
     }
 
     try {
-      console.log(`[Setup] Creating vault directory: ${vaultPath}`);
+      log.debug(`Creating vault directory: ${vaultPath}`);
       // Create vault dir if it doesn't exist
       mkdirSync(vaultPath, { recursive: true });
-      console.log(`[Setup] Vault directory created successfully`);
+      log.debug('Vault directory created successfully');
 
       // Hash password with scrypt
-      console.log(`[Setup] Hashing password...`);
+      log.debug('Hashing password...');
       const passwordHash = await hashPassword(password);
-      console.log(`[Setup] Password hashed successfully`);
+      log.debug('Password hashed successfully');
 
       // Create config
-      console.log(`[Setup] Creating data directory: ${dataDir}`);
+      log.debug(`Creating data directory: ${dataDir}`);
       mkdirSync(dataDir, { recursive: true, mode: 0o700 });
 
       const config = {
@@ -100,18 +101,18 @@ export default (dataDir, sessions) => {
         createdAt: new Date().toISOString(),
       };
 
-      console.log(`[Setup] Writing config to: ${configPath}`);
+      log.debug(`Writing config to: ${configPath}`);
       writeFileSync(configPath, JSON.stringify(config, null, 2), { mode: 0o600 });
       setupToken = null;
       // Las sesiones de una configuración anterior no valen para la nueva
       sessions.destroyAll();
       // Ni su sincronización (repositorio y token de GitHub): se configura de nuevo con sesión
       rmSync(join(dataDir, 'sync.json'), { force: true });
-      console.log(`[Setup] Configuration saved successfully`);
+      log.info('Configuration saved successfully');
 
       res.json({ success: true });
     } catch (err) {
-      console.error(`[Setup] Error:`, err);
+      log.error('Error:', err);
       res.status(500).json({ error: publicError(err, 'Error al configurar') });
     }
   });

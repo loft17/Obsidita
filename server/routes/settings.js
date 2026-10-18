@@ -9,6 +9,8 @@ import * as limits from '../limits.js';
 import { loadZipArchive, ZIP_LEVEL } from '../lazy.js';
 import { getUpdateStatus } from '../updates.js';
 import { DEFAULT_UPLOAD_EXTENSIONS, parseUploadExtensions, uploadExtensions } from '../uploads.js';
+import { createLogger } from '../logger.js';
+const log = createLogger('Settings');
 
 export default (dataDir, getConfig, limiter, sessions) => {
   const router = Router();
@@ -267,7 +269,7 @@ export default (dataDir, getConfig, limiter, sessions) => {
       const archive = new ZipArchive({ zlib: { level: ZIP_LEVEL } });
 
       archive.on('error', (err) => {
-        console.error('Archiver error:', err);
+        log.error('Archiver error:', err);
         if (!res.headersSent) {
           res.status(500).json({ error: publicError(err, 'No se pudo crear el archivo ZIP') });
         } else {

@@ -1,6 +1,8 @@
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import crypto from 'crypto';
+import { createLogger } from './logger.js';
+const log = createLogger('Error');
 
 // Hash CSP ('sha256-...') de un script inline
 export const scriptHash = (code) => `'sha256-${crypto.createHash('sha256').update(code).digest('base64')}'`;
@@ -94,7 +96,7 @@ const FS_ERRORS = {
 
 export const publicError = (err, fallback = 'Error en la operación') => {
   if (err && typeof err.code === 'string') {
-    console.error('[Error]', err);
+    log.error(err);
     return FS_ERRORS[err.code] || fallback;
   }
   // Errores propios (validaciones) con mensaje pensado para el usuario

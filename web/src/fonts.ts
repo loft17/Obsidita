@@ -7,6 +7,8 @@
 // descarga la de la familia que se está usando (antes entraban las 78 variantes en el CSS
 // inicial). Ver loadBundledFont(), que se llama al arrancar y al cambiar de fuente.
 
+import log from './logger';
+
 export type FontCategory = 'sans' | 'serif' | 'mono';
 
 // El nombre debe coincidir con el `font-family` que declara cada paquete
@@ -196,7 +198,7 @@ export function loadBundledFont(name: string): Promise<void> {
     (err) => {
       // Si falla, se reintentará la próxima vez que se pida la familia
       loaded.delete(pkg);
-      console.warn(`[Fonts] No se pudo cargar ${name}:`, err);
+      log.warn(`[Fonts] No se pudo cargar ${name}:`, err);
     },
   );
   loaded.set(pkg, task);

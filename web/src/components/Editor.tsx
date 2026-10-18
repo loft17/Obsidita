@@ -20,6 +20,7 @@ import { subscribePendingScroll, takePendingLine } from '../wikilinks';
 import { useLatest } from '../latestRef';
 import { notify } from '../toast';
 import { t, useT } from '../i18n';
+import log from '../logger';
 
 interface Props {
   filePath: string;
@@ -95,7 +96,7 @@ export function saveNote(path: string, content: string): Promise<void> {
       if (err instanceof ConflictError) {
         setConflict({ path, mine: content, theirs: err.content, version: err.version });
       } else {
-        console.error('Autosave failed:', err);
+        log.error('Autosave failed:', err);
         const name = noteTitle(path);
         notify('save', t('toast.saveError', { name, error: (err as Error).message }), 'error');
       }

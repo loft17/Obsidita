@@ -1,6 +1,8 @@
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { createLogger } from './logger.js';
+const log = createLogger('Updates');
 
 // Aviso de nueva versión: compara la versión del package.json local (la que está en marcha)
 // con la del package.json de la rama main en GitHub. Se consulta desde el servidor, con caché,
@@ -45,7 +47,7 @@ const fetchLatest = async () => {
     latest = version;
     nextCheck = Date.now() + CHECK_INTERVAL;
   } catch (err) {
-    console.warn('[Updates] No se pudo comprobar si hay una versión nueva:', err.message);
+    log.warn('No se pudo comprobar si hay una versión nueva:', err.message);
     nextCheck = Date.now() + RETRY_INTERVAL;
   }
 };
