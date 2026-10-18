@@ -140,6 +140,8 @@ function FileTreeItem({
   );
 }
 
+const ITEM_HEIGHT = 27; // px, debe coincidir con min-height en CSS
+
 export default function FileExplorer() {
   const tree = useStore((s) => s.tree);
   const hiddenFolders = useStore((s) => s.hiddenFolders);
@@ -156,7 +158,19 @@ export default function FileExplorer() {
     isFolder?: boolean;
   } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const explorerRef = useRef<HTMLDivElement>(null);
+  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 50 });
   const t = useT();
+
+  // Virtualización manual: calcula qué items son visibles basándose en scroll
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const container = e.currentTarget;
+    const scrollTop = container.scrollTop;
+    const clientHeight = container.clientHeight;
+    const start = Math.max(0, Math.floor(scrollTop / ITEM_HEIGHT) - 10);
+    const end = Math.ceil((scrollTop + clientHeight) / ITEM_HEIGHT) + 10;
+    setVisibleRange({ start, end });
+  };
 
   const handleSelect = (path: string) => {
     openFile(path, fileName(path));
@@ -381,6 +395,7 @@ export default function FileExplorer() {
         </button>
       </div>
       <div
+        ref={explorerRef}
         className={`file-explorer ${dropTarget === '' ? 'drop-target' : ''}`}
         // El hueco libre del explorador es la raíz de la bóveda
         onDragOver={(e) => drag.onDragOver(e, '')}
@@ -391,8 +406,13 @@ export default function FileExplorer() {
             clearExpandTimer();
           }
         }}
+        onScroll={handleScroll}
       >
-        {flatItems.map((flatItem) => (
+        {/* Spacer arriba */}
+        <div style={{ height: `${visibleRange.start * ITEM_HEIGHT}px` }} />
+
+        {/* Items visibles */}
+        {flatItems.slice(visibleRange.start, visibleRange.end).map((flatItem, idx) => (
           <FileTreeItem
             key={flatItem.item.path}
             flatItem={flatItem}
@@ -403,6 +423,9 @@ export default function FileExplorer() {
             drag={drag}
           />
         ))}
+
+        {/* Spacer abajo */}
+        <div style={{ height: `${Math.max(0, (flatItems.length - visibleRange.end) * ITEM_HEIGHT)}px` }} />
       </div>
       {menu && (
         <div ref={menuRef} className="context-menu" style={{ top: menu.y, left: menu.x }}>
