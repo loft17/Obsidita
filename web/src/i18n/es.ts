@@ -163,6 +163,10 @@ export const es = {
   'image.actualSize': 'Clic para ver a tamaño real',
   'image.openOriginal': 'Abrir original',
   'image.uploadError': 'No se pudo subir la imagen: {error}',
+  'textFile.readOnly': 'Solo lectura',
+  'textFile.tooLarge': 'El archivo es demasiado grande para mostrarlo aquí. Puedes descargarlo.',
+  'textFile.binary': 'El archivo no es texto. Puedes descargarlo.',
+  'textFile.error': 'No se pudo cargar el archivo',
   'table.addRow': 'Añadir una fila debajo',
   'table.addColumn': 'Añadir una columna',
 

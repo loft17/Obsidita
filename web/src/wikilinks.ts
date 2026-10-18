@@ -1,6 +1,8 @@
 // Enlaces internos al estilo Obsidian: [[nota]], [[nota|alias]], [[nota#encabezado]], [[#encabezado]]
 import { useStore } from './store';
 import { filesApi } from './api';
+import { rawFileUrl } from './attachments';
+import { resolveWikilink as resolveInVault } from '../../shared/wikilinks.js';
 
 export interface Wikilink {
   target: string; // ruta o nombre de la nota, sin #encabezado ('' = la propia nota)
@@ -21,33 +23,13 @@ export function parseWikilink(inner: string): Wikilink {
 // Texto visible del enlace: el alias o, si no hay, lo escrito tal cual
 export const wikilinkLabel = (inner: string) => parseWikilink(inner).alias || inner.split('|')[0].trim();
 
-const parentDir = (path: string) => path.split('/').slice(0, -1).join('/');
 const lower = (s: string) => s.toLowerCase();
 
-// Ruta de la nota enlazada desde `notePath`, o null si no existe.
-// Orden: ruta exacta desde la raíz, relativa a la nota y, por último, por
-// nombre en cualquier carpeta (la más cercana a la nota).
+// Ruta del archivo (nota o adjunto) enlazado desde `notePath`, o null si no existe.
+// La lógica es la misma que usa el servidor al actualizar enlaces: ver shared/wikilinks.js
 export function resolveWikilink(target: string, notePath: string): string | null {
-  if (!target) return notePath || null;
-  const files = useStore.getState().tree.filter((item) => item.type === 'file');
-  const withExt = /\.[^/]+$/.test(target) && !/\.md$/i.test(target) ? target : target.replace(/\.md$/i, '') + '.md';
-  const clean = withExt.replace(/^\/+/, '');
-  const find = (p: string) => files.find((f) => lower(f.path) === lower(p))?.path;
-
-  const exact = find(clean) ?? find(parentDir(notePath) ? `${parentDir(notePath)}/${clean}` : clean);
-  if (exact) return exact;
-
-  const suffix = lower(`/${clean}`);
-  const matches = files.filter((f) => lower(`/${f.path}`).endsWith(suffix));
-  if (!matches.length) return null;
-  const noteDir = parentDir(notePath).split('/');
-  const shared = (p: string) => {
-    const a = parentDir(p).split('/');
-    let n = 0;
-    while (n < a.length && n < noteDir.length && a[n] === noteDir[n]) n++;
-    return n;
-  };
-  return matches.sort((x, y) => shared(y.path) - shared(x.path) || x.path.length - y.path.length)[0].path;
+  const paths = useStore.getState().tree.filter((item) => item.type !== 'folder').map((item) => item.path);
+  return resolveInVault(target, notePath, paths);
 }
 
 export const isResolved = (inner: string, notePath: string) =>
@@ -110,6 +92,11 @@ export function scrollToLine(container: HTMLElement, bodyLine: number) {
 export async function followWikilink(inner: string, notePath: string, newTab = false) {
   const { target, heading } = parseWikilink(inner);
   let path = resolveWikilink(target, notePath);
+  // Adjunto (PDF, audio...): lo abre el navegador en otra pestaña, como Obsidian lo abre fuera del editor
+  if (path && !/\.md$/i.test(path)) {
+    window.open(rawFileUrl(path), '_blank', 'noopener');
+    return;
+  }
   const created = !path;
   if (!path) {
     path = target.replace(/^\/+/, '').replace(/\.md$/i, '') + '.md';

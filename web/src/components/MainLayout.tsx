@@ -12,7 +12,8 @@ import { QuickOpenDialog, ConflictDialog } from './FileDialogs';
 import ReadingView from './ReadingView';
 import ImageViewer from './ImageViewer';
 import StatusBar from './StatusBar';
-import { isImage } from '../attachments';
+import TextViewer from './TextViewer';
+import { isImage, isPlainText } from '../attachments';
 import NoteMenu from './NoteMenu';
 import NoteShortcuts, { useNoteOverlayStore } from './NoteShortcuts';
 import { IconBook, IconEdit, IconSidebar, IconSearch } from './Icons';
@@ -143,10 +144,11 @@ export default function MainLayout() {
           if (!activeTab) break;
           // Sin nada pendiente no hay guardado que avise: se confirma igualmente
           if (hasPendingSave(activeTab)) flushPendingSave(activeTab);
-          else if (!isImage(activeTab)) notify('save', translate('toast.saved'));
+          else if (isNote(activeTab)) notify('save', translate('toast.saved'));
           break;
         case 'e':
-          if (!activeTab || isImage(activeTab)) return;
+          // Solo las notas tienen modo edición: el resto de archivos son de solo lectura
+          if (!activeTab || !isNote(activeTab)) return;
           e.preventDefault();
           setEditMode(!editMode);
           break;
@@ -305,7 +307,7 @@ export default function MainLayout() {
     if (activeTab === path) setFileContent(theirs);
   };
 
-  const editToggle = activeTab && !activeIsImage && (
+  const editToggle = activeTab && isNote(activeTab) && (
     <button
       className="icon-btn"
       title={editMode ? t('note.toReading') : t('note.toEditing')}
@@ -380,6 +382,8 @@ export default function MainLayout() {
             ) : activeTab ? (
               activeIsImage ? (
                 <ImageViewer key={activeTab} filePath={activeTab} />
+              ) : isPlainText(activeTab) ? (
+                <TextViewer key={activeTab} filePath={activeTab} />
               ) : !isNote(activeTab) ? (
                 <div className="unsupported-file">
                   <div>{t('main.notEditable')}</div>

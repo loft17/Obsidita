@@ -5,35 +5,18 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { posix } from 'path';
 import * as vault from './vault.js';
+import { resolveWikilink as resolveInVault } from '../shared/wikilinks.js';
 
 const lower = (s) => s.toLowerCase();
 const parentDir = (p) => p.split('/').slice(0, -1).join('/');
 const isMd = (p) => /\.md$/i.test(p);
 
-// Índice de archivos por ruta en minúsculas → ruta real
-const indexFiles = (paths) => new Map(paths.map((p) => [lower(p), p]));
+// Archivos del vault: la lista en el orden del árbol (para los wikilinks, igual que el cliente)
+// y un índice por ruta en minúsculas → ruta real (para los enlaces markdown)
+const indexFiles = (paths) => ({ paths, byLower: new Map(paths.map((p) => [lower(p), p])) });
 
-// Igual que resolveWikilink del cliente (web/src/wikilinks.ts): ruta exacta desde la raíz,
-// relativa a la nota y, por último, por nombre en cualquier carpeta (la más cercana a la nota)
-function resolveWikilink(target, notePath, files) {
-  const withExt = /\.[^/]+$/.test(target) && !isMd(target) ? target : target.replace(/\.md$/i, '') + '.md';
-  const clean = withExt.replace(/^\/+/, '');
-  const dir = parentDir(notePath);
-  const exact = files.get(lower(clean)) ?? files.get(lower(dir ? `${dir}/${clean}` : clean));
-  if (exact) return exact;
-
-  const suffix = lower(`/${clean}`);
-  const matches = [...files.values()].filter((p) => lower(`/${p}`).endsWith(suffix));
-  if (!matches.length) return null;
-  const noteDir = dir.split('/');
-  const shared = (p) => {
-    const a = parentDir(p).split('/');
-    let n = 0;
-    while (n < a.length && n < noteDir.length && a[n] === noteDir[n]) n++;
-    return n;
-  };
-  return matches.sort((x, y) => shared(y) - shared(x) || x.length - y.length)[0];
-}
+// La misma resolución que el cliente: ver shared/wikilinks.js
+const resolveWikilink = (target, notePath, files) => resolveInVault(target, notePath, files.paths);
 
 const safeDecode = (s) => {
   try {
@@ -48,9 +31,9 @@ function resolveMdLink(url, notePath, files) {
   const path = safeDecode(url.replace(/[#?].*$/, ''));
   if (!path) return null;
   const relative = posix.normalize(posix.join(parentDir(notePath), path));
-  const fromNote = files.get(lower(relative));
+  const fromNote = files.byLower.get(lower(relative));
   if (fromNote && !path.startsWith('/')) return { path: fromNote, relative: true };
-  const fromRoot = files.get(lower(path.replace(/^\/+/, '')));
+  const fromRoot = files.byLower.get(lower(path.replace(/^\/+/, '')));
   return fromRoot ? { path: fromRoot, relative: false } : null;
 }
 

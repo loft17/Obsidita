@@ -1,6 +1,6 @@
 {
   "name": "Obsidita",
-  "version": "0.9.17",
+  "version": "0.9.18",
   "description": "Web viewer/editor for Obsidian vaults",
   "type": "module",
   "main": "server/index.js",

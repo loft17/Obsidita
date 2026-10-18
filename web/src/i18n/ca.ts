@@ -164,6 +164,10 @@ export const ca: Messages = {
   'image.actualSize': 'Fes clic per veure a mida real',
   'image.openOriginal': "Obre l'original",
   'image.uploadError': "No s'ha pogut pujar la imatge: {error}",
+  'textFile.readOnly': 'Només lectura',
+  'textFile.tooLarge': 'El fitxer és massa gran per mostrar-lo aquí. El pots descarregar.',
+  'textFile.binary': 'El fitxer no és text. El pots descarregar.',
+  'textFile.error': "No s'ha pogut carregar el fitxer",
   'table.addRow': 'Afegeix una fila a sota',
   'table.addColumn': 'Afegeix una columna',
 

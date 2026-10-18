@@ -164,6 +164,10 @@ export const en: Messages = {
   'image.actualSize': 'Click to view at actual size',
   'image.openOriginal': 'Open original',
   'image.uploadError': 'Could not upload the image: {error}',
+  'textFile.readOnly': 'Read only',
+  'textFile.tooLarge': 'The file is too large to show here. You can download it.',
+  'textFile.binary': 'The file is not text. You can download it.',
+  'textFile.error': 'Could not load the file',
   'table.addRow': 'Add a row below',
   'table.addColumn': 'Add a column',
 

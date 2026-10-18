@@ -6,6 +6,11 @@ const IMAGE_EXT = /\.(png|jpe?g|gif|webp|svg|bmp|avif|ico)$/i;
 
 export const isImage = (path: string) => IMAGE_EXT.test(path);
 
+// Archivos de texto que no son notas: se muestran en solo lectura (ver TextViewer)
+const TEXT_EXT = /\.(txt|text|log|json|canvas|csv|tsv|ya?ml|toml|ini|conf|cfg|xml|css|js|mjs|ts|html?|sh|py|sql)$/i;
+
+export const isPlainText = (path: string) => TEXT_EXT.test(path);
+
 const isExternal = (src: string) => /^([a-z][a-z0-9+.-]*:|\/\/)/i.test(src);
 
 const safeDecode = (s: string) => {
