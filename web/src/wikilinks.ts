@@ -56,23 +56,35 @@ export const isResolved = (inner: string, notePath: string) =>
 // Encabezado o línea al que desplazarse cuando la vista de lectura termine de pintar la nota
 let pendingScroll: { path: string; heading?: string; line?: number } | null = null;
 
+const pendingListeners = new Set<() => void>();
+
+// Avisa cuando llega un destino nuevo: la nota puede estar ya abierta y no volver a pintarse
+export function subscribePendingScroll(fn: () => void) {
+  pendingListeners.add(fn);
+  return () => {
+    pendingListeners.delete(fn);
+  };
+}
+
+// Cada una consume solo lo suyo: leer el encabezado no debe descartar una línea pendiente
 export function takePendingHeading(path: string) {
-  if (pendingScroll?.path !== path) return '';
+  if (pendingScroll?.path !== path || !pendingScroll.heading) return '';
   const { heading } = pendingScroll;
   pendingScroll = null;
-  return heading ?? '';
+  return heading;
 }
 
 export function takePendingLine(path: string) {
-  if (pendingScroll?.path !== path) return null;
+  if (pendingScroll?.path !== path || !pendingScroll.line) return null;
   const { line } = pendingScroll;
   pendingScroll = null;
-  return line ?? null;
+  return line;
 }
 
-// Setea la línea a la que desplazarse cuando la vista de lectura termine de pintar la nota
+// `line`: 1-indexed sobre el fichero completo (frontmatter incluido), como la devuelve la búsqueda
 export function setPendingLine(path: string, line: number) {
   pendingScroll = { path, line };
+  pendingListeners.forEach((fn) => fn());
 }
 
 // Desplaza `container` hasta el encabezado cuyo texto coincide (sin distinguir mayúsculas)
@@ -84,12 +96,14 @@ export function scrollToHeading(container: HTMLElement, heading: string) {
   el?.scrollIntoView({ block: 'start' });
 }
 
-// Desplaza `container` hasta la línea especificada (1-indexed)
-export function scrollToLine(container: HTMLElement, lineNum: number) {
-  if (lineNum <= 0) return;
-  const els = [...container.querySelectorAll<HTMLElement>('[data-line]')];
-  const el = els.find((e) => Number(e.dataset.line) === lineNum - 1);
-  el?.scrollIntoView({ block: 'start' });
+// Desplaza `container` hasta el bloque que contiene `bodyLine` (0-indexed sobre el cuerpo):
+// solo los inicios de bloque llevan data-line, así que se busca el último que empieza antes
+export function scrollToLine(container: HTMLElement, bodyLine: number) {
+  let target: HTMLElement | undefined;
+  for (const el of container.querySelectorAll<HTMLElement>('[data-line]')) {
+    if (Number(el.dataset.line) <= bodyLine) target = el;
+  }
+  target?.scrollIntoView({ block: 'center' });
 }
 
 // Abre la nota enlazada; si no existe la crea en la raíz del vault, como Obsidian

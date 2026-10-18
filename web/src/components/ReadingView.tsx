@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useSyncExternalStore, type MouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type MouseEvent } from 'react';
 import markdownIt from 'markdown-it';
 import { parseNote } from '../frontmatter';
 import Properties from './Properties';
@@ -6,7 +6,7 @@ import InlineTitle from './InlineTitle';
 import { useStore } from '../store';
 import { attachmentUrl, isImage, parseSize } from '../attachments';
 import {
-  followWikilink, isResolved, parseWikilink, resolveWikilink, scrollToHeading, scrollToLine, takePendingHeading, takePendingLine, wikilinkLabel,
+  followWikilink, isResolved, parseWikilink, resolveWikilink, scrollToHeading, scrollToLine, subscribePendingScroll, takePendingHeading, takePendingLine, wikilinkLabel,
 } from '../wikilinks';
 import { embedSection, getEmbedContent, getEmbedsVersion, refreshEmbeds, subscribeEmbeds } from '../noteEmbeds';
 import { cancelPendingSave, NOTES_CHANGED, saveNote } from './Editor';
@@ -18,6 +18,15 @@ const md = markdownIt({
   html: false,
   linkify: true,
   breaks: true,
+});
+
+// Línea de origen (0-indexed sobre el cuerpo) en cada bloque, para saltar a resultados de búsqueda.
+// Las notas incrustadas no la llevan: sus líneas son de otra nota
+md.core.ruler.push('source_line', (state) => {
+  if (Array.isArray(state.env?.embedStack)) return;
+  for (const token of state.tokens) {
+    if (token.map && token.nesting !== -1 && token.type !== 'inline') token.attrSet('data-line', String(token.map[0]));
+  }
 });
 
 // Resaltado al estilo Obsidian: ==texto== → <mark>
@@ -462,13 +471,20 @@ export default function ReadingView({ content, filePath, onContentChange }: Prop
     };
   }, []);
 
+  // Un resultado de búsqueda de la nota ya abierta no cambia `html`: hay que reaccionar al aviso
+  const [scrollRequest, setScrollRequest] = useState(0);
+  useEffect(() => subscribePendingScroll(() => setScrollRequest((n) => n + 1)), []);
+
   // Llegada desde [[nota#encabezado]] o desde resultados de búsqueda
   useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
     const heading = takePendingHeading(notePath);
+    if (heading) return scrollToHeading(el, heading);
     const line = takePendingLine(notePath);
-    if (heading && contentRef.current) scrollToHeading(contentRef.current, heading);
-    else if (line && contentRef.current) scrollToLine(contentRef.current, line);
-  }, [html, notePath]);
+    // La búsqueda cuenta líneas del fichero completo (1-indexed); data-line, del cuerpo (0-indexed)
+    if (line) scrollToLine(el, line - 1 - (head?.match(/\n/g)?.length ?? 0));
+  }, [html, notePath, head, scrollRequest]);
 
   useEffect(() => {
     if (!contentRef.current) return;

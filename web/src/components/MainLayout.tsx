@@ -81,6 +81,8 @@ export default function MainLayout() {
   const sidebarView = useStore((s) => s.sidebarView);
   const sidebarWidth = useStore((s) => s.sidebarWidth);
   const [fileContent, setFileContent] = useState('');
+  // Nota a la que pertenece `fileContent`: al cambiar de pestaña, hasta que llega la nueva, es la anterior
+  const [contentPath, setContentPath] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
   const tree = useStore((s) => s.tree);
@@ -188,6 +190,7 @@ export default function MainLayout() {
     // archivos (PDF, ZIP...) se leerían en UTF-8 y el autoguardado los reescribiría corrompidos
     if (!isNote(activeTab)) {
       setFileContent('');
+      setContentPath(activeTab);
       setLoading(false);
       return;
     }
@@ -206,8 +209,10 @@ export default function MainLayout() {
         if (cancelled || useStore.getState().activeTab !== path) return;
         noteVersions.set(path, data.version);
         setFileContent(data.content);
+        setContentPath(path);
       } catch (err) {
         console.error('Error loading file:', err);
+        if (!cancelled) setContentPath(path);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -368,7 +373,7 @@ export default function MainLayout() {
             </div>
           )}
           <div className="editor-wrapper">
-            {loading ? (
+            {loading || (activeTab && isNote(activeTab) && contentPath !== activeTab) ? (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
                 {t('common.loading')}
               </div>

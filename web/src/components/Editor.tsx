@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore, isUnder } from '../store';
 import { filesApi, ConflictError } from '../api';
 import { parseNote, composeNote, type FrontmatterData } from '../frontmatter';
@@ -15,6 +15,7 @@ import { livePreview, HighlightSyntax, notePath } from '../livePreview';
 import { imageUpload } from '../imageUpload';
 import { wikilinkCompletion } from '../wikilinkComplete';
 import { setEmbedContent } from '../noteEmbeds';
+import { subscribePendingScroll, takePendingLine } from '../wikilinks';
 import { notify } from '../toast';
 import { t } from '../i18n';
 
@@ -238,6 +239,22 @@ export default function Editor({ filePath, content, onContentChange }: Props) {
     }
     shownPathRef.current = filePath;
   }, [body, filePath]);
+
+  // Llegada desde un resultado de búsqueda (también con la nota ya abierta)
+  const [scrollRequest, setScrollRequest] = useState(0);
+  useEffect(() => subscribePendingScroll(() => setScrollRequest((n) => n + 1)), []);
+  useEffect(() => {
+    const view = viewRef.current;
+    const line = takePendingLine(filePath);
+    if (!view || !line) return;
+    // La búsqueda cuenta líneas del fichero completo; el editor muestra solo el cuerpo
+    const offset = note.valid ? (note.head?.match(/\n/g)?.length ?? 0) : 0;
+    const target = view.state.doc.line(Math.min(Math.max(1, line - offset), view.state.doc.lines));
+    view.dispatch({
+      selection: { anchor: target.from },
+      effects: EditorView.scrollIntoView(target.from, { y: 'center' }),
+    });
+  }, [body, filePath, note, scrollRequest]);
 
   const handleBodyChange = (newBody: string) => {
     if (!note.valid) commit(newBody);
