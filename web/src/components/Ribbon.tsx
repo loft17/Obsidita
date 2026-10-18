@@ -6,6 +6,7 @@ import { openDailyNote, templateFiles, applyTemplate } from '../templates';
 import { insertIntoNote } from './Editor';
 import { QuickOpenDialog } from './FileDialogs';
 import { t, useT } from '../i18n';
+import { notify } from '../toast';
 import { IconSidebar, IconFolderOpen, IconSearch, IconTag, IconCalendarDays, IconTemplate, IconTrash, IconSettings, IconLogout } from './Icons';
 
 export const logout = async () => {
@@ -14,7 +15,7 @@ export const logout = async () => {
 };
 
 const openToday = () =>
-  openDailyNote().catch((err) => alert(t('daily.openError', { error: (err as Error).message })));
+  openDailyNote().catch((err) => notify('daily', t('daily.openError', { error: (err as Error).message }), 'error'));
 
 // "Insertar plantilla": elige una nota de la carpeta de plantillas y la inserta en el cursor de la nota abierta
 function useTemplatePicker() {
@@ -22,17 +23,17 @@ function useTemplatePicker() {
 
   const open = async () => {
     const { activeTab, setTree } = useStore.getState();
-    if (!activeTab || isImage(activeTab)) return alert(t('templates.openNoteFirst'));
+    if (!activeTab || isImage(activeTab)) return notify('templates', t('templates.openNoteFirst'), 'info');
     try {
       const { templates } = await settingsApi.getNotes();
       if (!templates.folder) {
-        return alert(t('templates.configureFolder'));
+        return notify('templates', t('templates.configureFolder'), 'info');
       }
       const tree = await filesApi.getTree();
       setTree(tree);
       setPicker({ folder: templates.folder, files: templateFiles(tree, templates.folder) });
     } catch (err) {
-      alert(t('templates.loadError', { error: (err as Error).message }));
+      notify('templates', t('templates.loadError', { error: (err as Error).message }), 'error');
     }
   };
 
@@ -44,7 +45,7 @@ function useTemplatePicker() {
       const title = (activeTab.split('/').pop() || activeTab).replace(/\.md$/i, '');
       insertIntoNote(applyTemplate(content, title, templates));
     } catch (err) {
-      alert(t('templates.insertError', { error: (err as Error).message }));
+      notify('templates', t('templates.insertError', { error: (err as Error).message }), 'error');
     }
   };
 

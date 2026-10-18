@@ -4,6 +4,7 @@
 import { useStore } from './store';
 import { filesApi, settingsApi, type NotesConfig } from './api';
 import { getLang, t } from './i18n';
+import { notify } from './toast';
 
 export const DEFAULT_DAILY_FORMAT = 'YYYY-MM-DD';
 export const DEFAULT_DATE_FORMAT = 'YYYY-MM-DD';
@@ -121,7 +122,7 @@ export async function openDailyNote() {
   openFile(path, path.split('/').pop() || path);
   // Recién creada: se abre en modo edición
   setEditMode(true);
-  if (missingTemplate) alert(t('daily.templateMissing', { template: missingTemplate }));
+  if (missingTemplate) notify('daily', t('daily.templateMissing', { template: missingTemplate }), 'error');
 }
 
 // Plantillas disponibles: las notas de la carpeta de plantillas (y sus subcarpetas)

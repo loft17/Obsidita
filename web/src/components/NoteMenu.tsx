@@ -7,6 +7,7 @@ import { IconMenu } from './Icons';
 import { RenameDialog, MoveDialog, DeleteFileDialog, HistoryDialog } from './FileDialogs';
 import { isImage } from '../attachments';
 import { t as translate, useT } from '../i18n';
+import { notify } from '../toast';
 
 const fileName = (path: string) => path.split('/').pop() || path;
 const parentFolder = (path: string) => (path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '');
@@ -150,7 +151,7 @@ export default function NoteMenu() {
     await flushPendingSave(activeTab);
     const url = `/api/files/export-pdf/${encodeURIComponent(activeTab)}`;
     if (win) win.location.href = url;
-    else alert(translate('note.popupBlocked'));
+    else notify('exportPdf', translate('note.popupBlocked'), 'error');
   };
 
   const folders = useMemo(

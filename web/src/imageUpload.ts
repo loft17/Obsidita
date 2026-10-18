@@ -4,6 +4,7 @@ import { filesApi } from './api';
 import { useStore } from './store';
 import { isImage } from './attachments';
 import { t } from './i18n';
+import { notify } from './toast';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -41,7 +42,7 @@ async function upload(view: EditorView, notePath: string, files: File[], pos: nu
     });
     view.focus();
   } catch (err) {
-    alert(t('image.uploadError', { error: (err as Error).message }));
+    notify('imageUpload', t('image.uploadError', { error: (err as Error).message }), 'error');
   }
 }
 

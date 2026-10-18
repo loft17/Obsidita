@@ -229,7 +229,7 @@ export default function FileExplorer() {
       await filesApi.copyFile(path);
       await refreshTree();
     } catch (err) {
-      alert(t('file.copyError', { error: (err as Error).message }));
+      notify('copy', t('file.copyError', { error: (err as Error).message }), 'error');
     }
   };
 
@@ -342,7 +342,7 @@ export default function FileExplorer() {
         await handleMove(from, folder);
         if (folder) expandFolder(folder);
       } catch (err) {
-        alert(t('file.moveError', { error: (err as Error).message }));
+        notify('move', t('file.moveError', { error: (err as Error).message }), 'error');
       }
     },
     onDragEnd: endDrag,
