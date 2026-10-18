@@ -1,5 +1,12 @@
-import { lazy, Suspense, useState, useEffect, type PointerEvent as ReactPointerEvent } from 'react';
-import { useStore, DEFAULT_SIDEBAR_WIDTH } from '../store';
+import {
+  lazy,
+  Suspense,
+  useState,
+  useEffect,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
+import { useStore, DEFAULT_SIDEBAR_WIDTH, MIN_SIDEBAR_WIDTH, MAX_SIDEBAR_WIDTH } from '../store';
 import { filesApi } from '../api';
 import Ribbon, { SidebarFooter } from './Ribbon';
 import FileExplorer from './FileExplorer';
@@ -29,9 +36,15 @@ import { canRunFileShortcut, fileShortcutFor, hasOpenOverlay } from '../fileShor
 // Los ajustes solo se descargan la primera vez que se abren
 const SettingsModal = lazy(() => import('./SettingsModal'));
 
-// Borde arrastrable entre la barra lateral y la nota; doble clic vuelve al ancho por defecto
+// Paso de las flechas al redimensionar con el teclado (px); con Shift, el grande
+const RESIZE_STEP = 10;
+const RESIZE_STEP_LARGE = 50;
+
+// Borde arrastrable entre la barra lateral y la nota; doble clic vuelve al ancho por defecto.
+// Con el foco: flechas para estrechar/ensanchar, Inicio/Fin para el mínimo/máximo e Intro para el ancho por defecto
 function SidebarResizer() {
   const setSidebarWidth = useStore((s) => s.setSidebarWidth);
+  const sidebarWidth = useStore((s) => s.sidebarWidth);
   const t = useT();
 
   const startDrag = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -55,13 +68,46 @@ function SidebarResizer() {
     handle.addEventListener('pointercancel', end);
   };
 
+  const onKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    const step = e.shiftKey ? RESIZE_STEP_LARGE : RESIZE_STEP;
+    let width: number;
+    switch (e.key) {
+      case 'ArrowLeft':
+        width = sidebarWidth - step;
+        break;
+      case 'ArrowRight':
+        width = sidebarWidth + step;
+        break;
+      case 'Home':
+        width = MIN_SIDEBAR_WIDTH;
+        break;
+      case 'End':
+        width = MAX_SIDEBAR_WIDTH;
+        break;
+      case 'Enter':
+        width = DEFAULT_SIDEBAR_WIDTH;
+        break;
+      default:
+        return;
+    }
+    e.preventDefault();
+    setSidebarWidth(width, true);
+  };
+
   return (
     <div
       className="sidebar-resizer"
       role="separator"
       aria-orientation="vertical"
+      aria-label={t('sidebar.resize')}
+      aria-controls="sidebar-left"
+      aria-valuenow={sidebarWidth}
+      aria-valuemin={MIN_SIDEBAR_WIDTH}
+      aria-valuemax={MAX_SIDEBAR_WIDTH}
+      tabIndex={0}
       title={t('sidebar.resize')}
       onPointerDown={startDrag}
+      onKeyDown={onKeyDown}
       onDoubleClick={() => setSidebarWidth(DEFAULT_SIDEBAR_WIDTH, true)}
     />
   );
@@ -325,7 +371,7 @@ export default function MainLayout() {
           <div className="sidebar-backdrop" onClick={() => useStore.setState({ sidebarOpen: false })} />
         )}
         {sidebarOpen && (
-          <aside className="sidebar-left" style={mobile ? undefined : { width: sidebarWidth }}>
+          <aside id="sidebar-left" className="sidebar-left" style={mobile ? undefined : { width: sidebarWidth }}>
             {sidebarView === 'search' ? (
               <SearchPanel />
             ) : sidebarView === 'tags' ? (

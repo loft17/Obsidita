@@ -259,7 +259,12 @@ a:hover {
   transition: background-color 0.15s;
 }
 
+.sidebar-resizer:focus {
+  outline: none;
+}
+
 .sidebar-resizer:hover::after,
+.sidebar-resizer:focus-visible::after,
 body.is-resizing .sidebar-resizer::after {
   background-color: var(--interactive-accent);
 }
