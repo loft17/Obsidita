@@ -49,24 +49,12 @@ export default function App() {
     init();
   }, []);
 
-  const handleSetupComplete = async () => {
-    try {
-      // Después del setup, necesitamos recargar la página o llamar a checkStatus de nuevo
-      // porque el servidor ha actualizado su estado en memoria
-      setTimeout(async () => {
-        try {
-          const tree = await filesApi.getTree();
-          setTree(tree);
-          setError('');
-          setAppState('main');
-        } catch (err) {
-          console.log('Entrando a login después de setup');
-          setAppState('login');
-        }
-      }, 500);
-    } catch (err: any) {
-      console.error('Setup completion error:', err);
-    }
+  // El servidor guarda la configuración antes de responder y no abre sesión (además invalida
+  // las anteriores), así que tras el setup siempre toca iniciar sesión: sin esperas ni recargas
+  const handleSetupComplete = () => {
+    setError('');
+    loadMainLayout().catch(() => {});
+    setAppState('login');
   };
 
   const handleLoginComplete = async () => {
