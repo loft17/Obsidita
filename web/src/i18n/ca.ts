@@ -305,6 +305,9 @@ export const ca: Messages = {
     'Limita la longitud màxima de línia. Mostra menys contingut a la pantalla, però els paràgrafs llargs són més llegibles.',
   'settings.lineNumbers': 'Números de línia',
   'settings.lineNumbers.desc': 'Mostra els números de línia.',
+  'settings.pdfViewer': 'Visor de PDF',
+  'settings.pdfViewer.desc':
+    "Obre els fitxers PDF amb el visor integrat del navegador en lloc d'oferir descarregar-los.",
   'settings.attachments': 'Ubicació predeterminada dels fitxers adjunts nous',
   'settings.uploads': 'Tipus de fitxer permesos en pujar',
   'settings.uploads.desc':

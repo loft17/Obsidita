@@ -302,6 +302,9 @@ export const en: Messages = {
     'Limits the maximum line length. Less content fits on screen, but long paragraphs are easier to read.',
   'settings.lineNumbers': 'Line numbers',
   'settings.lineNumbers.desc': 'Show line numbers.',
+  'settings.pdfViewer': 'PDF viewer',
+  'settings.pdfViewer.desc':
+    "Open PDF files with the browser's built-in viewer instead of offering to download them.",
   'settings.attachments': 'Default location for new attachments',
   'settings.uploads': 'Allowed upload file types',
   'settings.uploads.desc':

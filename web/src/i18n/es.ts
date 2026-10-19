@@ -303,6 +303,9 @@ export const es = {
     'Limita la longitud de línea máxima. Muestra menos contenido en pantalla, pero los párrafos largos son más legibles.',
   'settings.lineNumbers': 'Números de línea',
   'settings.lineNumbers.desc': 'Muestra los números de línea.',
+  'settings.pdfViewer': 'Visor de PDF',
+  'settings.pdfViewer.desc':
+    'Abre los archivos PDF con el visor integrado del navegador en vez de ofrecer descargarlos.',
   'settings.attachments': 'Ubicación predeterminada para los archivos adjuntos nuevos',
   'settings.uploads': 'Tipos de archivo permitidos al subir',
   'settings.uploads.desc':

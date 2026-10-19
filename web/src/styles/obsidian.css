@@ -1033,6 +1033,13 @@ button.tree-chevron:focus-visible,
   color: var(--text-faint);
 }
 
+/* PDF con el visor nativo del navegador */
+.pdf-viewer {
+  flex: 1;
+  width: 100%;
+  border: none;
+}
+
 /* Archivos de texto que no son notas (txt, json, canvas...): solo lectura */
 .text-viewer {
   flex: 1;

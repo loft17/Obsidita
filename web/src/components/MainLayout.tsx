@@ -17,9 +17,10 @@ import Editor, { cancelPendingSave, noteVersions, saveNote } from './Editor';
 import { QuickOpenDialog, ConflictDialog } from './FileDialogs';
 import ReadingView from './ReadingView';
 import ImageViewer from './ImageViewer';
+import PdfViewer from './PdfViewer';
 import StatusBar from './StatusBar';
 import TextViewer from './TextViewer';
-import { isImage, isPlainText } from '../attachments';
+import { isImage, isPdf, isPlainText } from '../attachments';
 import NoteMenu from './NoteMenu';
 import NoteShortcuts from './NoteShortcuts';
 import { IconBook, IconEdit, IconSidebar, IconSearch } from './Icons';
@@ -126,6 +127,8 @@ export default function MainLayout() {
   const tree = useStore((s) => s.tree);
   const openFile = useStore((s) => s.openFile);
   const activeIsImage = !!activeTab && isImage(activeTab);
+  const pdfViewer = useStore((s) => s.pdfViewer);
+  const activeIsPdf = pdfViewer && !!activeTab && isPdf(activeTab);
   const showRibbon = useStore((s) => s.showRibbon);
   const showTabHeader = useStore((s) => s.showTabHeader);
   const settingsOpen = useStore((s) => s.settingsOpen);
@@ -260,6 +263,8 @@ export default function MainLayout() {
             ) : activeTab ? (
               activeIsImage ? (
                 <ImageViewer key={activeTab} filePath={activeTab} />
+              ) : activeIsPdf ? (
+                <PdfViewer key={activeTab} filePath={activeTab} />
               ) : isPlainText(activeTab) ? (
                 <TextViewer key={activeTab} filePath={activeTab} />
               ) : !isNote(activeTab) ? (
@@ -293,7 +298,7 @@ export default function MainLayout() {
               </div>
             )}
           </div>
-          {!activeIsImage && !mobile && <StatusBar content={fileContent} />}
+          {!activeIsImage && !activeIsPdf && !mobile && <StatusBar content={fileContent} />}
         </div>
       </div>
       <Toasts />

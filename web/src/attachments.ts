@@ -12,6 +12,8 @@ const TEXT_EXT = /\.(txt|text|log|json|canvas|csv|tsv|ya?ml|toml|ini|conf|cfg|xm
 
 export const isPlainText = (path: string) => TEXT_EXT.test(path);
 
+export const isPdf = (path: string) => /\.pdf$/i.test(path);
+
 const isExternal = (src: string) => /^([a-z][a-z0-9+.-]*:|\/\/)/i.test(src);
 
 const safeDecode = (s: string) => {

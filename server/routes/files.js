@@ -66,11 +66,15 @@ export default (dataDir, getConfig) => {
   // Archivos binarios del vault (imágenes adjuntas a las notas)
   router.get('/raw/:filePath', withVault((cfg, req, res) => {
     const fullPath = vault.resolveFile(cfg.vaultPath, req.params.filePath);
-    // Un SVG abierto directamente no debe poder ejecutar scripts
-    res.set({
-      'X-Content-Type-Options': 'nosniff',
-      'Content-Security-Policy': "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox",
-    });
+    res.set('X-Content-Type-Options', 'nosniff');
+    if (/\.pdf$/i.test(fullPath)) {
+      // El visor de PDF nativo del navegador no funciona con `sandbox`; se permite incrustarlo
+      // solo desde la propia web (el iframe de PdfViewer)
+      res.set({ 'Content-Security-Policy': "frame-ancestors 'self'", 'X-Frame-Options': 'SAMEORIGIN' });
+    } else {
+      // Un SVG abierto directamente no debe poder ejecutar scripts
+      res.set('Content-Security-Policy', "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox");
+    }
     res.sendFile(fullPath, { dotfiles: 'allow' }, (err) => {
       if (err && !res.headersSent) res.status(err.statusCode || 404).json({ error: 'Not found' });
     });

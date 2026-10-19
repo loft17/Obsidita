@@ -348,6 +348,8 @@ function EditorSection() {
   const setShowLineNumbers = useStore((s) => s.setShowLineNumbers);
   const readableLineLength = useStore((s) => s.readableLineLength);
   const setReadableLineLength = useStore((s) => s.setReadableLineLength);
+  const pdfViewer = useStore((s) => s.pdfViewer);
+  const setPdfViewer = useStore((s) => s.setPdfViewer);
   const t = useT();
   return (
     <>
@@ -399,6 +401,16 @@ function EditorSection() {
           </div>
           <label className="setting-toggle">
             <input type="checkbox" checked={showLineNumbers} onChange={(e) => setShowLineNumbers(e.target.checked)} />
+            <span />
+          </label>
+        </div>
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.pdfViewer')}</div>
+            <div className="setting-desc">{t('settings.pdfViewer.desc')}</div>
+          </div>
+          <label className="setting-toggle">
+            <input type="checkbox" checked={pdfViewer} onChange={(e) => setPdfViewer(e.target.checked)} />
             <span />
           </label>
         </div>

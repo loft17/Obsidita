@@ -153,7 +153,10 @@ const precompressed = (req, res, next) => {
     if (!existsSync(file)) continue;
     res.set({ 'Content-Encoding': encoding, Vary: 'Accept-Encoding', 'Cache-Control': 'public, max-age=31536000, immutable' });
     res.type(extname(req.path));
-    return res.sendFile(file, { maxAge: '1y', immutable: true }, (err) => err && next(err));
+    // Si el navegador cancela la descarga (recarga, cambio de página) no es un error del servidor
+    return res.sendFile(file, { maxAge: '1y', immutable: true }, (err) => {
+      if (err && err.code !== 'ECONNABORTED') next(err);
+    });
   }
   next();
 };

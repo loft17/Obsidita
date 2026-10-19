@@ -42,6 +42,8 @@ export interface PrefsSlice {
   setShowTabHeader: (show: boolean) => void;
   showRibbon: boolean;
   setShowRibbon: (show: boolean) => void;
+  pdfViewer: boolean;
+  setPdfViewer: (enabled: boolean) => void;
 }
 
 const KEYS = {
@@ -58,6 +60,8 @@ const KEYS = {
   readableLine: 'readableLineLength',
   tabHeader: 'showTabHeader',
   ribbon: 'showRibbon',
+  // Abrir los PDF con el visor nativo del navegador en vez de ofrecer descargarlos
+  pdfViewer: 'pdfViewer',
 };
 
 const FONT_KEYS: Record<FontKind, string> = {
@@ -190,5 +194,7 @@ export const createPrefsSlice: StateCreator<AppStore, [], [], PrefsSlice> = (set
     setShowTabHeader: boolPref('showTabHeader', KEYS.tabHeader),
     showRibbon: readBool(KEYS.ribbon, true),
     setShowRibbon: boolPref('showRibbon', KEYS.ribbon),
+    pdfViewer: readBool(KEYS.pdfViewer, false),
+    setPdfViewer: boolPref('pdfViewer', KEYS.pdfViewer),
   };
 };
