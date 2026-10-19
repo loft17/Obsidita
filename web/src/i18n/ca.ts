@@ -227,6 +227,7 @@ export const ca: Messages = {
   'search.rateLimited': 'Massa cerques. Torna-ho a provar en {s} s; es mantenen els resultats anteriors.',
   'search.line': 'Línia {n}',
   'search.more': 'i {n} més...',
+  'search.toggleMatches': 'Mostra o amaga les coincidències',
   'tags.sortByCount': 'Ordena per nombre de notes',
   'tags.sortByName': 'Ordena per nom',
   'tags.filter': 'Filtra les etiquetes...',

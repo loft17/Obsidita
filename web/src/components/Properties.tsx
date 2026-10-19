@@ -129,7 +129,20 @@ function ChipList({
           key={`${item}-${i}`}
           className={`${pill ? 'chip chip-pill' : 'chip'}${onItemClick ? ' clickable' : ''}`}
           title={onItemClick ? t('props.searchTag', { tag: item }) : undefined}
+          role={onItemClick ? 'button' : undefined}
+          tabIndex={onItemClick ? 0 : undefined}
           onClick={onItemClick && (() => onItemClick(item))}
+          onKeyDown={
+            onItemClick &&
+            ((e) => {
+              // Ignora las teclas que suben desde el botón de quitar
+              if (e.target !== e.currentTarget) return;
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onItemClick(item);
+              }
+            })
+          }
         >
           {item}
           {editable && (

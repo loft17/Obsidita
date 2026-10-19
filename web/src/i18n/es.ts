@@ -224,6 +224,7 @@ export const es = {
   'search.rateLimited': 'Demasiadas búsquedas. Prueba de nuevo en {s} s; se mantienen los resultados anteriores.',
   'search.line': 'Línea {n}',
   'search.more': 'y {n} más...',
+  'search.toggleMatches': 'Mostrar u ocultar coincidencias',
   'tags.sortByCount': 'Ordenar por número de notas',
   'tags.sortByName': 'Ordenar por nombre',
   'tags.filter': 'Filtrar etiquetas...',

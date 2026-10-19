@@ -349,6 +349,22 @@ body.is-resizing {
   color: var(--text-faint);
 }
 
+/* Chevron como botón real (búsqueda): sin estilos nativos del navegador */
+button.tree-chevron {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+button.tree-chevron:focus-visible,
+.search-match:focus-visible,
+.chip.clickable:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: -2px;
+}
+
 .tree-item.file {
   padding-left: 0;
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
 import { useStore, hiddenMatchers, isHiddenPath } from '../store';
 import { searchApi } from '../api';
 import type { SearchResult, SearchMatch } from '../types';
@@ -6,6 +6,16 @@ import { parentFolder } from '../paths';
 import { useT } from '../i18n';
 import { setPendingLine } from '../wikilinks';
 import { IconChevronRight, IconChevronDown, IconClose, IconSearch } from './Icons';
+
+// Enter/Espacio activan un elemento con role="button"; se ignoran las teclas
+// que suben desde un hijo enfocable (p. ej. el botón del chevron)
+const activateOnKey = (fn: () => void) => (e: KeyboardEvent<HTMLElement>) => {
+  if (e.target !== e.currentTarget) return;
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    fn();
+  }
+};
 
 function Highlighted({ text, start, length }: Pick<SearchMatch, 'text' | 'start' | 'length'>) {
   return (
@@ -158,27 +168,42 @@ export default function SearchPanel() {
         {visible.map((r) => {
           const isOpen = !collapsed.has(r.path);
           const hasMatches = r.matches.length > 0;
+          const openResult = () => {
+            if (r.matches.length > 0) setPendingLine(r.path, r.matches[0].line);
+            openFile(r.path, r.name);
+          };
           return (
             <div key={r.path} className="search-result">
               <div
                 className={`tree-item file ${activeTab === r.path ? 'active' : ''}`}
                 style={{ paddingLeft: hasMatches ? '0' : '16px' }}
                 title={r.path}
-                onClick={() => {
-                  if (r.matches.length > 0) setPendingLine(r.path, r.matches[0].line);
-                  openFile(r.path, r.name);
+                role="button"
+                tabIndex={0}
+                onClick={openResult}
+                onKeyDown={(e) => {
+                  // Flechas derecha/izquierda despliegan o pliegan las coincidencias, como en el árbol
+                  if (hasMatches && e.target === e.currentTarget && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+                    e.preventDefault();
+                    if ((e.key === 'ArrowRight') !== isOpen) toggle(r.path);
+                    return;
+                  }
+                  activateOnKey(openResult)(e);
                 }}
               >
                 {hasMatches && (
-                  <span
+                  <button
+                    type="button"
                     className="tree-chevron"
+                    aria-expanded={isOpen}
+                    aria-label={t('search.toggleMatches')}
                     onClick={(e) => {
                       e.stopPropagation();
                       toggle(r.path);
                     }}
                   >
                     {isOpen ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
-                  </span>
+                  </button>
                 )}
                 <span className="tree-label">
                   <HighlightedName name={r.name.replace(/\.md$/i, '')} query={q} />
@@ -188,19 +213,25 @@ export default function SearchPanel() {
               </div>
               {hasMatches && isOpen && (
                 <div className="search-matches">
-                  {r.matches.map((m, i) => (
-                    <div
-                      key={i}
-                      className="search-match"
-                      title={t('search.line', { n: m.line })}
-                      onClick={() => {
-                        setPendingLine(r.path, m.line);
-                        openFile(r.path, r.name);
-                      }}
-                    >
-                      <Highlighted text={m.text} start={m.start} length={m.length} />
-                    </div>
-                  ))}
+                  {r.matches.map((m, i) => {
+                    const openMatch = () => {
+                      setPendingLine(r.path, m.line);
+                      openFile(r.path, r.name);
+                    };
+                    return (
+                      <div
+                        key={i}
+                        className="search-match"
+                        title={t('search.line', { n: m.line })}
+                        role="button"
+                        tabIndex={0}
+                        onClick={openMatch}
+                        onKeyDown={activateOnKey(openMatch)}
+                      >
+                        <Highlighted text={m.text} start={m.start} length={m.length} />
+                      </div>
+                    );
+                  })}
                   {r.total > r.matches.length && (
                     <div className="search-match-more">{t('search.more', { n: r.total - r.matches.length })}</div>
                   )}

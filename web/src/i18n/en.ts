@@ -225,6 +225,7 @@ export const en: Messages = {
   'search.rateLimited': 'Too many searches. Try again in {s}s; the previous results are kept.',
   'search.line': 'Line {n}',
   'search.more': 'and {n} more...',
+  'search.toggleMatches': 'Show or hide matches',
   'tags.sortByCount': 'Sort by number of notes',
   'tags.sortByName': 'Sort by name',
   'tags.filter': 'Filter tags...',
