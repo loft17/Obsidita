@@ -340,6 +340,14 @@ body.is-resizing {
   color: var(--text-normal);
 }
 
+/* Carpeta pulsada en el breadcrumb: sombreada en azul para encontrarla entre muchas abiertas */
+.tree-item.revealed,
+.tree-item.revealed:hover {
+  background-color: rgba(59, 130, 246, 0.3);
+  box-shadow: inset 2px 0 0 rgb(59, 130, 246);
+  color: var(--text-normal);
+}
+
 .tree-chevron {
   width: 16px;
   min-width: 16px;
@@ -633,6 +641,26 @@ button.tree-chevron:focus-visible,
 
 .breadcrumb-sep {
   opacity: 0.7;
+}
+
+.breadcrumb-folder {
+  background: none;
+  border: none;
+  padding: 0 2px;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.breadcrumb-folder:hover {
+  color: var(--text-normal);
+  background-color: var(--interactive-hover);
+}
+
+.breadcrumb-folder:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: -2px;
 }
 
 .editor-wrapper {

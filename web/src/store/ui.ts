@@ -23,6 +23,11 @@ export interface UiSlice {
   expandedFolders: Set<string>;
   toggleFolder: (path: string) => void;
   collapseAll: () => void;
+  // Carpeta pedida desde fuera del árbol (el breadcrumb): el explorador la muestra y la selecciona.
+  // `seq` permite repetir la petición con la misma carpeta
+  revealRequest: { path: string; seq: number } | null;
+  revealFolder: (path: string) => void;
+  clearRevealRequest: () => void;
   // Ancho de la barra lateral en el escritorio (px), ajustable arrastrando su borde
   sidebarWidth: number;
   setSidebarWidth: (width: number, persist?: boolean) => void;
@@ -61,6 +66,21 @@ export const createUiSlice: StateCreator<AppStore, [], [], UiSlice> = (set) => (
       return { expandedFolders: expanded };
     }),
   collapseAll: () => set({ expandedFolders: new Set() }),
+  revealRequest: null,
+  // Despliega la carpeta y todas las que la contienen, y abre el explorador de archivos
+  revealFolder: (path) =>
+    set((state) => {
+      const expanded = new Set(state.expandedFolders);
+      const parts = path.split('/');
+      for (let i = 1; i <= parts.length; i++) expanded.add(parts.slice(0, i).join('/'));
+      return {
+        expandedFolders: expanded,
+        sidebarOpen: true,
+        sidebarView: 'files',
+        revealRequest: { path, seq: (state.revealRequest?.seq ?? 0) + 1 },
+      };
+    }),
+  clearRevealRequest: () => set({ revealRequest: null }),
   sidebarWidth: readNumber(SIDEBAR_WIDTH_KEY, DEFAULT_SIDEBAR_WIDTH, clampSidebarWidth),
   // Durante el arrastre solo se actualiza el estado; se guarda al soltar (persist)
   setSidebarWidth: (width, persist = false) => {

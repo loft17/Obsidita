@@ -133,6 +133,7 @@ export default function MainLayout() {
   const conflict = useStore((s) => s.conflicts[0]);
   const tabCount = useStore((s) => s.tabs.length);
   const toggleSidebar = useStore((s) => s.toggleSidebar);
+  const revealFolder = useStore((s) => s.revealFolder);
   const mobile = useIsMobile();
   const t = useT();
   useSyncNotifications();
@@ -229,7 +230,18 @@ export default function MainLayout() {
                   .split('/')
                   .map((part, i, arr) => (
                     <span key={i}>
-                      {part}
+                      {i < arr.length - 1 ? (
+                        // Las carpetas del camino llevan a su sitio en el árbol de archivos
+                        <button
+                          type="button"
+                          className="breadcrumb-folder"
+                          onClick={() => revealFolder(arr.slice(0, i + 1).join('/'))}
+                        >
+                          {part}
+                        </button>
+                      ) : (
+                        part
+                      )}
                       {i < arr.length - 1 && <span className="breadcrumb-sep"> / </span>}
                     </span>
                   ))}

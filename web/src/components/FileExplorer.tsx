@@ -84,6 +84,7 @@ function FileTreeItem({
   onKeyDown,
   onFocus,
   tabStop,
+  revealed,
   drag,
 }: {
   flatItem: FlatItem;
@@ -95,6 +96,8 @@ function FileTreeItem({
   onFocus: (path: string) => void;
   // Único elemento del árbol alcanzable con Tab; el resto se recorre con las flechas
   tabStop: boolean;
+  // Carpeta seleccionada desde el breadcrumb
+  revealed: boolean;
   drag: DragHandlers;
 }) {
   const { item, level, isExpanded, hasChildren } = flatItem;
@@ -106,7 +109,7 @@ function FileTreeItem({
   return (
     <div className={`tree-node ${isFolder && drag.dropTarget === item.path ? 'drop-target' : ''}`} role="none">
       <div
-        className={`tree-item ${isFolder ? 'folder' : 'file'} ${activeTab === item.path ? 'active' : ''}`}
+        className={`tree-item ${isFolder ? 'folder' : 'file'} ${activeTab === item.path ? 'active' : ''} ${revealed ? 'revealed' : ''}`}
         style={{ paddingLeft: `${level * 14 + 8}px` }}
         role="treeitem"
         aria-level={level + 1}
@@ -163,6 +166,9 @@ export default function FileExplorer() {
   const [focusedPath, setFocusedPath] = useState<string | null>(null);
   // Elemento que debe recibir el foco en cuanto la virtualización lo pinte
   const pendingFocus = useRef<string | null>(null);
+  // Carpeta seleccionada desde el breadcrumb; se olvida con el siguiente clic o al cambiar de nota
+  const [revealedPath, setRevealedPath] = useState<string | null>(null);
+  const revealRequest = useStore((s) => s.revealRequest);
   const [dialog, setDialog] = useState<{
     kind: 'rename' | 'move' | 'delete' | 'new-note' | 'new-folder';
     path: string;
@@ -435,6 +441,39 @@ export default function FileExplorer() {
 
   const activeTab = useStore((s) => s.activeTab);
 
+  // Petición del breadcrumb: la carpeta ya está desplegada (y sus padres); se centra en el
+  // árbol y se selecciona. Se pinta tras hacer scroll, así que el foco va por `pendingFocus`
+  useEffect(() => {
+    if (!revealRequest) return;
+    const { path } = revealRequest;
+    useStore.getState().clearRevealRequest();
+    const index = flatItems.findIndex((f) => f.item.path === path);
+    const container = explorerRef.current;
+    if (index < 0 || !container) return;
+    setRevealedPath(path);
+    setFocusedPath(path);
+    container.scrollTop = Math.max(0, index * ITEM_HEIGHT - container.clientHeight / 2);
+    updateRange(container);
+    pendingFocus.current = path;
+  }, [revealRequest, flatItems]);
+
+  // El sombreado se quita con el siguiente clic en cualquier parte de la página. El clic del
+  // breadcrumb que lo ha puesto ya pasó, así que no lo borra
+  useEffect(() => {
+    if (!revealedPath) return;
+    const clear = () => setRevealedPath(null);
+    document.addEventListener('pointerdown', clear, true);
+    return () => document.removeEventListener('pointerdown', clear, true);
+  }, [revealedPath]);
+
+  // Solo al cambiar de nota: al montarse el explorador no debe borrar la selección recién hecha
+  const lastActiveTab = useRef(activeTab);
+  useEffect(() => {
+    if (lastActiveTab.current === activeTab) return;
+    lastActiveTab.current = activeTab;
+    setRevealedPath(null);
+  }, [activeTab]);
+
   // Lleva el foco a un elemento del árbol, aunque la virtualización aún no lo haya pintado
   const moveFocus = (index: number) => {
     const target = flatItems[index];
@@ -564,6 +603,7 @@ export default function FileExplorer() {
             onKeyDown={(e) => handleTreeKeyDown(e, visibleRange.start + idx)}
             onFocus={setFocusedPath}
             tabStop={flatItem.item.path === tabStop}
+            revealed={flatItem.item.path === revealedPath}
             drag={drag}
           />
         ))}
