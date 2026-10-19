@@ -48,7 +48,7 @@ Ojo con Firefox: field-sizing funciona en Chrome, Edge y Safari recientes, pero 
 ---
 
 ## 🧩 Variables de entorno
-Que esta explicado extensamente en la carpeta DOC en el ficher
+Que esta explicado extensamente en la carpeta [docs](docs/) en el ficher
 
 ## 📚 Atajos de teclado
 ## 📚 Documentación técnica

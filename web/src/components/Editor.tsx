@@ -274,7 +274,6 @@ export default function Editor({ filePath, content, onContentChange }: Props) {
       viewRef.current = null;
     };
     // Solo al montar: los cambios de `body` posteriores los aplica el efecto de más abajo
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

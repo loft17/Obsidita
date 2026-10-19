@@ -158,7 +158,6 @@ export default function TagsPanel() {
   useEffect(() => {
     load();
     return () => abortRef.current?.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleSort = () => {

@@ -408,7 +408,6 @@ export default function FileExplorer() {
 
   // Sin dependencias: el elemento pendiente aparece cuando el scroll actualiza el rango visible.
   // Sin nada pendiente solo compara una ref, así que correr tras cada render no cuesta nada
-  // eslint-disable-next-line no-restricted-syntax
   useEffect(() => {
     if (pendingFocus.current && focusTreeItem(pendingFocus.current)) pendingFocus.current = null;
   });

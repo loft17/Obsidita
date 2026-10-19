@@ -199,8 +199,9 @@ Obsidian-Web/
 │       ├── .obsidian/        # Obsidian configuration
 │       └── attachments/      # Images and other files
 │
-└── 📚 utils/                 # Scripts and documentation
-    ├── ENG/                  # Documentation in English
+└── 📚 docs/                  # Documentation
+    ├── en/                   # Documentation in English
+    │   ├── API.md
     │   ├── ERRORS_AND_SOLUTIONS.md
     │   └── [other guides]
     └── [useful scripts]

@@ -490,7 +490,6 @@ export default function ReadingView({ content, filePath, onContentChange }: Prop
   // de cachés de módulo): por eso están en las dependencias aunque no aparezcan en la función
   const html = useMemo(
     () => md.render(markdownContent, { notePath }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [markdownContent, notePath, tree, embedsVersion, lang, theme],
   );
 

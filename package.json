@@ -1,6 +1,6 @@
 {
   "name": "Obsidita",
-  "version": "0.9.23",
+  "version": "0.9.20262019",
   "description": "Web viewer/editor for Obsidian vaults",
   "type": "module",
   "main": "server/index.js",
@@ -9,10 +9,6 @@
     "web:dev": "cd web && vite",
     "web:build": "cd web && vite build",
     "server:dev": "node --watch server/index.js",
-    "lint": "eslint web/src",
-    "lint:fix": "eslint web/src --fix",
-    "format": "prettier --write \"web/src/**/*.{ts,tsx}\"",
-    "format:check": "prettier --check \"web/src/**/*.{ts,tsx}\"",
     "postinstall": "npm run web:build",
     "start": "node server/index.js"
   },
@@ -57,30 +53,15 @@
     "zustand": "^4.4.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.5",
     "@types/node": "^20.0.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@vitejs/plugin-react": "^4.7.0",
     "concurrently": "^8.2.0",
-    "eslint": "^9.39.5",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-react-hooks": "^7.1.1",
-    "globals": "^16.5.0",
-    "prettier": "^3.9.10",
     "typescript": "^5.0.0",
-    "typescript-eslint": "^8.71.2",
     "vite": "^6.4.4"
   },
   "engines": {
     "node": ">=20.0.0"
-  },
-  "prettier": {
-    "singleQuote": true,
-    "semi": true,
-    "tabWidth": 2,
-    "printWidth": 120,
-    "trailingComma": "all",
-    "arrowParens": "always"
   }
 }

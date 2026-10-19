@@ -388,7 +388,6 @@ function SearchBar({ onClose }: { onClose: () => void }) {
       hl.set(HL_ALL, all);
       show(0, false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, editMode]);
 
   // F3 / Shift+F3 siguen buscando aunque el foco esté en el editor. El listener se registra una

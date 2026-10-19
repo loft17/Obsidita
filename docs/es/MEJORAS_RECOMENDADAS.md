@@ -84,7 +84,7 @@ Auditoría completa del código (servidor Express + cliente React · ~16 000 lí
 | 20 | ✅ | M | 21 familias de `@fontsource` entran en el build | **Corregido (carga bajo demanda):** `web/src/fonts.ts` ya no importa las 78 variantes en el arranque; cada familia se carga con un `import()` dinámico desde `loadBundledFont()` (al arrancar, al cambiar de fuente, y todas al abrir Ajustes para la vista previa). Resultado: el CSS principal pasa de 78 `@font-face` a **0** (56 kB → 44 kB) y las 78 variantes quedan en 78 trozos sueltos de 151 B cada uno. Las 21 familias siguen disponibles: no se quita funcionalidad. Nota: el woff2 no se reduce (1,8 MB), porque el navegador ya descargaba solo la fuente elegida; lo que se evita es declararlas todas de golpe |
 
 > [!note] Por qué importa el punto 10
-> Obsidita está pensada para VPS pequeños (`DOC/ESP/OPTIMIZACION_RECURSOS_LIMITADOS.md` habla de 512 MB - 2 GB). Un índice que puede llegar a 400 MB contradice ese objetivo.
+> Obsidita está pensada para VPS pequeños (`docs/es/OPTIMIZACION_RECURSOS_LIMITADOS.md` habla de 512 MB - 2 GB). Un índice que puede llegar a 400 MB contradice ese objetivo.
 
 ---
 
@@ -160,14 +160,14 @@ Auditoría completa del código (servidor Express + cliente React · ~16 000 lí
 
 | # | Prio | Esf. | Hallazgo | Cómo aplicarla |
 |:--:|:----:|:----:|----------|----------------|
-| 58 | 🔴 | S | **`README.md` está roto**: todas las secciones (Índice, Características, Instalación, Variables de entorno…) están vacías desde el commit `c7fc659`. El contenido real vive en `README.md_` y en `DOC/` | Restaurar el contenido (o enlazar a `DOC/`) y borrar `README.md_`, que es una copia de seguridad dentro de git |
-| 59 | 🟠 | M | No hay `Dockerfile` ni `docker-compose` ni unidad systemd versionada (solo scripts sueltos en `DOC/`) | Dockerfile multi-stage (build de Vite + runtime Node) y un `.service` de ejemplo |
+| 58 | 🔴 | S | **`README.md` está roto**: todas las secciones (Índice, Características, Instalación, Variables de entorno…) están vacías desde el commit `c7fc659`. El contenido real vive en `README.md_` y en `docs/` | Restaurar el contenido (o enlazar a `docs/`) y borrar `README.md_`, que es una copia de seguridad dentro de git |
+| 59 | 🟠 | M | No hay `Dockerfile` ni `docker-compose` ni unidad systemd versionada (solo scripts sueltos en `docs/`) | Dockerfile multi-stage (build de Vite + runtime Node) y un `.service` de ejemplo |
 | 60 | 🟠 | S | No hay endpoint de salud ni métricas | `GET /healthz` (configurado, vault accesible, versión): útil para el proxy y para Docker |
 | 61 | 🟠 | S | Si `MAX_NOTE_MB`/`MAX_UPLOAD_MB` superan `client_max_body_size` en nginx, aparecen 413 confusos | Advertir al arrancar si `MAX_*` pasa de un umbral y decirlo en el propio mensaje de error |
 | 62 | 🟠 | M | `sessions.json` se reescribe entero en cada login o actividad, y no hay copia de seguridad | Escritura atómica (temporal + `rename`) y backup de `data/` antes de operaciones destructivas |
 | 63 | 🟠 | S | No hay rotación de logs ni opción de escribir a fichero | Variable `LOG_FILE` o documentar `journalctl` con systemd |
-| 64 | 🟡 | M | La API no está documentada | Un `DOC/ESP/API.md` con la lista de endpoints, o generar OpenAPI |
-| 65 | 🟡 | M | La documentación está duplicada en `DOC/ESP` y `DOC/ENG` (doble mantenimiento) | Elegir un idioma canónico y traducir solo lo esencial |
+| 64 | 🟡 | M | La API no está documentada | Un `docs/es/API.md` con la lista de endpoints, o generar OpenAPI |
+| 65 | 🟡 | M | La documentación está duplicada en `docs/es` y `docs/en` (doble mantenimiento) | Elegir un idioma canónico y traducir solo lo esencial |
 | 66 | 🟡 | S | Restos en el repositorio: `README.md_` versionado y el fichero `notas` suelto en la raíz | Limpiarlos |
 | 67 | 🟡 | S | No hay guía de contribución ni despliegue reproducible | `CONTRIBUTING.md` con «cómo levantar, testear y desplegar» |
 
