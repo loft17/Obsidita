@@ -162,14 +162,14 @@ Auditoría completa del código (servidor Express + cliente React · ~16 000 lí
 |:--:|:----:|:----:|----------|----------------|
 | 58 | 🔴 | S | **`README.md` está roto**: todas las secciones (Índice, Características, Instalación, Variables de entorno…) están vacías desde el commit `c7fc659`. El contenido real vive en `README.md_` y en `docs/` | Restaurar el contenido (o enlazar a `docs/`) y borrar `README.md_`, que es una copia de seguridad dentro de git |
 | 59 | 🟠 | M | No hay `Dockerfile` ni `docker-compose` ni unidad systemd versionada (solo scripts sueltos en `docs/`) | Dockerfile multi-stage (build de Vite + runtime Node) y un `.service` de ejemplo |
-| 60 | 🟠 | S | No hay endpoint de salud ni métricas | `GET /healthz` (configurado, vault accesible, versión): útil para el proxy y para Docker |
+| 60 | ✅ | S | No hay endpoint de salud ni métricas | **Corregido:** `GET /healthz` (`server/routes/health.js`), público y sin datos sensibles: devuelve `configured`, `vault` (existe y es legible/escribible, con límite de 3 s), `version` y `uptime`. `200` si va bien o aún falta el setup; `503` si el vault no es accesible. Documentado en `docs/*/API.md` |
 | 61 | 🟠 | S | Si `MAX_NOTE_MB`/`MAX_UPLOAD_MB` superan `client_max_body_size` en nginx, aparecen 413 confusos | Advertir al arrancar si `MAX_*` pasa de un umbral y decirlo en el propio mensaje de error |
 | 62 | 🟠 | M | `sessions.json` se reescribe entero en cada login o actividad, y no hay copia de seguridad | Escritura atómica (temporal + `rename`) y backup de `data/` antes de operaciones destructivas |
 | 63 | 🟠 | S | No hay rotación de logs ni opción de escribir a fichero | Variable `LOG_FILE` o documentar `journalctl` con systemd |
 | 64 | 🟡 | M | La API no está documentada | Un `docs/es/API.md` con la lista de endpoints, o generar OpenAPI |
 | 65 | 🟡 | M | La documentación está duplicada en `docs/es` y `docs/en` (doble mantenimiento) | Elegir un idioma canónico y traducir solo lo esencial |
 | 66 | 🟡 | S | Restos en el repositorio: `README.md_` versionado y el fichero `notas` suelto en la raíz | Limpiarlos |
-| 67 | 🟡 | S | No hay guía de contribución ni despliegue reproducible | `CONTRIBUTING.md` con «cómo levantar, testear y desplegar» |
+| 67 | ✅ | S | No hay guía de contribución ni despliegue reproducible | **Corregido:** `CONTRIBUTING.md` en la raíz con cómo levantar (dev y producción en local), cómo comprobar un cambio mientras no haya tests (`tsc --noEmit`, `node --check`, build, `/healthz` y una lista de pruebas manuales), convenciones y despliegue paso a paso (versión fijada con `git checkout`, systemd, proxy, verificación con `/healthz`, actualización y vuelta atrás). Pendiente para que sea del todo reproducible: versionar `package-lock.json` (hoy está en `.gitignore`) y usar `npm ci` |
 
 ---
 

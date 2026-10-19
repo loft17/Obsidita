@@ -24,6 +24,7 @@ Reference for the endpoints exposed by the server (`server/`). The web app (`web
 - [Settings](#settings--apisettings) — server and vault settings
 - [Sync](#sync--apisync) — GitHub sync and note history
 - [Fonts](#fonts--apifonts) — custom fonts
+- [Health](#health--healthz) — service status for proxy and Docker
 - [curl example](#curl-example)
 
 ---
@@ -537,6 +538,29 @@ For variable fonts `weight` is `"100 900"`.
 ### `GET /api/fonts/file/:name`
 
 Returns the font file (`.woff2`, `.woff`, `.ttf`, `.otf`) with `Cache-Control: private, max-age=86400`. `404` if missing or the name is invalid.
+
+---
+
+## Health — `/healthz`
+
+Public (no session, no CSRF) and outside `/api`, meant for the reverse proxy, Docker's `HEALTHCHECK` or an external monitor. It returns no paths or vault data. It also answers `HEAD` and sends `Cache-Control: no-store`.
+
+### `GET /healthz`
+
+```json
+{ "status": "ok", "configured": true, "vault": true, "version": "0.9.20262019", "uptime": 3600 }
+```
+
+- `configured`: whether setup has been completed.
+- `vault`: whether the vault folder exists and is readable and writable (`null` when not configured). A disk that does not answer within 3 s counts as `false`.
+- `uptime`: seconds since the process started.
+
+Status `200` when everything is fine **or setup is still pending** (so the container is not flagged unhealthy before setup); `503` with `"status": "error"` when configured but the vault is not accessible.
+
+```bash
+curl -fsS http://localhost:3000/healthz
+# Docker: HEALTHCHECK CMD wget -qO- http://127.0.0.1:3000/healthz || exit 1
+```
 
 ---
 

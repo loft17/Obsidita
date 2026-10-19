@@ -19,7 +19,7 @@ const TIMEOUT = 5000;
 
 const enabled = !['0', 'false', 'no', 'off'].includes((process.env.UPDATE_CHECK || '').trim().toLowerCase());
 
-const current = JSON.parse(
+export const current = JSON.parse(
   readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8')
 ).version;
 

@@ -11,6 +11,7 @@ import searchRoutes from './routes/search.js';
 import settingsRoutes from './routes/settings.js';
 import syncRoutes from './routes/sync.js';
 import fontsRoutes from './routes/fonts.js';
+import healthRoutes from './routes/health.js';
 import { createSyncManager } from './sync.js';
 import { invalidateSnapshot } from './searchIndex.js';
 import { createSessionStore, createLoginLimiter } from './sessions.js';
@@ -96,6 +97,9 @@ const getConfig = () => {
   configCache = { key, value };
   return value;
 };
+
+// Salud del servicio (pública, sin sesión): para el proxy, Docker o un monitor externo
+app.use('/healthz', healthRoutes(getConfig));
 
 // Serve static web files (before auth middleware so they're always accessible)
 // Los archivos de assets/ llevan un hash en el nombre: el navegador los guarda un año sin
