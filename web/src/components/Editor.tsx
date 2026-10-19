@@ -357,7 +357,7 @@ export default function Editor({ filePath, content, onContentChange }: Props) {
         {showInlineTitle && <InlineTitle filePath={filePath} onEnter={() => viewRef.current?.focus()} />}
         {note.valid && (
           <div className="editor-properties">
-            <Properties data={note.data} editable onChange={handlePropertiesChange} />
+            <Properties data={note.data} editable onChange={handlePropertiesChange} notePath={filePath} />
           </div>
         )}
         <div ref={hostRef} className="editor-cm" />

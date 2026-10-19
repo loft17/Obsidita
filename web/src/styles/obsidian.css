@@ -1158,6 +1158,34 @@ button.tree-chevron:focus-visible,
   color: var(--text-normal);
 }
 
+.property-value-image {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.property-value-image > span {
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  overflow-wrap: anywhere;
+}
+
+.property-image {
+  display: block;
+  align-self: flex-start;
+  max-width: 100%;
+}
+
+.property-image img {
+  display: block;
+  max-width: 100%;
+  max-height: 240px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  object-fit: contain;
+}
+
 .property-input,
 .property-new-key {
   width: 100%;

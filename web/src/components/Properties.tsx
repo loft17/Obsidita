@@ -1,5 +1,6 @@
 import { useState, type KeyboardEvent } from 'react';
 import { isDateString, type FrontmatterData } from '../frontmatter';
+import { attachmentUrl } from '../attachments';
 import { useT } from '../i18n';
 import {
   IconTag,
@@ -13,6 +14,7 @@ import {
   IconPlus,
   IconChevronUp,
   IconChevronDown,
+  IconImage,
 } from './Icons';
 
 interface Props {
@@ -20,9 +22,11 @@ interface Props {
   editable?: boolean;
   onChange?: (data: FrontmatterData) => void;
   onTagClick?: (tag: string) => void;
+  // Ruta de la nota, para resolver imágenes del vault relativas a ella
+  notePath?: string;
 }
 
-type Kind = 'tags' | 'list' | 'date' | 'number' | 'checkbox' | 'text';
+type Kind = 'tags' | 'list' | 'date' | 'number' | 'checkbox' | 'image' | 'text';
 
 function kindOf(key: string, value: unknown): Kind {
   // Como en el índice del servidor: `tags`, `tag`, `Tags`...
@@ -32,6 +36,8 @@ function kindOf(key: string, value: unknown): Kind {
   if (typeof value === 'number') return 'number';
   if (typeof value === 'boolean') return 'checkbox';
   if (isDateString(value)) return 'date';
+  // Solo `image`/`imagen` con texto: se muestra la imagen debajo del valor
+  if (/^(image|imagen)$/i.test(key) && (value === undefined || value === null || typeof value === 'string')) return 'image';
   return 'text';
 }
 
@@ -69,6 +75,7 @@ const ICONS: Record<Kind, typeof IconText> = {
   date: IconCalendar,
   number: IconHash,
   checkbox: IconCheckSquare,
+  image: IconImage,
   text: IconText,
 };
 
@@ -180,6 +187,27 @@ function ChipList({
   );
 }
 
+// Admite URL (http/https) o una ruta/enlace del vault: `foto.jpg`, `[[foto.jpg]]` o `![[foto.jpg]]`
+function imageSrc(value: string, notePath: string): string | null {
+  const text = value.trim().replace(/^!?\[\[([^\]|]+)(?:\|[^\]]*)?\]\]$/, '$1').trim();
+  if (!text) return null;
+  if (/^https?:\/\//i.test(text)) return text;
+  // Otros esquemas (javascript:, file:...) no se cargan
+  if (/^[a-z][a-z0-9+.-]*:/i.test(text) || text.startsWith('//')) return null;
+  return attachmentUrl(text, notePath);
+}
+
+function PropertyImage({ src }: { src: string }) {
+  // Se recuerda qué src falló para volver a intentarlo si cambia la URL
+  const [failed, setFailed] = useState<string | null>(null);
+  if (failed === src) return null;
+  return (
+    <a className="property-image" href={src} target="_blank" rel="noreferrer noopener">
+      <img src={src} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(src)} />
+    </a>
+  );
+}
+
 function DateText({ value }: { value: string }) {
   const [y, m, d] = value.split('-');
   return (
@@ -197,7 +225,7 @@ function DateText({ value }: { value: string }) {
   );
 }
 
-export default function Properties({ data, editable = false, onChange, onTagClick }: Props) {
+export default function Properties({ data, editable = false, onChange, onTagClick, notePath = '' }: Props) {
   const [adding, setAdding] = useState(false);
   const [newKey, setNewKey] = useState('');
   const t = useT();
@@ -244,13 +272,14 @@ export default function Properties({ data, editable = false, onChange, onTagClic
       {entries.map(([key, value], index) => {
         const kind = kindOf(key, value);
         const Icon = ICONS[kind];
+        const img = kind === 'image' ? imageSrc(toText(value), notePath) : null;
         return (
           <div key={key} className={editable ? 'property-row editable' : 'property-row'}>
             <span className="property-key">
               <Icon size={16} />
               <span className="property-label">{key}</span>
             </span>
-            <div className="property-value">
+            <div className={img ? 'property-value property-value-image' : 'property-value'}>
               {kind === 'tags' || kind === 'list' ? (
                 <ChipList
                   items={toList(value)}
@@ -281,6 +310,7 @@ export default function Properties({ data, editable = false, onChange, onTagClic
               ) : (
                 <span>{toText(value)}</span>
               )}
+              {img && <PropertyImage src={img} />}
             </div>
             {editable && (
               <div className="property-actions">

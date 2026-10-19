@@ -541,7 +541,7 @@ export default function ReadingView({ content, filePath, onContentChange }: Prop
       <div className="reading-view-inner">
         {showInlineTitle && filePath && <InlineTitle filePath={filePath} />}
 
-        <Properties data={frontmatter} onTagClick={searchTag} />
+        <Properties data={frontmatter} onTagClick={searchTag} notePath={notePath} />
 
         <div
           ref={contentRef}
