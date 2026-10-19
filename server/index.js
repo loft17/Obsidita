@@ -58,6 +58,23 @@ const loginLimiter = createLoginLimiter();
 const trustProxy = process.env.TRUST_PROXY;
 if (trustProxy) app.set('trust proxy', /^\d+$/.test(trustProxy) ? Number(trustProxy) : trustProxy);
 
+// Sin TRUST_PROXY, Express no mira X-Forwarded-Proto: detrás de un proxy con HTTPS req.secure
+// es false y la cookie de sesión sale sin Secure (y el límite de login ve la IP del proxy).
+// Si llega una petición reenviada por un proxy se avisa una vez, sea cual sea HOST
+if (!trustProxy) {
+  let warned = false;
+  app.use((req, res, next) => {
+    if (!warned && (req.get('X-Forwarded-Proto') || req.get('X-Forwarded-For'))) {
+      warned = true;
+      createLogger('Security').warn(
+        'Ha llegado una petición a través de un proxy (cabeceras X-Forwarded-*) y TRUST_PROXY no está definido: ' +
+          'la cookie de sesión se emite sin Secure y el límite de intentos de login ve la IP del proxy. Define TRUST_PROXY=1.'
+      );
+    }
+    next();
+  });
+}
+
 const distPath = join(__dirname, '..', 'web', 'dist');
 
 // Middleware
@@ -229,6 +246,7 @@ const port = validPort(getConfig()?.port) ?? validPort(process.env.PORT) ?? 3000
 // HOST=127.0.0.1 para escuchar solo en local (detrás de un proxy inverso con HTTPS);
 // sin definir, escucha en todas las interfaces
 const host = process.env.HOST || undefined;
+const isLoopback = (h) => h === 'localhost' || h === '::1' || /^127\./.test(h);
 app.listen(port, host, () => {
   const cfg = getConfig();
   log.info(`Obsidita listening on http://${host || 'localhost'}:${port}`);
@@ -252,5 +270,14 @@ app.listen(port, host, () => {
   }
   if (!host) {
     createLogger('Security').warn('Escuchando en todas las interfaces por HTTP (sin cifrar). Define HOST=127.0.0.1 y pon delante un proxy con HTTPS (Caddy, nginx).');
+  } else if (!isLoopback(host)) {
+    createLogger('Security').warn(`Escuchando en ${host} por HTTP (sin cifrar). Define HOST=127.0.0.1 y pon delante un proxy con HTTPS (Caddy, nginx).`);
+  }
+  // Escuchar solo en local casi siempre significa que hay un proxy delante
+  if (!trustProxy && host && isLoopback(host)) {
+    createLogger('Security').warn(
+      `HOST=${host} sin TRUST_PROXY: si hay un proxy con HTTPS delante, la cookie de sesión se emite sin Secure ` +
+        'y el límite de intentos de login ve la IP del proxy. Define TRUST_PROXY=1.'
+    );
   }
 });
