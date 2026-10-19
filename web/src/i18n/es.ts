@@ -19,6 +19,7 @@ export const es = {
   'key.backspace': 'Retroceso',
 
   'app.connectError': 'No se pudo conectar al servidor',
+  'app.proxyTooLarge': 'Demasiado grande para el proxy (413): sube client_max_body_size en nginx para que coincida con MAX_NOTE_MB / MAX_UPLOAD_MB',
   'main.empty': 'Selecciona un archivo para comenzar',
   'main.notEditable': 'Este archivo no se edita aquí: solo las notas Markdown (.md). Puedes descargarlo.',
 

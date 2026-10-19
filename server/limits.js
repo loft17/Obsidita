@@ -20,6 +20,9 @@ const DAY = 24 * 60 * 60 * 1000;
 // Tamaño de las peticiones
 export const MAX_NOTE_MB = num('MAX_NOTE_MB', 20); // JSON: guardar una nota, etc.
 export const MAX_UPLOAD_MB = num('MAX_UPLOAD_MB', 50); // adjunto subido
+// client_max_body_size del proxy inverso (nginx). Solo sirve para avisar al arrancar si
+// MAX_NOTE_MB o MAX_UPLOAD_MB lo superan: nginx cortaría antes con un 413 propio
+export const PROXY_MAX_BODY_MB = num('PROXY_MAX_BODY_MB', 50);
 
 // Contraseña
 export const MIN_PASSWORD_LENGTH = int('MIN_PASSWORD_LENGTH', 12);

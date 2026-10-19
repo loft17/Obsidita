@@ -16,7 +16,7 @@ import { invalidateSnapshot } from './searchIndex.js';
 import { createSessionStore, createLoginLimiter } from './sessions.js';
 import { loadCookieSecret } from './cookieSecret.js';
 import { securityHeaders, csrfGuard } from './security.js';
-import { MAX_NOTE_MB, MAX_UPLOAD_MB } from './limits.js';
+import { MAX_NOTE_MB, MAX_UPLOAD_MB, PROXY_MAX_BODY_MB } from './limits.js';
 import { createLogger } from './logger.js';
 const log = createLogger('Server');
 
@@ -232,6 +232,15 @@ app.listen(port, host, () => {
     log.info(`Vault: ${cfg.vaultPath}`);
   } else {
     log.info('Setup required');
+  }
+  // Si los límites superan el del proxy, nginx rechaza la petición con su propio 413 antes de llegar aquí
+  const over = [['MAX_NOTE_MB', MAX_NOTE_MB], ['MAX_UPLOAD_MB', MAX_UPLOAD_MB]].filter(([, mb]) => mb > PROXY_MAX_BODY_MB);
+  if (over.length) {
+    createLogger('Config').warn(
+      `${over.map(([name, mb]) => `${name}=${mb}`).join(', ')} supera PROXY_MAX_BODY_MB=${PROXY_MAX_BODY_MB}: ` +
+        `si hay un nginx delante, pon client_max_body_size ${Math.ceil(Math.max(...over.map(([, mb]) => mb)))}M ` +
+        '(y PROXY_MAX_BODY_MB al mismo valor) o las peticiones grandes fallarán con 413'
+    );
   }
   // Avisos de despliegue inseguro
   if (process.getuid?.() === 0) {

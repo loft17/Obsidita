@@ -20,6 +20,7 @@ export const en: Messages = {
   'key.backspace': 'Backspace',
 
   'app.connectError': 'Could not connect to the server',
+  'app.proxyTooLarge': 'Too large for the proxy (413): raise client_max_body_size in nginx to match MAX_NOTE_MB / MAX_UPLOAD_MB',
   'main.empty': 'Select a file to get started',
   'main.notEditable': 'This file is not edited here: only Markdown (.md) notes. You can download it.',
 

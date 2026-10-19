@@ -55,10 +55,11 @@ export function parseRetryAfter(value: string | null, fallbackMs = 60_000): numb
 }
 
 // Convierte una respuesta de error en la subclase de ApiError que corresponda. El cuerpo puede no
-// ser JSON (proxy, 502...): entonces el mensaje es `HTTP <código>`
+// ser JSON (proxy, 502...): entonces el mensaje es `HTTP <código>`. Un 413 sin JSON lo ha
+// devuelto el proxy (client_max_body_size de nginx), no el servidor: se explica en el mensaje
 const toApiError = async (res: Response): Promise<ApiError> => {
   const data: ErrorBody = await res.json().catch(() => ({}));
-  const message = data.error || `HTTP ${res.status}`;
+  const message = data.error || (res.status === 413 ? t('app.proxyTooLarge') : `HTTP ${res.status}`);
   if (res.status === 429) return new RateLimitError(message, parseRetryAfter(res.headers.get('Retry-After')), data);
   if (res.status === 409 && typeof data.version === 'string')
     return new ConflictError(data.content as string, data.version, data);

@@ -20,6 +20,7 @@ export const ca: Messages = {
   'key.backspace': 'Retrocés',
 
   'app.connectError': "No s'ha pogut connectar al servidor",
+  'app.proxyTooLarge': 'Massa gran per al proxy (413): puja client_max_body_size a nginx perquè coincideixi amb MAX_NOTE_MB / MAX_UPLOAD_MB',
   'main.empty': 'Selecciona un fitxer per començar',
   'main.notEditable': 'Aquest fitxer no es edita aquí: només les notes Markdown (.md). El pots descarregar.',
 
