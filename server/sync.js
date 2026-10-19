@@ -1,7 +1,8 @@
 import { spawn } from 'child_process';
-import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync } from 'fs';
+import { readFileSync, existsSync, mkdirSync, appendFileSync } from 'fs';
 import { opendir } from 'fs/promises';
 import { join } from 'path';
+import { writeFileAtomic } from './dataFiles.js';
 import { createLogger } from './logger.js';
 const log = createLogger('Sync');
 
@@ -239,7 +240,7 @@ export const createSyncManager = (dataDir, getConfig) => {
     };
   };
 
-  const save = (cfg) => writeFileSync(configPath, JSON.stringify(cfg, null, 2), { mode: 0o600 });
+  const save = (cfg) => writeFileAtomic(configPath, JSON.stringify(cfg, null, 2));
 
   const updateStatus = (changes) => {
     const cfg = load();

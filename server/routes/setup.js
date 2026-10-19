@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import { readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from 'fs';
+import { readFileSync, mkdirSync, existsSync, rmSync } from 'fs';
 import { join } from 'path';
 import crypto from 'crypto';
 import { checkVaultPath } from '../vault.js';
 import { hashPassword, MIN_PASSWORD_LENGTH } from '../password.js';
 import { publicError } from '../security.js';
+import { writeFileAtomic, backupData } from '../dataFiles.js';
 import { createLogger } from '../logger.js';
 const log = createLogger('Setup');
 
@@ -101,8 +102,10 @@ export default (dataDir, sessions) => {
         createdAt: new Date().toISOString(),
       };
 
+      // Se borran las sesiones y sync.json de la configuración anterior: antes, copia de seguridad
+      backupData(dataDir, 'setup');
       log.debug(`Writing config to: ${configPath}`);
-      writeFileSync(configPath, JSON.stringify(config, null, 2), { mode: 0o600 });
+      writeFileAtomic(configPath, JSON.stringify(config, null, 2));
       setupToken = null;
       // Las sesiones de una configuración anterior no valen para la nueva
       sessions.destroyAll();

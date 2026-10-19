@@ -3,7 +3,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import { fileURLToPath } from 'url';
 import { dirname, join, extname } from 'path';
-import { readFileSync, existsSync, writeFileSync, mkdirSync, readdirSync, chmodSync, statSync, lstatSync } from 'fs';
+import { readFileSync, existsSync, writeFileSync, mkdirSync, readdirSync, chmodSync, statSync, lstatSync, rmSync } from 'fs';
 import setupRoutes from './routes/setup.js';
 import authRoutes from './routes/auth.js';
 import filesRoutes from './routes/files.js';
@@ -33,7 +33,10 @@ try {
   // inaccesible (el bit de ejecución es el que permite recorrerla)
   for (const f of readdirSync(dataDir)) {
     const file = join(dataDir, f);
-    if (lstatSync(file).isFile()) chmodSync(file, 0o600);
+    if (!lstatSync(file).isFile()) continue;
+    // Temporales de una escritura atómica interrumpida (ver server/dataFiles.js)
+    if (f.startsWith('.') && f.endsWith('.tmp')) rmSync(file, { force: true });
+    else chmodSync(file, 0o600);
   }
 } catch (err) {
   createLogger('Security').warn('No se pudieron ajustar los permisos de data/:', err.message);

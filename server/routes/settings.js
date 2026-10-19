@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { writeFileSync, mkdirSync, existsSync, statSync, readdirSync } from 'fs';
+import { mkdirSync, existsSync, statSync, readdirSync } from 'fs';
 import { join } from 'path';
 import * as vault from '../vault.js';
 import { publicError } from '../security.js';
@@ -9,6 +9,7 @@ import * as limits from '../limits.js';
 import { loadZipArchive, ZIP_LEVEL } from '../lazy.js';
 import { getUpdateStatus } from '../updates.js';
 import { DEFAULT_UPLOAD_EXTENSIONS, parseUploadExtensions, uploadExtensions } from '../uploads.js';
+import { writeFileAtomic, backupData } from '../dataFiles.js';
 import { createLogger } from '../logger.js';
 const log = createLogger('Settings');
 
@@ -78,7 +79,8 @@ export default (dataDir, getConfig, limiter, sessions) => {
         return res.status(400).json({ error: 'La ruta existe pero no es una carpeta' });
       }
       mkdirSync(full, { recursive: true });
-      writeFileSync(configPath, JSON.stringify({ ...cfg, vaultPath: full }, null, 2), { mode: 0o600 });
+      backupData(dataDir, 'vault-path');
+      writeFileAtomic(configPath, JSON.stringify({ ...cfg, vaultPath: full }, null, 2));
       res.json({ vaultPath: full });
     } catch (err) {
       res.status(500).json({ error: publicError(err, 'No se pudo cambiar la ruta') });
@@ -107,7 +109,8 @@ export default (dataDir, getConfig, limiter, sessions) => {
         return res.status(400).json({ error: `La contraseña nueva debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres` });
       }
       const passwordHash = await hashPassword(newPassword);
-      writeFileSync(configPath, JSON.stringify({ ...getConfig(), passwordHash }, null, 2), { mode: 0o600 });
+      backupData(dataDir, 'password');
+      writeFileAtomic(configPath, JSON.stringify({ ...getConfig(), passwordHash }, null, 2));
       sessions.destroyAll();
       res.cookie('token', sessions.create(), sessionCookie(req));
       res.json({ success: true });
@@ -120,6 +123,7 @@ export default (dataDir, getConfig, limiter, sessions) => {
 
   // Cierra todas las sesiones abiertas, también la actual
   router.post('/sessions/revoke', (req, res) => {
+    backupData(dataDir, 'revoke-sessions');
     sessions.destroyAll();
     res.clearCookie('token', { httpOnly: true, sameSite: 'strict', secure: req.secure });
     res.json({ success: true });
@@ -136,7 +140,7 @@ export default (dataDir, getConfig, limiter, sessions) => {
     }
     try {
       const { siteTitle: _, ...rest } = cfg;
-      writeFileSync(configPath, JSON.stringify(siteTitle ? { ...rest, siteTitle } : rest, null, 2), { mode: 0o600 });
+      writeFileAtomic(configPath, JSON.stringify(siteTitle ? { ...rest, siteTitle } : rest, null, 2));
       res.json({ siteTitle });
     } catch (err) {
       res.status(500).json({ error: publicError(err, 'No se pudo guardar') });
@@ -161,7 +165,7 @@ export default (dataDir, getConfig, limiter, sessions) => {
     }
     try {
       const { uploadExtensions: _, ...rest } = cfg;
-      writeFileSync(configPath, JSON.stringify(extensions.length ? { ...rest, uploadExtensions: extensions } : rest, null, 2), { mode: 0o600 });
+      writeFileAtomic(configPath, JSON.stringify(extensions.length ? { ...rest, uploadExtensions: extensions } : rest, null, 2));
       res.json({ extensions: uploadExtensions(extensions.length ? { uploadExtensions: extensions } : null), defaults: DEFAULT_UPLOAD_EXTENSIONS });
     } catch (err) {
       res.status(500).json({ error: publicError(err, 'No se pudo guardar') });

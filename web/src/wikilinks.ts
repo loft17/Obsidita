@@ -2,7 +2,7 @@
 import { useStore } from './store';
 import { filesApi } from './api';
 import { rawFileUrl } from './attachments';
-import { resolveWikilink as resolveInVault } from '../../shared/wikilinks.js';
+import { resolveWikilink as resolveInVault } from '../../server/wikilinks.js';
 import { fileName } from './paths';
 import log from './logger';
 
@@ -28,7 +28,7 @@ export const wikilinkLabel = (inner: string) => parseWikilink(inner).alias || in
 const lower = (s: string) => s.toLowerCase();
 
 // Ruta del archivo (nota o adjunto) enlazado desde `notePath`, o null si no existe.
-// La lógica es la misma que usa el servidor al actualizar enlaces: ver shared/wikilinks.js
+// La lógica es la misma que usa el servidor al actualizar enlaces: ver server/wikilinks.js
 export function resolveWikilink(target: string, notePath: string): string | null {
   const paths = useStore
     .getState()

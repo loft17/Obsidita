@@ -62,7 +62,7 @@ export default defineConfig({
     },
   },
   server: {
-    // shared/ (código común con el servidor) queda fuera de web/
+    // server/wikilinks.js (código común con el servidor) queda fuera de web/
     fs: { allow: ['..'] },
     proxy: {
       '/api': 'http://localhost:3000',

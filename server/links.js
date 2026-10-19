@@ -5,7 +5,7 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { posix } from 'path';
 import * as vault from './vault.js';
-import { resolveWikilink as resolveInVault } from '../shared/wikilinks.js';
+import { resolveWikilink as resolveInVault } from './wikilinks.js';
 import { createLogger } from './logger.js';
 const log = createLogger('Links');
 
@@ -17,7 +17,7 @@ const isMd = (p) => /\.md$/i.test(p);
 // y un índice por ruta en minúsculas → ruta real (para los enlaces markdown)
 const indexFiles = (paths) => ({ paths, byLower: new Map(paths.map((p) => [lower(p), p])) });
 
-// La misma resolución que el cliente: ver shared/wikilinks.js
+// La misma resolución que el cliente: ver server/wikilinks.js
 const resolveWikilink = (target, notePath, files) => resolveInVault(target, notePath, files.paths);
 
 const safeDecode = (s) => {

@@ -1,5 +1,6 @@
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import crypto from 'crypto';
+import { writeFileAtomic } from './dataFiles.js';
 import { createLogger } from './logger.js';
 const log = createLogger('Security');
 
@@ -48,6 +49,6 @@ export const loadCookieSecret = (secretPath) => {
   }
 
   const secret = generated();
-  writeFileSync(secretPath, secret, { mode: 0o600 });
+  writeFileAtomic(secretPath, secret);
   return secret;
 };

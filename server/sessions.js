@@ -1,8 +1,9 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
+import { readFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import crypto from 'crypto';
 
 import { SESSION_MAX_AGE, SESSION_IDLE } from './limits.js';
+import { writeFileAtomic } from './dataFiles.js';
 import { createLogger } from './logger.js';
 const log = createLogger('Auth');
 
@@ -37,9 +38,10 @@ export const createSessionStore = (dataDir) => {
     }
   }
 
+  // Atómico: un corte a mitad de escritura no deja el archivo vacío (cerraría todas las sesiones)
   const save = () => {
     mkdirSync(dataDir, { recursive: true, mode: 0o700 });
-    writeFileSync(path, JSON.stringify(sessions), { mode: 0o600 });
+    writeFileAtomic(path, JSON.stringify(sessions));
   };
 
   const alive = (s, now) => s.expires > now && now - s.lastSeen < SESSION_IDLE;
