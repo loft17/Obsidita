@@ -1,7 +1,11 @@
 <a id="top"></a>
 
 <p align="center">
-  <img src="docs/images/logo_readme.jpg" alt="Obsidita" width="720">
+  <b>🇬🇧 English</b> · <a href="README.es.md">🇪🇸 Español</a>
+</p>
+
+<p align="center">
+  <img src="docs/images/logo_readme.webp" alt="Obsidita" width="720">
 </p>
 
 <p align="center">
@@ -9,56 +13,60 @@
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript"></a>
   <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React"></a>
   <a href="https://expressjs.com/"><img src="https://img.shields.io/badge/Express-4-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express"></a>
-  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/Licencia-MIT-F7DF1E?style=for-the-badge" alt="Licencia MIT"></a>
-  <a href="https://claude.com/claude-code"><img src="https://img.shields.io/badge/Desarrollado_con-Claude-D97757?style=for-the-badge&logo=claude&logoColor=white" alt="Desarrollado con Claude"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-F7DF1E?style=for-the-badge" alt="MIT License"></a>
+  <a href="https://claude.com/claude-code"><img src="https://img.shields.io/badge/Built_with-Claude-D97757?style=for-the-badge&logo=claude&logoColor=white" alt="Built with Claude"></a>
 </p>
 
 ---
 
-## 💎 Tu vault de Obsidian, en cualquier navegador
+## 💎 Your Obsidian vault, in any browser
 
 <div align="justify">
 
-**Obsidita** es un visor y editor web **ultraligero** y **autoalojado** para tus notas Markdown. Lo instalas en tu VPS y accedes a tu vault desde cualquier dispositivo, con una interfaz fiel a la de Obsidian.
+**Obsidita** is an **ultra-lightweight**, **self-hosted** web viewer and editor for your Markdown notes. Install it on your VPS and reach your vault from any device, through an interface that stays true to Obsidian.
 
-Obsidita trabaja directamente sobre la carpeta de tu vault: tus notas siguen siendo archivos `.md` normales, sin bases de datos ni formatos propios, y puedes seguir abriéndolas con Obsidian de escritorio. Desde el portátil del trabajo, una tablet o el móvil puedes escribir con vista previa en vivo, navegar por tus wikilinks, buscar en todo el vault, editar propiedades y pegar imágenes, y tus cambios se guardan solos.
+Obsidita works directly on your vault folder: your notes remain plain `.md` files, with no database and no proprietary format, so you can keep opening them with Obsidian on your desktop. From a work laptop, a tablet or your phone you can write with live preview, follow your wikilinks, search the whole vault, edit properties and paste images, and your changes are saved automatically.
 
-Tus notas se quedan en tu servidor, protegidas con contraseña, sesiones revocables y una configuración segura por defecto. Y si quieres llevarlas a otros dispositivos, puedes sincronizarlas con GitHub desde la propia web.
+Your notes stay on your server, protected by a password, revocable sessions and secure-by-default settings. And if you want them on other devices too, you can sync them with GitHub right from the web interface.
 
 </div>
 
+<p align="center">
+  <img src="docs/images/screen_001.webp" alt="Obsidita showing a note in reading mode, with its properties and the file explorer" width="100%">
+</p>
+
 > [!TIP]
-> **¿Prisa?** `git clone` → `npm install` → `npm start` → abre `http://localhost:3000` y pega el token que aparece en la consola. [Ver instalación ↓](#-instalación)
+> **In a hurry?** `git clone` → `npm install` → `npm start` → open `http://localhost:3000` and paste the token printed in the console. [See installation ↓](#-installation)
 
 ---
 
-## 📑 Índice
+## 📑 Contents
 
 <table>
 <tr>
 <td valign="top" width="33%">
 
-**Empezar**
-- [✨ Características](#-características)
-- [🚀 Instalación](#-instalación)
-- [🔧 Configuración inicial](#-configuración-inicial)
-- [🧩 Variables de entorno](#-variables-de-entorno)
+**Get started**
+- [✨ Features](#-features)
+- [🚀 Installation](#-installation)
+- [🔧 Initial setup](#-initial-setup)
+- [🧩 Environment variables](#-environment-variables)
 
 </td>
 <td valign="top" width="33%">
 
-**Usar**
-- [⌨️ Atajos de teclado](#️-atajos-de-teclado)
-- [🔄 Sincronización con GitHub](#-sincronización-con-github)
-- [⚠️ Importante](#️-importante)
+**Use**
+- [⌨️ Keyboard shortcuts](#️-keyboard-shortcuts)
+- [🔄 GitHub sync](#-github-sync)
+- [⚠️ Important](#️-important)
 
 </td>
 <td valign="top" width="33%">
 
-**Referencia**
-- [📚 Documentación](#-documentación)
-- [🤖 Desarrollado con IA](#-desarrollado-con-ia)
-- [📄 Licencia](#-licencia)
+**Reference**
+- [📚 Documentation](#-documentation)
+- [🤖 Built with AI](#-built-with-ai)
+- [📄 License](#-license)
 
 </td>
 </tr>
@@ -66,69 +74,69 @@ Tus notas se quedan en tu servidor, protegidas con contraseña, sesiones revocab
 
 ---
 
-## ✨ Características
+## ✨ Features
 
 <table>
 <tr>
 <td width="50%" valign="top">
 
-### ✍️ Escribe como en Obsidian
-- Editor **CodeMirror 6** con **vista previa en vivo** (incluidas tablas) o **modo fuente**.
-- **Modo lectura** con resaltado de sintaxis y **diagramas Mermaid**.
-- **Autoguardado** mientras escribes, y `Ctrl+S` para forzarlo.
-- Si la nota cambia en otro dispositivo, se recarga sola; si tenías cambios sin guardar, eliges qué versión conservar.
-- **Propiedades** (frontmatter YAML) editables, con `tags` y `aliases` como listas.
+### ✍️ Write like in Obsidian
+- **CodeMirror 6** editor with **live preview** (tables included) or **source mode**.
+- **Reading mode** with syntax highlighting and **Mermaid diagrams**.
+- **Autosave** as you type, plus `Ctrl+S` to force it.
+- If a note changes on another device, it reloads by itself; if you had unsaved changes, you choose which version to keep.
+- Editable **properties** (YAML frontmatter), with `tags` and `aliases` as lists.
 
 </td>
 <td width="50%" valign="top">
 
-### 🔗 Conecta tus ideas
-- **Wikilinks**: `[[nota]]`, `[[nota|alias]]` y `[[nota#encabezado]]`.
-- Los enlaces a notas inexistentes se ven atenuados y **crean la nota** al pulsarlos.
-- **Búsqueda global** en nombres y contenido, con contexto.
-- Filtra por etiqueta con `tag:proyecto`.
-- Búsqueda dentro de la nota con `Ctrl+F`.
+### 🔗 Connect your ideas
+- **Wikilinks**: `[[note]]`, `[[note|alias]]` and `[[note#heading]]`.
+- Links to missing notes are dimmed and **create the note** when clicked.
+- **Global search** across names and content, with context.
+- Filter by tag with `tag:project`.
+- In-note search with `Ctrl+F`.
 
 </td>
 </tr>
 <tr>
 <td valign="top">
 
-### 📂 Organiza tu vault
-- **Explorador** con carpetas colapsables y menú contextual.
-- **Pestañas**: `Ctrl`/`Cmd` + clic o botón central.
-- Mueve y renombra: los **enlaces se actualizan** solos.
-- Papelera `.trash` desde la que puedes restaurar.
-- **Adjuntos**: arrastra o pega imágenes; se guardan donde lo hace Obsidian.
-- **Notas diarias y plantillas** con la misma configuración que Obsidian.
+### 📂 Organize your vault
+- **File explorer** with collapsible folders and a context menu.
+- **Tabs**: `Ctrl`/`Cmd` + click or middle click.
+- Move and rename: **links update** automatically.
+- `.trash` folder you can restore from.
+- **Attachments**: drag or paste images; they're stored where Obsidian desktop puts them.
+- **Daily notes and templates** using the same settings as Obsidian.
 
 </td>
 <td valign="top">
 
-### ☁️ Pensado para tu servidor
-- **Sincronización con GitHub**, manual o periódica.
-- **Exportación a PDF** desde el navegador.
-- **Recuento de palabras** y caracteres.
-- Tema **oscuro, claro o del sistema**, y fuentes a elegir (también las tuyas).
-- Interfaz en **español, inglés o catalán**.
+### ☁️ Built for your server
+- **GitHub sync**, manual or scheduled.
+- **PDF export** from the browser.
+- **Word** and character **count**.
+- **Dark, light or system** theme, and a choice of fonts (your own too).
+- Interface in **English, Spanish or Catalan**.
 
 </td>
 </tr>
 </table>
 
 > [!NOTE]
-> 🔒 **Seguro por defecto:** contraseña con `scrypt` · sesiones revocables · límite de intentos de login · protección CSRF · CSP estricta · vault aislado.
+> 🔒 **Secure by default:** `scrypt` password hashing · revocable sessions · login rate limiting · CSRF protection · strict CSP · isolated vault.
 
 ---
 
-## 🚀 Instalación
+## 🚀 Installation
 
-| Necesitas | Detalle |
+| You need | Details |
 | :--- | :--- |
-| 🟢 **Node.js** | **20 o superior** (20.12+ para que se cargue el `.env`) y el `npm` que trae. |
-| 🐙 **git** | **2.31 o superior**, solo si vas a usar la sincronización con GitHub. |
-| 📁 **Un vault** | Una carpeta del servidor: un vault existente o una carpeta vacía. |
-| 🔐 **En producción** | Un dominio y un proxy inverso con HTTPS (Caddy o nginx). Muy recomendado. |
+| 🟢 **Node.js** | **20 or later** (20.12+ to load the `.env` file) and the `npm` that ships with it. |
+| 🐙 **git** | **2.31 or later**, only if you're going to use GitHub sync. |
+| 📁 **A vault** | A folder on the server: an existing vault or an empty folder. |
+| 🔐 **In production** | A domain and a reverse proxy with HTTPS (Caddy or nginx). Strongly recommended. |
 
 ```bash
 git clone https://github.com/loft17/Obsidita.git
@@ -139,20 +147,20 @@ npm start
 
 <div align="justify">
 
-Abre **`http://localhost:3000`** y sigue la [configuración inicial](#-configuración-inicial). Para desplegarlo en un servidor con systemd, nginx y HTTPS, tienes la guía completa en [Instalación y configuración](docs/es/INSTALACION_Y_CONFIGURACION.md).
+Open **`http://localhost:3000`** and follow the [initial setup](#-initial-setup). To deploy it on a server with systemd, nginx and HTTPS, see the full guide in [Installation and setup](docs/en/INSTALLATION_AND_SETUP.md).
 
 </div>
 
 > [!WARNING]
-> **No uses `npm install --omit=dev` ni `--production`.** La web se compila con Vite (una dependencia de desarrollo) durante el `postinstall`; sin ella no se genera `web/dist` y la página aparecerá en blanco.
+> **Don't use `npm install --omit=dev` or `--production`.** The web app is built with Vite (a dev dependency) during `postinstall`; without it `web/dist` isn't generated and the page will be blank.
 
 ---
 
-## 🔧 Configuración inicial
+## 🔧 Initial setup
 
 <div align="justify">
 
-La primera vez que arranca, el servidor imprime en la consola un **token de un solo uso**. Así nadie que llegue a la web antes que tú puede configurarla.
+On first start, the server prints a **one-time token** to the console. This way, nobody who reaches the site before you can set it up.
 
 </div>
 
@@ -162,19 +170,19 @@ La primera vez que arranca, el servidor imprime en la consola un **token de un s
 ==================================================
 ```
 
-1. Abre la web y pega el **token de configuración**.
-2. Escribe la **ruta absoluta** de tu vault, por ejemplo `/srv/vaults/mi-vault`.
-3. Elige una **contraseña** de al menos **12 caracteres**.
-4. Si quieres, cambia el **puerto** (por defecto `3000`).
-5. Pulsa **Configurar** e inicia sesión. ¡Listo! 🎉
+1. Open the site and paste the **setup token**.
+2. Enter the **absolute path** of your vault, for example `/srv/vaults/my-vault`.
+3. Choose a **password** of at least **12 characters**.
+4. Optionally, change the **port** (default `3000`).
+5. Click **Set up** and log in. Done! 🎉
 
 ---
 
-## 🧩 Variables de entorno
+## 🧩 Environment variables
 
 <div align="justify">
 
-Al arrancar, el servidor carga el archivo **`.env`** de la carpeta de la app, si existe. Copia la plantilla, ajústala y reinicia. Las variables definidas en la shell, en systemd o en PM2 tienen prioridad sobre las del `.env`.
+On startup, the server loads the **`.env`** file from the app folder, if there is one. Copy the template, adjust it and restart. Variables set in the shell, in systemd or in PM2 take precedence over those in `.env`.
 
 </div>
 
@@ -182,105 +190,105 @@ Al arrancar, el servidor carga el archivo **`.env`** de la carpeta de la app, si
 cp .env.example .env && nano .env
 ```
 
-| Variable | Para qué sirve |
+| Variable | What it does |
 | :--- | :--- |
-| `HOST` | En producción, `127.0.0.1`: así solo el proxy inverso puede conectar. |
-| `TRUST_PROXY` | Ponla a `1` si hay un proxy inverso delante (Caddy, nginx). |
-| `VAULTS_ROOT` | Limita el vault a una carpeta concreta, p. ej. `/srv/vaults`. |
-| `UPDATE_CHECK` | Con `0`, el servidor no comprueba si hay versiones nuevas en GitHub. |
-| `MAX_UPLOAD_MB`, `MAX_NOTE_MB`… | Límites de tamaño, búsqueda, contraseña y sesiones. |
+| `HOST` | In production, `127.0.0.1`, so only the reverse proxy can connect. |
+| `TRUST_PROXY` | Set it to `1` if there's a reverse proxy in front (Caddy, nginx). |
+| `VAULTS_ROOT` | Restricts the vault to a specific folder, e.g. `/srv/vaults`. |
+| `UPDATE_CHECK` | With `0`, the server doesn't check GitHub for new versions. |
+| `MAX_UPLOAD_MB`, `MAX_NOTE_MB`… | Limits for size, search, password and sessions. |
 
 <div align="justify">
 
-Todas las variables están comentadas en [`.env.example`](.env.example) y explicadas en detalle en [Instalación y configuración](docs/es/INSTALACION_Y_CONFIGURACION.md#-variables-de-entorno).
+Every variable is commented in [`.env.example`](.env.example) and explained in detail in [Installation and setup](docs/en/INSTALLATION_AND_SETUP.md#-environment-variables).
 
 </div>
 
 ---
 
-## ⌨️ Atajos de teclado
+## ⌨️ Keyboard shortcuts
 
-| Atajo | Acción |
+| Shortcut | Action |
 | :--- | :--- |
-| <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>P</kbd> | Abrir una nota rápidamente |
-| <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>S</kbd> | Guardar ahora |
-| <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>E</kbd> | Alternar edición y lectura |
-| <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> | Buscar en todo el vault |
-| <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>F</kbd> | Buscar dentro de la nota |
-| <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + rueda | Cambiar el tamaño de la letra |
+| <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>P</kbd> | Quickly open a note |
+| <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>S</kbd> | Save now |
+| <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>E</kbd> | Toggle editing and reading |
+| <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> | Search the whole vault |
+| <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>F</kbd> | Search within the note |
+| <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + wheel | Change the font size |
 
 <div align="justify">
 
-La lista completa está en [Atajos de teclado](docs/es/ATAJOS.md).
+The full list is in [Keyboard shortcuts](docs/en/KEYBOARD_SHORTCUTS.md).
 
 </div>
 
 ---
 
-## 🔄 Sincronización con GitHub
+## 🔄 GitHub sync
 
 <div align="justify">
 
-Obsidita puede mantener tu vault sincronizado con un repositorio de GitHub y, a través de él, con Obsidian de escritorio usando el plugin **Obsidian Git**. Se configura desde **Preferencias → Sincronización**: indica el repositorio (mejor privado, porque se suben todas las notas), la rama y un **token de acceso personal** limitado a ese repositorio.
+Obsidita can keep your vault in sync with a GitHub repository and, through it, with Obsidian desktop using the **Obsidian Git** plugin. Set it up under **Preferences → Sync**: enter the repository (preferably private, since all your notes are uploaded), the branch and a **personal access token** scoped to that repository.
 
-Cada sincronización hace commit de los cambios, integra los del repositorio y sube el resultado. Si una nota ha cambiado en los dos lados, se conserva la versión del servidor. Puedes sincronizar a mano o elegir una frecuencia automática, desde cada 5 minutos hasta una vez al día. El token se guarda solo en el servidor y nunca llega al navegador; la papelera `.trash` no se sube.
+Each sync commits your changes, merges those from the repository and pushes the result. If a note changed on both sides, the server's version wins. You can sync manually or pick an automatic interval, from every 5 minutes to once a day. The token is stored only on the server and never reaches the browser; the `.trash` folder is not uploaded.
 
 </div>
 
 ---
 
-## ⚠️ Importante
+## ⚠️ Important
 
 > [!NOTE]
-> **Firefox:** algunos campos de texto usan `field-sizing`, que funciona en Chrome, Edge y Safari recientes, pero puede que no en Firefox. Ahí el campo no crece con el texto, aunque sigue ocupando el hueco libre de la línea, así que se puede usar igual.
+> **Firefox:** some text fields use `field-sizing`, which works in recent Chrome, Edge and Safari but may not in Firefox. There the field won't grow with the text, but it still fills the free space on the line, so it remains usable.
 
 ---
 
-## 📚 Documentación
+## 📚 Documentation
 
-| Documento | Contenido |
+| Document | Contents |
 | :--- | :--- |
-| 📖 [Guía de uso](docs/es/GUIA_USUARIO.md) | Lo básico para empezar a escribir y organizar tus notas. |
-| ⚙️ [Instalación y configuración](docs/es/INSTALACION_Y_CONFIGURACION.md) | Despliegue en producción, nginx, variables de entorno y copias de seguridad. |
-| ⌨️ [Atajos de teclado](docs/es/ATAJOS.md) | Todos los atajos disponibles. |
-| 🩺 [Errores y soluciones](docs/es/ERRORES_Y_SOLUCIONES.md) | Problemas frecuentes y cómo resolverlos. |
-| 🪶 [Recursos limitados](docs/es/OPTIMIZACION_RECURSOS_LIMITADOS.md) | Cómo ajustarlo para servidores pequeños. |
-| 🧰 [Scripts listos](docs/es/SCRIPTS_LISTOS.md) | Scripts para instalar, actualizar y mantener la app. |
-| 🏗️ [Arquitectura](docs/es/ARQUITECTURA.md) | Cómo está organizado el código. |
-| 🔌 [API HTTP](docs/es/API.md) | Endpoints del servidor. |
-| 🤝 [Contribuir](CONTRIBUTING.md) | Cómo levantar el proyecto en local y proponer cambios. |
+| 📖 [User guide](docs/en/USER_GUIDE.md) | The basics to start writing and organizing your notes. |
+| ⚙️ [Installation and setup](docs/en/INSTALLATION_AND_SETUP.md) | Production deployment, nginx, environment variables and backups. |
+| ⌨️ [Keyboard shortcuts](docs/en/KEYBOARD_SHORTCUTS.md) | Every available shortcut. |
+| 🩺 [Errors and solutions](docs/en/ERRORS_AND_SOLUTIONS.md) | Common problems and how to fix them. |
+| 🪶 [Limited resources](docs/en/OPTIMIZATION_LIMITED_RESOURCES.md) | How to tune it for small servers. |
+| 🧰 [Ready-to-use scripts](docs/en/READY_TO_USE_SCRIPTS.md) | Scripts to install, update and maintain the app. |
+| 🏗️ [Architecture](docs/en/ARCHITECTURE.md) | How the code is organized. |
+| 🔌 [HTTP API](docs/en/API.md) | Server endpoints. |
+| 🤝 [Contributing](CONTRIBUTING.md) | How to run the project locally and propose changes (in Spanish). |
 
 <div align="justify">
 
-🇬🇧 La documentación también está disponible en inglés en [docs/en](docs/en/).
+🇪🇸 The documentation is also available in Spanish in [docs/es](docs/es/).
 
 </div>
 
 ---
 
-## 🤖 Desarrollado con IA
+## 🤖 Built with AI
 
 <div align="justify">
 
-Obsidita se ha desarrollado con ayuda de **[Claude](https://claude.com/claude-code)**, la IA de Anthropic, usando Claude Code: tanto el código como la documentación se han escrito y revisado en colaboración con ella.
+Obsidita was built with the help of **[Claude](https://claude.com/claude-code)**, Anthropic's AI, using Claude Code: both the code and the documentation were written and reviewed in collaboration with it.
 
 </div>
 
 ---
 
-## 📄 Licencia
+## 📄 License
 
 <div align="justify">
 
-Distribuido bajo la licencia [MIT](https://opensource.org/licenses/MIT).
+Distributed under the [MIT](https://opensource.org/licenses/MIT) license.
 
-Obsidita es un proyecto independiente y no está afiliado, patrocinado ni respaldado por Obsidian ni por Dynalist Inc. «Obsidian» es una marca de sus respectivos propietarios y se menciona aquí solo para indicar compatibilidad.
+Obsidita is an independent project and is not affiliated with, sponsored or endorsed by Obsidian or Dynalist Inc. "Obsidian" is a trademark of its respective owners and is mentioned here only to indicate compatibility.
 
 </div>
 
 ---
 
 <p align="center">
-  Hecho con 💜 para quienes viven en su vault de Obsidian.<br><br>
-  <a href="#top"><b>⬆ Volver arriba</b></a>
+  Made with 💜 for everyone who lives in their Obsidian vault.<br><br>
+  <a href="#top"><b>⬆ Back to top</b></a>
 </p>
