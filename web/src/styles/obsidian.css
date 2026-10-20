@@ -599,6 +599,7 @@ button.tree-chevron:focus-visible,
 
 .tab-new {
   padding: 4px;
+  background: transparent;
   margin-left: 4px;
   margin-bottom: 4px;
 }

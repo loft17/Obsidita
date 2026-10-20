@@ -5,6 +5,7 @@ import { useT } from '../i18n';
 import { IconClose, IconPlus, IconSidebar } from './Icons';
 import { useIsMobile } from '../mobile';
 import { flushPendingSave } from './Editor';
+import { createUntitledNote } from './fileActions';
 
 function CloseUnsavedDialog({ path, onClose, onRemove }: { path: string; onClose: () => void; onRemove: () => void }) {
   const [busy, setBusy] = useState(false);
@@ -144,9 +145,15 @@ export default function Tabs() {
           </div>
         ))}
       </div>
-      <div className="tab-new" title={t('tabs.new')}>
+      <button
+        type="button"
+        className="tab-new"
+        title={t('tabs.new')}
+        aria-label={t('tabs.new')}
+        onClick={createUntitledNote}
+      >
         <IconPlus size={16} />
-      </div>
+      </button>
       {pathToClose && (
         <CloseUnsavedDialog
           path={pathToClose}
