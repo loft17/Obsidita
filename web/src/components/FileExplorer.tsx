@@ -637,6 +637,11 @@ export default function FileExplorer() {
           ) : (
             <MenuItem onClick={() => runMenuAction(handleOpenInNewTab)}>{t('file.openInNewTab')}</MenuItem>
           )}
+          {!menu.isFolder && (
+            <MenuItem onClick={() => runMenuAction((path) => useStore.getState().setNoteInfoPath(path))}>
+              {t('file.info')}
+            </MenuItem>
+          )}
           <hr className="dropdown-divider" />
           <MenuItem onClick={() => runMenuAction(handleCopy)}>{t('file.makeCopy')}</MenuItem>
           {menu.isFolder && (

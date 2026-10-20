@@ -83,7 +83,7 @@ Todas las peticiones a `/api` con método distinto de `GET`, `HEAD` u `OPTIONS` 
 Se configuran con variables de entorno (ver `.env.example`) y se pueden consultar con [`GET /api/settings/limits`](#get-apisettingslimits).
 
 - **Login y acciones con contraseña** (login, cambiar vault, cambiar contraseña): 5 fallos en 15 min por IP (las IPv6 se agrupan por /64) bloquean esa IP 1 min, duplicándose en cada bloqueo hasta 1 h. Además, 50 fallos en total en 15 min bloquean el login para todos durante 5 min.
-- **Búsqueda y etiquetas**: `SEARCH_RATE_MAX` (120) peticiones por IP y minuto, compartido entre `/search` y `/search/tags`.
+- **Búsqueda y etiquetas**: `SEARCH_RATE_MAX` (120) peticiones por IP y minuto, compartido entre `/search`, `/search/tags` y `/search/note-info`.
 
 ---
 
@@ -334,6 +334,26 @@ Todas las etiquetas del vault (del frontmatter `tags:` y `#etiquetas` del cuerpo
 ```json
 [{ "tag": "proyecto/web", "paths": ["Proyectos/idea.md"] }]
 ```
+
+### `GET /api/search/note-info?path=<ruta>`
+
+Datos de un archivo para el panel «Información de la nota»: lo que dice el disco y qué notas lo enlazan (`[[wikilinks]]`, `![[incrustaciones]]` y `[enlaces](markdown)`, fuera del código). Comparte el límite de las búsquedas porque recorre el vault.
+
+```json
+{
+  "size": 2048,
+  "created": 1760000000000,
+  "modified": 1760900000000,
+  "encoding": "UTF-8",
+  "bom": false,
+  "lineEndings": "LF",
+  "backlinks": [{ "path": "Proyectos/idea.md", "count": 2 }]
+}
+```
+
+- `created`: `null` si el sistema de archivos no guarda la fecha de creación.
+- `encoding` (`"UTF-8"` o `null` si no lo es), `bom` y `lineEndings` (`"LF"`, `"CRLF"`, `"mixed"` o `null`) solo se calculan para las notas `.md`.
+- Las notas que superan los límites de la búsqueda (`SEARCH_MAX_FILE_MB`, `SEARCH_MAX_SCANNED_MB`) no aparecen en `backlinks`.
 
 ---
 

@@ -1,5 +1,8 @@
 import { Router } from 'express';
+import { statSync, readFileSync } from 'fs';
+import * as vault from '../vault.js';
 import { snapshot, getContentLines } from '../searchIndex.js';
+import { findTags, findLinks, linkFileName, resolveLink } from '../noteContent.js';
 import { publicError } from '../security.js';
 import {
   SEARCH_MAX_RESULTS as MAX_RESULTS,
@@ -40,49 +43,6 @@ const snippet = (line, idx, len) => {
     length: len,
   };
 };
-
-const FRONTMATTER = /^---[ \t]*\r?\n(?:([\s\S]*?)\r?\n)?---[ \t]*(?:\r?\n|$)/;
-const INLINE_TAG = /(^|\s)#([\p{L}\p{N}_\-/]*[\p{L}_\-/][\p{L}\p{N}_\-/]*)/gu;
-
-const cleanTag = (s) => s.replace(/\s+#.*$/, '').trim().replace(/^["']|["']$/g, '').replace(/^#/, '');
-
-// Apariciones de etiquetas en una nota: { line, idx, text } por cada una, tanto en
-// la propiedad `tags` del frontmatter como en `#etiquetas` del cuerpo (fuera de bloques de código)
-function findTags(lines) {
-  const found = [];
-  let start = 0;
-  const fm = FRONTMATTER.exec(lines.join('\n'));
-  if (fm) {
-    const fmLines = fm[1] === undefined ? [] : fm[1].split('\n');
-    start = fmLines.length + 2;
-    for (let i = 0; i < fmLines.length; i++) {
-      const m = /^(tags?)[ \t]*:[ \t]*(.*)$/i.exec(fmLines[i]);
-      if (!m) continue;
-      const rest = m[2].trim();
-      const lineNo = i + 1;
-      const push = (ln, raw) => {
-        const text = cleanTag(raw);
-        if (text) found.push({ line: ln, idx: lines[ln].indexOf(text), text });
-      };
-      if (rest === '') {
-        for (let j = i + 1; j < fmLines.length && /^\s*-(\s|$)/.test(fmLines[j]); j++) {
-          push(j + 1, fmLines[j].replace(/^\s*-\s?/, ''));
-        }
-      } else {
-        rest.replace(/^\[|\]$/g, '').split(/[,\s]+/).forEach((t) => push(lineNo, t));
-      }
-    }
-  }
-  let inCode = false;
-  for (let i = start; i < lines.length; i++) {
-    if (/^\s*(```|~~~)/.test(lines[i])) inCode = !inCode;
-    if (inCode) continue;
-    for (const m of lines[i].matchAll(INLINE_TAG)) {
-      found.push({ line: i, idx: m.index + m[1].length, text: '#' + m[2] });
-    }
-  }
-  return found;
-}
 
 // Etiquetas de una nota del índice: se calculan una vez por cada versión de la nota
 const noteTags = (note, vaultPath, filePath) => {
@@ -130,6 +90,49 @@ function searchTag(cfg, tag) {
   return results.slice(0, MAX_RESULTS);
 }
 
+// Enlaces de una nota del índice: como las etiquetas, una vez por cada versión. Salen del
+// contenido en minúsculas, que basta porque los enlaces se resuelven sin distinguir mayúsculas
+const noteLinks = (note) => {
+  if (note.links === null) note.links = findLinks(note.lower);
+  return note.links;
+};
+
+// Notas que enlazan a `target` y cuántas veces. Solo se resuelven los enlaces cuyo nombre de
+// archivo coincide con el suyo: el resto no pueden llegar a él
+function findBacklinks(cfg, target) {
+  const entries = snapshot(cfg.vaultPath);
+  const paths = entries.filter(({ file }) => file.type !== 'folder').map(({ file }) => file.path);
+  const name = target.split('/').pop().toLowerCase();
+  const results = [];
+  for (const { file, note } of entries) {
+    if (!note || file.path === target) continue;
+    let count = 0;
+    for (const link of noteLinks(note)) {
+      if (linkFileName(link) === name && resolveLink(link, file.path, paths) === target) count++;
+    }
+    if (count) results.push({ path: file.path, count });
+  }
+  return results.sort((a, b) => a.path.localeCompare(b.path));
+}
+
+const utf8 = new TextDecoder('utf-8', { fatal: true });
+
+// Codificación y saltos de línea del archivo tal cual está en el disco
+function describeEncoding(buf) {
+  const bom = buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf;
+  let valid = true;
+  try {
+    utf8.decode(buf);
+  } catch {
+    valid = false;
+  }
+  const text = buf.toString('latin1');
+  const crlf = (text.match(/\r\n/g) ?? []).length;
+  const lf = (text.match(/\n/g) ?? []).length - crlf;
+  const lineEndings = crlf && lf ? 'mixed' : crlf ? 'CRLF' : lf ? 'LF' : null;
+  return { encoding: valid ? 'UTF-8' : null, bom, lineEndings };
+}
+
 export default (dataDir, getConfig) => {
   const router = Router();
 
@@ -145,6 +148,36 @@ export default (dataDir, getConfig) => {
       res.json(listTags(cfg));
     } catch (err) {
       res.status(400).json({ error: publicError(err, 'Error al leer las etiquetas') });
+    }
+  });
+
+  // Información de un archivo para el panel de la nota: datos del disco y enlaces entrantes.
+  // Recorre el vault como una búsqueda, así que comparte su límite
+  router.get('/note-info', (req, res) => {
+    try {
+      const cfg = getConfig();
+      if (!cfg) return res.status(400).json({ error: 'Not configured' });
+      const path = String(req.query.path || '');
+      if (!path) return res.status(400).json({ error: 'Falta la ruta' });
+      if (rateLimited(req.ip)) {
+        res.set('Retry-After', String(RATE_WINDOW / 1000));
+        return res.status(429).json({ error: 'Demasiadas búsquedas. Espera un momento' });
+      }
+      const fullPath = vault.resolveFile(cfg.vaultPath, path);
+      const stat = statSync(fullPath);
+      if (!stat.isFile()) return res.status(404).json({ error: 'Not found' });
+      const isMd = /\.md$/i.test(path);
+      res.json({
+        size: stat.size,
+        // Algunos sistemas de archivos no guardan la fecha de creación (birthtime = 0)
+        created: stat.birthtimeMs > 0 ? stat.birthtimeMs : null,
+        modified: stat.mtimeMs,
+        ...(isMd ? describeEncoding(readFileSync(fullPath)) : { encoding: null, bom: false, lineEndings: null }),
+        backlinks: findBacklinks(cfg, path),
+      });
+    } catch (err) {
+      if (err.code === 'ENOENT') return res.status(404).json({ error: 'Not found' });
+      res.status(400).json({ error: publicError(err, 'Error al leer la información de la nota') });
     }
   });
 

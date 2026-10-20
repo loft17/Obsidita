@@ -286,6 +286,17 @@ export const syncApi = {
     request(`/sync/history/version?${new URLSearchParams({ path, commit })}`),
 };
 
+// Datos del archivo en el disco y notas que lo enlazan (panel de información de la nota)
+export interface NoteInfo {
+  size: number;
+  created: number | null;
+  modified: number;
+  encoding: string | null;
+  bom: boolean;
+  lineEndings: 'LF' | 'CRLF' | 'mixed' | null;
+  backlinks: { path: string; count: number }[];
+}
+
 export interface VaultTag {
   tag: string;
   paths: string[];
@@ -343,5 +354,17 @@ export const searchApi = {
   ): Promise<VaultTag[]> => {
     const { signal, retries = 1, onWait } = opts;
     return withRetry(() => request('/search/tags', { signal }), signal, retries, onWait);
+  },
+  noteInfo: async (
+    path: string,
+    opts: { signal?: AbortSignal; retries?: number; onWait?: (ms: number) => void } = {},
+  ): Promise<NoteInfo> => {
+    const { signal, retries = 1, onWait } = opts;
+    return withRetry(
+      () => request(`/search/note-info?${new URLSearchParams({ path })}`, { signal }),
+      signal,
+      retries,
+      onWait,
+    );
   },
 };

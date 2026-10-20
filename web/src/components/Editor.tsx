@@ -91,6 +91,7 @@ export function saveNote(path: string, content: string): Promise<void> {
       // Si se ha seguido escribiendo mientras tanto, queda otro guardado pendiente
       if (!pendingSaves.has(path)) setTabDirty(path, false);
       clearConflict(path);
+      window.dispatchEvent(new CustomEvent(NOTE_SAVED, { detail: path }));
       notify('save', t('toast.saved'));
     } catch (err) {
       if (err instanceof ConflictError) {
@@ -115,6 +116,9 @@ export function saveNote(path: string, content: string): Promise<void> {
 
 // Evento para que la nota abierta compruebe si ha cambiado en el servidor
 export const NOTES_CHANGED = 'notes-changed';
+
+// Evento tras guardar una nota en el servidor; `detail` es su ruta
+export const NOTE_SAVED = 'note-saved';
 
 // Renombra o mueve un archivo o carpeta. El servidor actualiza los enlaces de otras notas,
 // así que antes se guarda todo lo pendiente y después se avisa para recargar la nota abierta

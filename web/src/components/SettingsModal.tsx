@@ -28,6 +28,7 @@ import {
   DEFAULT_TIME_FORMAT,
 } from '../templates';
 import { getLang, LANGUAGES, Trans, useI18n, useT, type Lang, type MessageKey } from '../i18n';
+import { formatBytes } from '../format';
 import {
   IconChevronLeft,
   IconClose,
@@ -1448,16 +1449,6 @@ function ShortcutsSection() {
     </>
   );
 }
-
-const formatBytes = (bytes: number) => {
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  let i = 0;
-  while (bytes >= 1024 && i < units.length - 1) {
-    bytes /= 1024;
-    i++;
-  }
-  return `${bytes.toLocaleString(getLang(), { maximumFractionDigits: i ? 1 : 0 })} ${units[i]}`;
-};
 
 function AboutSection() {
   const t = useT();

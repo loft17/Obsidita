@@ -20,6 +20,9 @@ export interface UiSlice {
   setSiteTitle: (title: string) => void;
   settingsOpen: boolean;
   setSettingsOpen: (open: boolean) => void;
+  // Archivo cuyo diálogo de información está abierto (null = cerrado)
+  noteInfoPath: string | null;
+  setNoteInfoPath: (path: string | null) => void;
   expandedFolders: Set<string>;
   toggleFolder: (path: string) => void;
   collapseAll: () => void;
@@ -54,6 +57,8 @@ export const createUiSlice: StateCreator<AppStore, [], [], UiSlice> = (set) => (
   },
   settingsOpen: false,
   setSettingsOpen: (open) => set({ settingsOpen: open }),
+  noteInfoPath: null,
+  setNoteInfoPath: (path) => set({ noteInfoPath: path }),
   expandedFolders: new Set(),
   toggleFolder: (path) =>
     set((state) => {

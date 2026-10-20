@@ -85,7 +85,7 @@ Every `/api` request whose method is not `GET`, `HEAD` or `OPTIONS` goes through
 Configured through environment variables (see `.env.example`) and readable via [`GET /api/settings/limits`](#get-apisettingslimits).
 
 - **Login and password-protected actions** (login, change vault, change password): 5 failures in 15 min per IP (IPv6 grouped by /64) lock that IP for 1 min, doubling on each lock up to 1 h. In addition, 50 failures in total within 15 min lock login for everyone for 5 min.
-- **Search and tags**: `SEARCH_RATE_MAX` (120) requests per IP per minute, shared between `/search` and `/search/tags`.
+- **Search and tags**: `SEARCH_RATE_MAX` (120) requests per IP per minute, shared between `/search`, `/search/tags` and `/search/note-info`.
 
 ---
 
@@ -336,6 +336,26 @@ All tags in the vault (frontmatter `tags:` and `#tags` in the body, outside code
 ```json
 [{ "tag": "project/web", "paths": ["Projects/idea.md"] }]
 ```
+
+### `GET /api/search/note-info?path=<path>`
+
+File data for the "Note info" panel: what the disk reports and which notes link to it (`[[wikilinks]]`, `![[embeds]]` and `[markdown](links)`, outside code). It shares the search limit because it walks the vault.
+
+```json
+{
+  "size": 2048,
+  "created": 1760000000000,
+  "modified": 1760900000000,
+  "encoding": "UTF-8",
+  "bom": false,
+  "lineEndings": "LF",
+  "backlinks": [{ "path": "Projects/idea.md", "count": 2 }]
+}
+```
+
+- `created`: `null` if the file system does not store the creation date.
+- `encoding` (`"UTF-8"`, or `null` if it is not), `bom` and `lineEndings` (`"LF"`, `"CRLF"`, `"mixed"` or `null`) are only computed for `.md` notes.
+- Notes over the search limits (`SEARCH_MAX_FILE_MB`, `SEARCH_MAX_SCANNED_MB`) are not listed in `backlinks`.
 
 ---
 

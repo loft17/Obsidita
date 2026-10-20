@@ -12,6 +12,7 @@ import FileExplorer from './FileExplorer';
 import SearchPanel from './SearchPanel';
 import TagsPanel from './TagsPanel';
 import TrashPanel from './TrashPanel';
+import NoteInfoModal from './NoteInfoModal';
 import Tabs from './Tabs';
 import Editor, { cancelPendingSave, noteVersions, saveNote } from './Editor';
 import { QuickOpenDialog, ConflictDialog } from './FileDialogs';
@@ -133,6 +134,8 @@ export default function MainLayout() {
   const showTabHeader = useStore((s) => s.showTabHeader);
   const settingsOpen = useStore((s) => s.settingsOpen);
   const setSettingsOpen = useStore((s) => s.setSettingsOpen);
+  const noteInfoPath = useStore((s) => s.noteInfoPath);
+  const setNoteInfoPath = useStore((s) => s.setNoteInfoPath);
   const conflict = useStore((s) => s.conflicts[0]);
   const tabCount = useStore((s) => s.tabs.length);
   const toggleSidebar = useStore((s) => s.toggleSidebar);
@@ -306,6 +309,15 @@ export default function MainLayout() {
         <Suspense fallback={null}>
           <SettingsModal onClose={() => setSettingsOpen(false)} />
         </Suspense>
+      )}
+      {noteInfoPath && (
+        <NoteInfoModal
+          key={noteInfoPath}
+          path={noteInfoPath}
+          // La nota abierta va con lo que se está escribiendo; las demás se leen del servidor
+          content={noteInfoPath === activeTab && !loading ? fileContent : undefined}
+          onClose={() => setNoteInfoPath(null)}
+        />
       )}
       {conflict && (
         <ConflictDialog

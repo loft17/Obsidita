@@ -216,6 +216,14 @@ export default function NoteMenu() {
         >
           <MenuItem onClick={() => openDialog('rename')}>{t('file.rename')}</MenuItem>
           <MenuItem onClick={() => openDialog('move')}>{t('file.moveFile')}</MenuItem>
+          <MenuItem
+            onClick={() => {
+              closeMenu();
+              useStore.getState().setNoteInfoPath(activeTab);
+            }}
+          >
+            {t('note.info')}
+          </MenuItem>
           {!activeIsImage && (
             <>
               {editMode && (
