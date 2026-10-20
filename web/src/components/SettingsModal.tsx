@@ -18,6 +18,7 @@ import {
   type SyncConfigUpdate,
   type SyncProvider,
   type UpdateStatus,
+  type VaultStats,
   type UploadExtensions,
 } from '../api';
 import {
@@ -339,6 +340,59 @@ function AppearanceSection() {
   );
 }
 
+// Imágenes externas: lo decide la CSP del servidor, así que vale para todos los dispositivos
+// y solo se aplica al recargar la página (la CSP llega con ella)
+function RemoteImagesSetting() {
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+  const [changed, setChanged] = useState(false);
+  const [error, setError] = useState('');
+  const t = useT();
+
+  useEffect(() => {
+    settingsApi
+      .getRemoteImages()
+      .then((r) => setEnabled(r.remoteImages))
+      .catch((err) => setError((err as Error).message));
+  }, []);
+
+  const toggle = async (value: boolean) => {
+    setError('');
+    try {
+      const saved = await settingsApi.setRemoteImages(value);
+      setEnabled(saved.remoteImages);
+      setChanged(true);
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
+  return (
+    <div className="setting-item">
+      <div className="setting-info">
+        <div className="setting-name">{t('settings.remoteImages')}</div>
+        <div className="setting-desc">{t('settings.remoteImages.desc')}</div>
+        {error && (
+          <div className="setting-desc" style={{ color: 'var(--text-error, #e5484d)' }}>
+            {error}
+          </div>
+        )}
+      </div>
+      <div className="setting-slider">
+        {changed && <button onClick={() => window.location.reload()}>{t('settings.remoteImages.reload')}</button>}
+        <label className="setting-toggle">
+          <input
+            type="checkbox"
+            checked={!!enabled}
+            disabled={enabled === null}
+            onChange={(e) => toggle(e.target.checked)}
+          />
+          <span />
+        </label>
+      </div>
+    </div>
+  );
+}
+
 function EditorSection() {
   const defaultEditMode = useStore((s) => s.defaultEditMode);
   const setDefaultEditMode = useStore((s) => s.setDefaultEditMode);
@@ -414,6 +468,7 @@ function EditorSection() {
             <span />
           </label>
         </div>
+        <RemoteImagesSetting />
       </div>
     </>
   );
@@ -1394,13 +1449,28 @@ function ShortcutsSection() {
   );
 }
 
+const formatBytes = (bytes: number) => {
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let i = 0;
+  while (bytes >= 1024 && i < units.length - 1) {
+    bytes /= 1024;
+    i++;
+  }
+  return `${bytes.toLocaleString(getLang(), { maximumFractionDigits: i ? 1 : 0 })} ${units[i]}`;
+};
+
 function AboutSection() {
   const t = useT();
   const [update, setUpdate] = useState<UpdateStatus | null>(null);
+  const [vaultStats, setVaultStats] = useState<VaultStats | null>(null);
   useEffect(() => {
     settingsApi
       .getUpdate()
       .then(setUpdate)
+      .catch(() => {});
+    settingsApi
+      .getVaultStats()
+      .then(setVaultStats)
       .catch(() => {});
   }, []);
 
@@ -1433,6 +1503,20 @@ function AboutSection() {
           <button onClick={() => window.open(update.url, '_blank', 'noopener,noreferrer')}>
             {t('about.viewOnGithub')}
           </button>
+        </div>
+      )}
+      {vaultStats && (
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('about.vaultSize', { size: formatBytes(vaultStats.size) })}</div>
+            <div className="setting-desc">
+              {t('about.vaultCounts', {
+                notes: vaultStats.notes.toLocaleString(getLang()),
+                files: vaultStats.files.toLocaleString(getLang()),
+                folders: vaultStats.folders.toLocaleString(getLang()),
+              })}
+            </div>
+          </div>
         </div>
       )}
       <div className="setting-item">

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { mkdirSync, existsSync, statSync, readdirSync } from 'fs';
+import { readdir, lstat } from 'fs/promises';
 import { join } from 'path';
 import * as vault from '../vault.js';
 import { publicError } from '../security.js';
@@ -43,6 +44,43 @@ export default (dataDir, getConfig, limiter, sessions) => {
   // ¿Hay una versión nueva en GitHub? Se muestra en "Acerca de" y como aviso al entrar
   router.get('/update', async (req, res) => {
     res.json(await getUpdateStatus());
+  });
+
+  // Tamaño del vault para "Acerca de": suma todo lo que hay dentro (también .obsidian, .trash
+  // y .git, que ocupan disco igual), sin seguir enlaces simbólicos. Las cuentas de notas y
+  // archivos solo incluyen lo visible en el árbol. Asíncrono para no bloquear con vaults grandes
+  router.get('/vault-stats', async (req, res) => {
+    const cfg = getConfig();
+    if (!cfg?.vaultPath) return res.status(400).json({ error: 'Not configured' });
+    const stats = { size: 0, notes: 0, files: 0, folders: 0 };
+    const walk = async (dir, hidden) => {
+      let entries;
+      try {
+        entries = await readdir(dir, { withFileTypes: true });
+      } catch {
+        return;
+      }
+      for (const entry of entries) {
+        if (entry.isSymbolicLink()) continue;
+        const fullPath = join(dir, entry.name);
+        const isHidden = hidden || entry.name.startsWith('.');
+        if (entry.isDirectory()) {
+          if (!isHidden) stats.folders++;
+          await walk(fullPath, isHidden);
+        } else if (entry.isFile()) {
+          try {
+            stats.size += (await lstat(fullPath)).size;
+          } catch {
+            continue;
+          }
+          if (isHidden) continue;
+          if (entry.name.endsWith('.md')) stats.notes++;
+          else stats.files++;
+        }
+      }
+    };
+    await walk(cfg.vaultPath, false);
+    res.json(stats);
   });
 
   // getConfig relee config.json en cada petición, así que el cambio se aplica al instante.
@@ -142,6 +180,27 @@ export default (dataDir, getConfig, limiter, sessions) => {
       const { siteTitle: _, ...rest } = cfg;
       writeFileAtomic(configPath, JSON.stringify(siteTitle ? { ...rest, siteTitle } : rest, null, 2));
       res.json({ siteTitle });
+    } catch (err) {
+      res.status(500).json({ error: publicError(err, 'No se pudo guardar') });
+    }
+  });
+
+  // Mostrar imágenes externas (https) en las notas. Desactivado por defecto: cargarlas revela
+  // la IP al servidor que las aloja. Lo aplica la CSP (security.js), que relee config.json
+  router.get('/remote-images', (req, res) => {
+    const cfg = getConfig();
+    if (!cfg) return res.status(400).json({ error: 'Not configured' });
+    res.json({ remoteImages: cfg.remoteImages === true });
+  });
+
+  router.post('/remote-images', (req, res) => {
+    const cfg = getConfig();
+    if (!cfg) return res.status(400).json({ error: 'Not configured' });
+    const remoteImages = req.body?.remoteImages === true;
+    try {
+      const { remoteImages: _, ...rest } = cfg;
+      writeFileAtomic(configPath, JSON.stringify(remoteImages ? { ...rest, remoteImages } : rest, null, 2));
+      res.json({ remoteImages });
     } catch (err) {
       res.status(500).json({ error: publicError(err, 'No se pudo guardar') });
     }

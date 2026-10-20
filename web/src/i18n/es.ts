@@ -306,6 +306,10 @@ export const es = {
   'settings.pdfViewer': 'Visor de PDF',
   'settings.pdfViewer.desc':
     'Abre los archivos PDF con el visor integrado del navegador en vez de ofrecer descargarlos.',
+  'settings.remoteImages': "Imágenes externas",
+  'settings.remoteImages.desc':
+    "Muestra las imágenes enlazadas desde otras webs (![](https://...)). Al cargarlas, esos servidores ven tu IP. Afecta a todos los dispositivos.",
+  'settings.remoteImages.reload': "Recargar para aplicar",
   'settings.attachments': 'Ubicación predeterminada para los archivos adjuntos nuevos',
   'settings.uploads': 'Tipos de archivo permitidos al subir',
   'settings.uploads.desc':
@@ -432,6 +436,8 @@ export const es = {
   'about.upToDate': 'Estás usando la última versión',
   'about.updateUnknown': 'No se pudo comprobar si hay una versión nueva',
   'about.updateDisabled': 'Comprobación de versiones desactivada (UPDATE_CHECK)',
+  'about.vaultSize': 'Tamaño del vault: {size}',
+  'about.vaultCounts': '{notes} notas · {files} archivos · {folders} carpetas',
   'about.developedBy': 'Desarrollado por',
   'about.tagline': 'Hecho con cariño (y una ayudita de la IA) para todos los Obsidian lovers 💜',
   'limits.title': 'Límites del servidor',

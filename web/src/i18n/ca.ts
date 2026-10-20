@@ -308,6 +308,10 @@ export const ca: Messages = {
   'settings.pdfViewer': 'Visor de PDF',
   'settings.pdfViewer.desc':
     "Obre els fitxers PDF amb el visor integrat del navegador en lloc d'oferir descarregar-los.",
+  'settings.remoteImages': "Imatges externes",
+  'settings.remoteImages.desc':
+    "Mostra les imatges enllaçades des d'altres webs (![](https://...)). En carregar-les, aquests servidors veuen la teva IP. Afecta tots els dispositius.",
+  'settings.remoteImages.reload': "Recarrega per aplicar",
   'settings.attachments': 'Ubicació predeterminada dels fitxers adjunts nous',
   'settings.uploads': 'Tipus de fitxer permesos en pujar',
   'settings.uploads.desc':
@@ -434,6 +438,8 @@ export const ca: Messages = {
   'about.upToDate': "Estàs fent servir l'última versió",
   'about.updateUnknown': "No s'ha pogut comprovar si hi ha una versió nova",
   'about.updateDisabled': 'Comprovació de versions desactivada (UPDATE_CHECK)',
+  'about.vaultSize': 'Mida del vault: {size}',
+  'about.vaultCounts': '{notes} notes · {files} fitxers · {folders} carpetes',
   'about.developedBy': 'Desenvolupat per',
   'about.tagline': 'Fet amb carinyo (i una ajudeta de la IA) per a tots els Obsidian lovers 💜',
   'limits.title': 'Límits del servidor',

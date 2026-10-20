@@ -79,7 +79,8 @@ const distPath = join(__dirname, '..', 'web', 'dist');
 
 // Middleware
 app.disable('x-powered-by');
-app.use(securityHeaders(distPath));
+// getConfig se define más abajo: solo se llama al llegar cada petición
+app.use(securityHeaders(distPath, () => getConfig()));
 app.use('/api', csrfGuard);
 // El JSON se lee antes de comprobar la sesión, así que por defecto solo se aceptan cuerpos
 // pequeños. Las notas (/api/files) pueden ser grandes: se leen con MAX_NOTE_MB más abajo,

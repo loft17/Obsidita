@@ -305,6 +305,10 @@ export const en: Messages = {
   'settings.pdfViewer': 'PDF viewer',
   'settings.pdfViewer.desc':
     "Open PDF files with the browser's built-in viewer instead of offering to download them.",
+  'settings.remoteImages': "External images",
+  'settings.remoteImages.desc':
+    "Show images linked from other websites (![](https://...)). Loading them lets those servers see your IP. Applies to all devices.",
+  'settings.remoteImages.reload': "Reload to apply",
   'settings.attachments': 'Default location for new attachments',
   'settings.uploads': 'Allowed upload file types',
   'settings.uploads.desc':
@@ -429,6 +433,8 @@ export const en: Messages = {
   'about.upToDate': 'You are using the latest version',
   'about.updateUnknown': 'Could not check for a new version',
   'about.updateDisabled': 'Version check disabled (UPDATE_CHECK)',
+  'about.vaultSize': 'Vault size: {size}',
+  'about.vaultCounts': '{notes} notes · {files} files · {folders} folders',
   'about.developedBy': 'Developed by',
   'about.tagline': 'Made with love (and a little help from AI) for all Obsidian lovers 💜',
   'limits.title': 'Server limits',

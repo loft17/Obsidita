@@ -18,15 +18,15 @@ const inlineScriptHashes = (distPath) => {
 
 // Cabeceras de seguridad para todas las respuestas (las rutas pueden sobrescribir la CSP,
 // como /api/files/raw o la exportación a PDF)
-export const securityHeaders = (distPath) => {
-  const csp = [
+export const securityHeaders = (distPath, getConfig) => {
+  const csp = (remoteImages) => [
     "default-src 'self'",
     `script-src 'self' ${inlineScriptHashes(distPath).join(' ')}`.trim(),
     // React (atributos style) y CodeMirror inyectan estilos en línea
     "style-src 'self' 'unsafe-inline'",
     // Las imágenes externas revelan tu IP a su servidor (píxeles de rastreo), así que
-    // se bloquean salvo con REMOTE_IMAGES=1
-    `img-src 'self' data: blob:${process.env.REMOTE_IMAGES === '1' ? ' https:' : ''}`,
+    // se bloquean salvo que se activen en Preferencias (remoteImages en config.json)
+    `img-src 'self' data: blob:${remoteImages ? ' https:' : ''}`,
     "font-src 'self' data:",
     "connect-src 'self'",
     "object-src 'none'",
@@ -34,10 +34,12 @@ export const securityHeaders = (distPath) => {
     "form-action 'self'",
     "frame-ancestors 'none'",
   ].join('; ');
+  const strict = csp(false);
+  const remote = csp(true);
 
   return (req, res, next) => {
     res.set({
-      'Content-Security-Policy': csp,
+      'Content-Security-Policy': getConfig()?.remoteImages === true ? remote : strict,
       'X-Content-Type-Options': 'nosniff',
       'X-Frame-Options': 'DENY',
       'Referrer-Policy': 'no-referrer',

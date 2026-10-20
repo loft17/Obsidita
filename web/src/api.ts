@@ -192,7 +192,15 @@ export interface UpdateStatus {
   url: string;
 }
 
+export interface VaultStats {
+  size: number;
+  notes: number;
+  files: number;
+  folders: number;
+}
+
 export const settingsApi = {
+  getVaultStats: (): Promise<VaultStats> => request('/settings/vault-stats'),
   getUpdate: (): Promise<UpdateStatus> => request('/settings/update'),
   getNotes: (): Promise<NotesConfig> => request('/settings/notes'),
   setNotes: (changes: NotesConfigUpdate): Promise<NotesConfig> => post('/settings/notes', changes),
@@ -207,6 +215,9 @@ export const settingsApi = {
   // Cierra todas las sesiones, también la actual
   revokeSessions: () => request('/settings/sessions/revoke', { method: 'POST' }),
   setSiteTitle: (siteTitle: string): Promise<{ siteTitle: string }> => post('/settings/site-title', { siteTitle }),
+  getRemoteImages: (): Promise<{ remoteImages: boolean }> => request('/settings/remote-images'),
+  setRemoteImages: (remoteImages: boolean): Promise<{ remoteImages: boolean }> =>
+    post('/settings/remote-images', { remoteImages }),
   getUploads: (): Promise<UploadExtensions> => request('/settings/uploads'),
   // Lista vacía = volver a las predeterminadas (notas e imágenes)
   setUploads: (extensions: string): Promise<UploadExtensions> => post('/settings/uploads', { extensions }),

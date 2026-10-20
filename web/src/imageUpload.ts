@@ -21,6 +21,20 @@ const pastedName = (file: File) => {
 const imageFiles = (list: FileList | null | undefined) =>
   [...(list ?? [])].filter((f) => f.type.startsWith('image/') || isImage(f.name));
 
+// URL de imagen pegada como texto: una sola URL http(s) cuya ruta acaba en extensión de imagen
+// (se ignoran query y hash). Los paréntesis y espacios se escapan para no romper el ![](...)
+const imageUrl = (text: string | undefined) => {
+  const value = text?.trim();
+  if (!value || /\s/.test(value)) return null;
+  try {
+    const url = new URL(value);
+    if (!/^https?:$/.test(url.protocol) || !isImage(url.pathname)) return null;
+  } catch {
+    return null;
+  }
+  return value.replace(/[() ]/g, (c) => encodeURIComponent(c));
+};
+
 // Enlace más corto posible: solo el nombre si no hay otro archivo que se llame igual
 const linkTarget = (path: string) => {
   const name = fileName(path);
@@ -118,7 +132,22 @@ export const imageUpload = (getPath: () => string) => [
   EditorView.domEventHandlers({
     paste(event, view) {
       const files = imageFiles(event.clipboardData?.files);
-      if (!files.length) return false;
+      if (!files.length) {
+        const url = imageUrl(event.clipboardData?.getData('text/plain'));
+        if (!url) return false;
+        event.preventDefault();
+        // El texto seleccionado (si es de una línea) pasa a ser el texto alternativo
+        const { from, to } = view.state.selection.main;
+        const selected = view.state.sliceDoc(from, to);
+        const insert = `![${selected.includes('\n') ? '' : selected}](${url})`;
+        view.dispatch({
+          changes: { from, to, insert },
+          selection: { anchor: from + insert.length },
+          scrollIntoView: true,
+          userEvent: 'input.paste',
+        });
+        return true;
+      }
       event.preventDefault();
       const { from, to } = view.state.selection.main;
       upload(view, getPath(), files, { from, to }, pastedName);
