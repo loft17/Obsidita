@@ -200,6 +200,11 @@ export interface VaultStats {
 }
 
 export const settingsApi = {
+  // Preferencias de la interfaz compartidas por todos los dispositivos (null = aún no hay)
+  getPrefs: (): Promise<{ prefs: Record<string, string> | null }> => request('/settings/prefs'),
+  // `null` borra la clave. keepalive: el cambio llega aunque se cierre la pestaña justo después
+  setPrefs: (changes: Record<string, string | null>): Promise<{ prefs: Record<string, string> }> =>
+    request('/settings/prefs', { method: 'POST', json: changes, keepalive: true }),
   getVaultStats: (): Promise<VaultStats> => request('/settings/vault-stats'),
   getUpdate: (): Promise<UpdateStatus> => request('/settings/update'),
   getNotes: (): Promise<NotesConfig> => request('/settings/notes'),

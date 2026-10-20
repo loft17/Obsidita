@@ -4,6 +4,7 @@
 import { Fragment, useMemo, type ReactNode } from 'react';
 import { create } from 'zustand';
 import { es } from './es';
+import { save, synced } from '../store/storage';
 
 export type Lang = 'es' | 'en' | 'ca';
 export type MessageKey = keyof typeof es;
@@ -31,10 +32,11 @@ export const LANGUAGES: { value: Lang; label: string }[] = [
   { value: 'ca', label: 'Català' },
 ];
 
-const isLang = (value: unknown): value is Lang => LANGUAGES.some((l) => l.value === value);
+export const isLang = (value: unknown): value is Lang => LANGUAGES.some((l) => l.value === value);
 
 // Sin preferencia guardada: el primer idioma del navegador que esté disponible; si no, inglés
-const LANG_KEY = 'lang';
+// Compartida entre dispositivos como el resto de preferencias (store/prefsSync.ts)
+export const LANG_KEY = synced('lang');
 const initialLang = ((): Lang => {
   try {
     const saved = localStorage.getItem(LANG_KEY);
@@ -60,11 +62,7 @@ export const i18nReady = loadLang(initialLang).catch(() => {});
 export const useI18n = create<{ lang: Lang; setLang: (lang: Lang) => void }>((set) => ({
   lang: initialLang,
   setLang: async (lang) => {
-    try {
-      localStorage.setItem(LANG_KEY, lang);
-    } catch {
-      // almacenamiento no disponible: la preferencia solo dura la sesión
-    }
+    save(LANG_KEY, lang);
     // Primero se descarga el idioma, para cambiar todos los textos de una vez
     await loadLang(lang).catch(() => {});
     applyLang(lang);

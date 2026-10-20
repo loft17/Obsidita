@@ -1,9 +1,10 @@
 import type { StateCreator } from 'zustand';
 import { loadBundledFont } from '../fonts';
-import { readBool, readNumber, readString, save } from './storage';
+import { readBool, readNumber, readString, save, synced } from './storage';
 import type { AppStore } from './index';
 
-// Preferencias del usuario: se guardan en localStorage y, las visuales, se aplican al documento
+// Preferencias del usuario: se guardan en localStorage y en el servidor (las comparten todos los
+// dispositivos, ver prefsSync.ts) y, las visuales, se aplican al documento
 
 export type Theme = 'dark' | 'light' | 'system';
 
@@ -44,30 +45,32 @@ export interface PrefsSlice {
   setShowRibbon: (show: boolean) => void;
   pdfViewer: boolean;
   setPdfViewer: (enabled: boolean) => void;
+  // Vuelve a leer y aplicar todas las preferencias (tras recibir las del servidor)
+  reloadPrefs: () => void;
 }
 
 const KEYS = {
-  hiddenFolders: 'hiddenFolders',
-  hiddenExtensions: 'hiddenExtensions',
-  defaultMode: 'defaultNoteMode',
+  hiddenFolders: synced('hiddenFolders'),
+  hiddenExtensions: synced('hiddenExtensions'),
+  defaultMode: synced('defaultNoteMode'),
   // Debe coincidir con el script en línea de index.html, que aplica el tema antes de pintar
-  theme: 'theme',
-  fontSize: 'fontSize',
+  theme: synced('theme'),
+  fontSize: synced('fontSize'),
   // Ctrl + rueda del ratón (o pellizcar en el trackpad) sobre la nota cambia el tamaño de fuente
-  quickFontSize: 'quickFontSize',
-  inlineTitle: 'showInlineTitle',
-  lineNumbers: 'showLineNumbers',
-  readableLine: 'readableLineLength',
-  tabHeader: 'showTabHeader',
-  ribbon: 'showRibbon',
+  quickFontSize: synced('quickFontSize'),
+  inlineTitle: synced('showInlineTitle'),
+  lineNumbers: synced('showLineNumbers'),
+  readableLine: synced('readableLineLength'),
+  tabHeader: synced('showTabHeader'),
+  ribbon: synced('showRibbon'),
   // Abrir los PDF con el visor nativo del navegador en vez de ofrecer descargarlos
-  pdfViewer: 'pdfViewer',
+  pdfViewer: synced('pdfViewer'),
 };
 
 const FONT_KEYS: Record<FontKind, string> = {
-  interface: 'fontInterface',
-  text: 'fontText',
-  monospace: 'fontMonospace',
+  interface: synced('fontInterface'),
+  text: synced('fontText'),
+  monospace: synced('fontMonospace'),
 };
 // Si la fuente elegida no está instalada, el navegador pasa a la predeterminada
 const FONT_FALLBACKS: Record<FontKind, string> = {
@@ -116,23 +119,41 @@ const readFonts = () =>
 // Valor inicial del modo de las notas (también lo usa `editMode` en el slice de documentos)
 export const initialDefaultEditMode = readString(KEYS.defaultMode) !== 'view';
 
-export const createPrefsSlice: StateCreator<AppStore, [], [], PrefsSlice> = (set, get) => {
-  const theme = readTheme();
-  const fontSize = readNumber(KEYS.fontSize, DEFAULT_FONT_SIZE, clampFontSize);
-  const fonts = readFonts();
-  const readableLineLength = readBool(KEYS.readableLine, true);
+// Lo guardado (en este navegador, o lo último recibido del servidor)
+const readPrefs = () => ({
+  hiddenFolders: readString(KEYS.hiddenFolders),
+  hiddenExtensions: readString(KEYS.hiddenExtensions),
+  defaultEditMode: readString(KEYS.defaultMode) !== 'view',
+  theme: readTheme(),
+  fontSize: readNumber(KEYS.fontSize, DEFAULT_FONT_SIZE, clampFontSize),
+  fonts: readFonts(),
+  quickFontSize: readBool(KEYS.quickFontSize, false),
+  showInlineTitle: readBool(KEYS.inlineTitle, true),
+  showLineNumbers: readBool(KEYS.lineNumbers, false),
+  readableLineLength: readBool(KEYS.readableLine, true),
+  showTabHeader: readBool(KEYS.tabHeader, true),
+  showRibbon: readBool(KEYS.ribbon, true),
+  pdfViewer: readBool(KEYS.pdfViewer, false),
+});
 
-  // Aplicar al documento las preferencias guardadas de una visita anterior
+// Aplicar al documento las preferencias visuales
+const applyPrefs = ({ theme, fontSize, fonts, readableLineLength }: ReturnType<typeof readPrefs>) => {
   applyTheme(theme);
-  // En modo "sistema", seguir los cambios del sistema operativo en caliente
-  systemDark.addEventListener('change', () => applyTheme(get().theme));
   applyFontSize(fontSize);
   (Object.keys(fonts) as FontKind[]).forEach((kind) => {
     applyFont(kind, fonts[kind]);
-    // La fuente guardada también se carga bajo demanda al arrancar
+    // La fuente guardada también se carga bajo demanda
     void loadBundledFont(fonts[kind]);
   });
   applyReadableLineLength(readableLineLength);
+};
+
+export const createPrefsSlice: StateCreator<AppStore, [], [], PrefsSlice> = (set, get) => {
+  const initial = readPrefs();
+  // Aplicar al documento las preferencias guardadas de una visita anterior
+  applyPrefs(initial);
+  // En modo "sistema", seguir los cambios del sistema operativo en caliente
+  systemDark.addEventListener('change', () => applyTheme(get().theme));
 
   // Setter de una preferencia de sí/no que solo se guarda
   const boolPref = (field: keyof PrefsSlice, key: string) => (value: boolean) => {
@@ -141,35 +162,35 @@ export const createPrefsSlice: StateCreator<AppStore, [], [], PrefsSlice> = (set
   };
 
   return {
-    hiddenFolders: readString(KEYS.hiddenFolders),
+    ...initial,
+    reloadPrefs: () => {
+      const prefs = readPrefs();
+      applyPrefs(prefs);
+      set(prefs);
+    },
     setHiddenFolders: (value) => {
       save(KEYS.hiddenFolders, value);
       set({ hiddenFolders: value });
     },
-    hiddenExtensions: readString(KEYS.hiddenExtensions),
     setHiddenExtensions: (value) => {
       save(KEYS.hiddenExtensions, value);
       set({ hiddenExtensions: value });
     },
-    defaultEditMode: initialDefaultEditMode,
     setDefaultEditMode: (mode) => {
       save(KEYS.defaultMode, mode ? 'edit' : 'view');
       set({ defaultEditMode: mode });
     },
-    theme,
     setTheme: (value) => {
       save(KEYS.theme, value);
       applyTheme(value);
       set({ theme: value });
     },
-    fontSize,
     setFontSize: (size) => {
       const value = clampFontSize(size);
       save(KEYS.fontSize, value);
       applyFontSize(value);
       set({ fontSize: value });
     },
-    fonts,
     setFont: (kind, name) => {
       const value = cleanFont(name);
       save(FONT_KEYS[kind], value || null);
@@ -178,23 +199,16 @@ export const createPrefsSlice: StateCreator<AppStore, [], [], PrefsSlice> = (set
       void loadBundledFont(value);
       set((state) => ({ fonts: { ...state.fonts, [kind]: value } }));
     },
-    quickFontSize: readBool(KEYS.quickFontSize, false),
     setQuickFontSize: boolPref('quickFontSize', KEYS.quickFontSize),
-    showInlineTitle: readBool(KEYS.inlineTitle, true),
     setShowInlineTitle: boolPref('showInlineTitle', KEYS.inlineTitle),
-    showLineNumbers: readBool(KEYS.lineNumbers, false),
     setShowLineNumbers: boolPref('showLineNumbers', KEYS.lineNumbers),
-    readableLineLength,
     setReadableLineLength: (enabled) => {
       save(KEYS.readableLine, enabled);
       applyReadableLineLength(enabled);
       set({ readableLineLength: enabled });
     },
-    showTabHeader: readBool(KEYS.tabHeader, true),
     setShowTabHeader: boolPref('showTabHeader', KEYS.tabHeader),
-    showRibbon: readBool(KEYS.ribbon, true),
     setShowRibbon: boolPref('showRibbon', KEYS.ribbon),
-    pdfViewer: readBool(KEYS.pdfViewer, false),
     setPdfViewer: boolPref('pdfViewer', KEYS.pdfViewer),
   };
 };

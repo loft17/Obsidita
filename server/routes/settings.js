@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { mkdirSync, existsSync, statSync, readdirSync } from 'fs';
+import { mkdirSync, existsSync, statSync, readdirSync, readFileSync } from 'fs';
 import { readdir, lstat } from 'fs/promises';
 import { join } from 'path';
 import * as vault from '../vault.js';
@@ -180,6 +180,49 @@ export default (dataDir, getConfig, limiter, sessions) => {
       const { siteTitle: _, ...rest } = cfg;
       writeFileAtomic(configPath, JSON.stringify(siteTitle ? { ...rest, siteTitle } : rest, null, 2));
       res.json({ siteTitle });
+    } catch (err) {
+      res.status(500).json({ error: publicError(err, 'No se pudo guardar') });
+    }
+  });
+
+  // Preferencias de la interfaz (tema, fuentes, modo de las notas...) en data/prefs.json: el
+  // navegador las guarda también en localStorage, pero estas mandan para que se apliquen igual
+  // en todos los dispositivos. `prefs: null` = aún no hay ninguna guardada (el primer navegador
+  // que entra sube las suyas). Clave → texto; se cambian por partes y `null` borra la clave
+  const prefsPath = join(dataDir, 'prefs.json');
+  const MAX_PREFS = 100;
+  const MAX_PREF_LENGTH = 10000;
+  const PREF_KEY = /^[A-Za-z][A-Za-z0-9_]{0,63}$/;
+  const readPrefs = () => {
+    try {
+      const prefs = JSON.parse(readFileSync(prefsPath, 'utf8'));
+      return prefs && typeof prefs === 'object' && !Array.isArray(prefs) ? prefs : null;
+    } catch (err) {
+      if (err.code !== 'ENOENT') log.warn('No se pudo leer prefs.json:', err.message);
+      return null;
+    }
+  };
+
+  router.get('/prefs', (req, res) => {
+    res.json({ prefs: readPrefs() });
+  });
+
+  router.post('/prefs', (req, res) => {
+    const changes = req.body;
+    if (!changes || typeof changes !== 'object' || Array.isArray(changes)) {
+      return res.status(400).json({ error: 'Preferencias no válidas' });
+    }
+    const prefs = { ...readPrefs() };
+    for (const [key, value] of Object.entries(changes)) {
+      if (!PREF_KEY.test(key)) return res.status(400).json({ error: `Clave no válida: ${key}` });
+      if (value === null) delete prefs[key];
+      else if (typeof value === 'string' && value.length <= MAX_PREF_LENGTH) prefs[key] = value;
+      else return res.status(400).json({ error: `Valor no válido: ${key}` });
+    }
+    if (Object.keys(prefs).length > MAX_PREFS) return res.status(400).json({ error: 'Demasiadas preferencias' });
+    try {
+      writeFileAtomic(prefsPath, JSON.stringify(prefs, null, 2));
+      res.json({ prefs });
     } catch (err) {
       res.status(500).json({ error: publicError(err, 'No se pudo guardar') });
     }

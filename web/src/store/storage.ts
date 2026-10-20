@@ -1,6 +1,8 @@
 // Persistencia común de las preferencias en localStorage. Si el almacenamiento no está
 // disponible, las lecturas devuelven el valor por defecto y las escrituras se ignoran:
-// la preferencia solo dura la sesión
+// la preferencia solo dura la sesión.
+// Las claves marcadas con `synced` se guardan además en el servidor (prefsSync.ts) para que se
+// apliquen en todos los dispositivos: aquí solo se avisa del cambio, sin depender de la API
 
 export const readString = (key: string, fallback = ''): string => {
   try {
@@ -30,12 +32,41 @@ export const readNumber = (key: string, fallback: number, clamp: (n: number) => 
   }
 };
 
-// `null` borra la clave
-export const save = (key: string, value: string | number | boolean | null) => {
+const syncedKeys = new Set<string>();
+let onSyncedChange: ((key: string, value: string | null) => void) | null = null;
+
+// Marca la clave como compartida entre dispositivos; devuelve la propia clave
+export const synced = (key: string) => {
+  syncedKeys.add(key);
+  return key;
+};
+export const getSyncedKeys = () => [...syncedKeys];
+export const setSyncedChangeHandler = (handler: typeof onSyncedChange) => {
+  onSyncedChange = handler;
+};
+
+export const readRaw = (key: string): string | null => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+// Escribe sin avisar al servidor (lo usa la sincronización al aplicar lo que llega de él)
+export const writeRaw = (key: string, value: string | null) => {
   try {
     if (value === null) localStorage.removeItem(key);
-    else localStorage.setItem(key, String(value));
+    else localStorage.setItem(key, value);
   } catch {
     // almacenamiento no disponible: la preferencia solo dura la sesión
   }
+};
+
+// `null` borra la clave. Si es compartida y cambia de verdad, se avisa para subirla al servidor
+export const save = (key: string, value: string | number | boolean | null) => {
+  const text = value === null ? null : String(value);
+  const changed = readRaw(key) !== text;
+  writeRaw(key, text);
+  if (changed && syncedKeys.has(key)) onSyncedChange?.(key, text);
 };

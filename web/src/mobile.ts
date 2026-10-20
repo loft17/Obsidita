@@ -103,20 +103,58 @@ function revealFocus() {
   });
 }
 
+// Campo en el que se puede escribir: mientras haya uno con el foco el teclado puede estar abierto
+function isEditable(el: Element | null): boolean {
+  if (!el || el === document.body) return false;
+  if (el instanceof HTMLElement && el.isContentEditable) return true;
+  if (el instanceof HTMLTextAreaElement) return !el.readOnly;
+  if (el instanceof HTMLInputElement) {
+    return !el.readOnly && !['button', 'checkbox', 'radio', 'range', 'color', 'file', 'submit', 'reset', 'image'].includes(el.type);
+  }
+  return el instanceof HTMLSelectElement;
+}
+
 export function fitToVisualViewport() {
   const vv = window.visualViewport;
   if (!vv) return;
+  const root = document.documentElement;
   let lastHeight = vv.height;
   const update = () => {
+    // Sin campo con el foco el teclado está cerrado: la app ocupa toda la pantalla (100dvh).
+    // Safari a veces no avisa del último cambio de tamaño al cerrarse el teclado (o lo hace a
+    // mitad de la animación, o con el zoom que pone al entrar en un campo) y --app-height se
+    // quedaba con la altura que tenía con el teclado abierto, tapando media página
+    if (!isEditable(document.activeElement)) {
+      root.style.removeProperty('--app-height');
+      if (window.scrollY || window.scrollX) window.scrollTo(0, 0);
+      lastHeight = vv.height;
+      return;
+    }
     // Con zoom de pellizco la zona visible es más pequeña, pero no hay que encoger la app
     if (Math.abs(vv.scale - 1) > 0.01) return;
-    document.documentElement.style.setProperty('--app-height', `${vv.height}px`);
+    root.style.setProperty('--app-height', `${vv.height}px`);
     if (window.scrollY || window.scrollX) window.scrollTo(0, 0);
     // Al abrirse el teclado, el cursor puede quedar por debajo de la nueva altura
     if (vv.height < lastHeight) requestAnimationFrame(revealFocus);
     lastHeight = vv.height;
   };
-  vv.addEventListener('resize', update);
+  // Además de en cada evento se vuelve a medir cuando termina la animación del teclado, por si
+  // el último evento llegó antes de que acabara o no llegó
+  let timers: number[] = [];
+  const schedule = () => {
+    update();
+    timers.forEach(clearTimeout);
+    timers = [150, 400, 800].map((ms) => window.setTimeout(update, ms));
+  };
+  vv.addEventListener('resize', schedule);
   vv.addEventListener('scroll', update);
+  window.addEventListener('resize', schedule);
+  // Al pasar de un campo a otro el foco sale y entra enseguida: los temporizadores miden
+  // cuando ya está en el nuevo y no se llega a quitar la altura
+  document.addEventListener('focusout', () => {
+    timers.forEach(clearTimeout);
+    timers = [150, 400, 800].map((ms) => window.setTimeout(update, ms));
+  });
+  document.addEventListener('focusin', schedule);
   update();
 }

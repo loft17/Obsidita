@@ -406,6 +406,22 @@ Título de la web (pestaña y pantalla de login). Máximo 60 caracteres; vacío 
 
 Responde `{ "siteTitle": "Mis notas" }`.
 
+### `GET /api/settings/prefs`
+
+Preferencias de la interfaz (tema, fuentes, modo por defecto de las notas, idioma...) compartidas por todos los dispositivos. Se guardan en `data/prefs.json`; `null` si aún no hay ninguna.
+
+```json
+{ "prefs": { "defaultNoteMode": "view", "theme": "light" } }
+```
+
+### `POST /api/settings/prefs`
+
+Cambia solo las claves enviadas; `null` borra una clave. Valores de texto (máximo 10 000 caracteres, 100 claves). Responde con todas las preferencias.
+
+```json
+{ "defaultNoteMode": "view", "fontText": null }
+```
+
 ### `GET /api/settings/uploads`
 
 Extensiones que se pueden subir con `folder` (arrastrar al explorador).

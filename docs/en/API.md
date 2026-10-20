@@ -408,6 +408,22 @@ Site title (browser tab and login screen). Max 60 characters; empty = default.
 
 Returns `{ "siteTitle": "My notes" }`.
 
+### `GET /api/settings/prefs`
+
+Interface preferences (theme, fonts, default note mode, language...) shared by every device. Stored in `data/prefs.json`; `null` if there are none yet.
+
+```json
+{ "prefs": { "defaultNoteMode": "view", "theme": "light" } }
+```
+
+### `POST /api/settings/prefs`
+
+Changes only the keys sent; `null` removes a key. String values (up to 10,000 characters, 100 keys). Responds with all the preferences.
+
+```json
+{ "defaultNoteMode": "view", "fontText": null }
+```
+
 ### `GET /api/settings/uploads`
 
 Extensions that can be uploaded with `folder` (drag and drop into the file explorer).
