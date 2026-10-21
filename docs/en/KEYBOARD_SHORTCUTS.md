@@ -14,6 +14,7 @@ The following shortcuts work anywhere in the application:
 | <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>S</kbd> | **Save** | Manually save the current note (normally saves automatically) |
 | <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>E</kbd> | **Edit/Read** | Toggle between edit mode and reading mode |
 | <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>B</kbd> | **Sidebar** | Show or hide sidebar (explorer, search, etc.) |
+| <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>K</kbd> | **Edit with AI** | Open the AI bar on the note or the selection (if configured, see [AI.md](AI.md)) |
 | <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> | **Search** | Open search panel in sidebar |
 | <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + **Wheel** | **Change Font Size** | Zoom in or out the text (similar to browser zoom) |
 

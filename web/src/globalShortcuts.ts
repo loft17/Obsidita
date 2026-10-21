@@ -7,9 +7,10 @@ import { canRunFileShortcut, fileShortcutFor, hasOpenOverlay } from './fileShort
 import { notify } from './toast';
 import { t } from './i18n';
 import { isNote } from './paths';
+import { openAiBar } from './ai';
 
 // Atajos globales. Con modificador: Ctrl/Cmd+P abrir nota (`onQuickOpen`), +S guardar,
-// +E editar/leer, +B barra lateral, +Shift+F buscar. Para el archivo abierto: F2 renombrar,
+// +E editar/leer, +B barra lateral, +K editar con IA, +Shift+F buscar. Para el archivo abierto: F2 renombrar,
 // Ctrl/Cmd+Shift+M mover y Ctrl/Cmd+Shift+Retroceso borrar (ver SHORTCUT_GROUPS en Ajustes → Atajos).
 // También Ctrl/Cmd + rueda sobre la nota para el tamaño de fuente
 export function useGlobalShortcuts(onQuickOpen: () => void) {
@@ -62,6 +63,12 @@ export function useGlobalShortcuts(onQuickOpen: () => void) {
         case 'b':
           e.preventDefault();
           toggleSidebar();
+          break;
+        case 'k':
+          // Solo con una nota, la IA configurada y sin un diálogo encima (si no, el atajo queda
+          // para el navegador). El editor no usa Ctrl/Cmd+K (ni markdownKeymap, ni defaultKeymap,
+          // ni historyKeymap)
+          if (!hasOpenOverlay() && openAiBar()) e.preventDefault();
           break;
       }
     };

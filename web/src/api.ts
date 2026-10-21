@@ -368,3 +368,62 @@ export const searchApi = {
     );
   },
 };
+
+// Edición con IA. La configuración solo trae nombres (proveedores y acciones), nunca URLs ni claves
+export interface AiAction {
+  name: string;
+  prompt: string;
+  provider?: string;
+}
+
+export type AiConfig =
+  | { enabled: false }
+  | { enabled: true; providers: string[]; default: string; actions: AiAction[]; maxChars: number };
+
+// `failed`: proveedores que fallaron antes del que respondió (respaldo de `fallback`)
+export interface AiEditResult {
+  text: string;
+  provider: string;
+  failed: string[];
+}
+
+// Ajustes → IA. Las claves nunca vuelven del servidor: solo si hay una guardada (`hasKey`), si no
+// se puede descifrar (`keyError`) y si la variable de entorno `apiKeyEnv` está definida (`envKey`)
+export interface AiProviderSettings {
+  name: string;
+  baseUrl: string;
+  model: string;
+  apiKeyEnv: string;
+  envKey: boolean;
+  hasKey: boolean;
+  keyError: boolean;
+}
+
+export interface AiSettings {
+  default: string;
+  fallback: string[];
+  providers: AiProviderSettings[];
+  actions: AiAction[];
+  keysSecretFromEnv: boolean;
+}
+
+// `apiKey`: texto = guardar esta clave (cifrada), null = olvidar la guardada, sin definir = no tocar.
+// `from`: nombre anterior al renombrar, para conservar su clave
+export interface AiSettingsUpdate {
+  default: string;
+  fallback: string[];
+  providers: { name: string; from?: string; baseUrl: string; model: string; apiKeyEnv: string; apiKey?: string | null }[];
+  actions: AiAction[];
+}
+
+export const aiApi = {
+  getConfig: (): Promise<AiConfig> => request('/ai/config'),
+  // Los errores llevan `code` en `data` (ApiError) para traducirlos: noKey, timeout, allFailed...
+  // `test`: prueba de conexión de Ajustes, solo con ese proveedor (sin respaldo)
+  edit: (
+    body: { text: string; instruction: string; provider?: string; test?: boolean },
+    signal?: AbortSignal,
+  ): Promise<AiEditResult> => request('/ai/edit', { method: 'POST', json: body, signal }),
+  getSettings: (): Promise<AiSettings> => request('/ai/settings'),
+  saveSettings: (settings: AiSettingsUpdate): Promise<AiSettings> => post('/ai/settings', settings),
+};

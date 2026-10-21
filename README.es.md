@@ -115,6 +115,7 @@ Tus notas se quedan en tu servidor, protegidas con contraseña, sesiones revocab
 
 ### ☁️ Pensado para tu servidor
 - **Sincronización con GitHub**, manual o periódica.
+- **Edición con IA** opcional (`Ctrl+K`): DeepSeek, Gemini, OpenAI, Ollama...
 - **Exportación a PDF** desde el navegador.
 - **Recuento de palabras** y caracteres.
 - Tema **oscuro, claro o del sistema**, y fuentes a elegir (también las tuyas).
@@ -251,6 +252,7 @@ Cada sincronización hace commit de los cambios, integra los del repositorio y s
 | 📖 [Guía de uso](docs/es/GUIA_USUARIO.md) | Lo básico para empezar a escribir y organizar tus notas. |
 | ⚙️ [Instalación y configuración](docs/es/INSTALACION_Y_CONFIGURACION.md) | Despliegue en producción, nginx, variables de entorno y copias de seguridad. |
 | ⌨️ [Atajos de teclado](docs/es/ATAJOS.md) | Todos los atajos disponibles. |
+| ✨ [Edición con IA](docs/es/IA.md) | Configurar proveedores (DeepSeek, Gemini...) y editar notas con IA. |
 | 🩺 [Errores y soluciones](docs/es/ERRORES_Y_SOLUCIONES.md) | Problemas frecuentes y cómo resolverlos. |
 | 🪶 [Recursos limitados](docs/es/OPTIMIZACION_RECURSOS_LIMITADOS.md) | Cómo ajustarlo para servidores pequeños. |
 | 🧰 [Scripts listos](docs/es/SCRIPTS_LISTOS.md) | Scripts para instalar, actualizar y mantener la app. |

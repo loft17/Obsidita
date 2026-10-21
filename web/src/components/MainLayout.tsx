@@ -35,6 +35,7 @@ import { isNote, noteTitle } from '../paths';
 import { useNoteLoader } from '../noteLoader';
 import { useExternalCheck } from '../externalCheck';
 import { useGlobalShortcuts } from '../globalShortcuts';
+import { loadAiConfig } from '../ai';
 
 // Los ajustes solo se descargan la primera vez que se abren
 const SettingsModal = lazy(() => import('./SettingsModal'));
@@ -146,6 +147,11 @@ export default function MainLayout() {
   useUpdateNotification();
   useGlobalShortcuts(() => setQuickOpen(true));
   useExternalCheck(setFileContent);
+
+  // Proveedores de IA configurados (sin ninguno, la función queda oculta)
+  useEffect(() => {
+    loadAiConfig();
+  }, []);
 
   // Fuentes de la carpeta fonts/ del servidor; se releen al abrir Ajustes por si se han añadido más
   useEffect(() => {

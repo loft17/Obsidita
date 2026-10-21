@@ -14,6 +14,7 @@ Los siguientes atajos funcionan en cualquier parte de la aplicación:
 | <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>S</kbd> | **Guardar** | Guarda manualmente la nota actual (normalmente se guarda automáticamente) |
 | <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>E</kbd> | **Editar/Leer** | Alterna entre modo edición y modo lectura |
 | <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>B</kbd> | **Barra Lateral** | Muestra u oculta la barra lateral (explorador, búsqueda, etc.) |
+| <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>K</kbd> | **Editar con IA** | Abre la barra de IA sobre la nota o la selección (si está configurada, ver [IA.md](IA.md)) |
 | <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> | **Buscar** | Abre el panel de búsqueda en la barra lateral |
 | <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + **Rueda** | **Cambiar Tamaño de Fuente** | Amplía o reduce el tamaño de la letra (función similar a zoom) |
 

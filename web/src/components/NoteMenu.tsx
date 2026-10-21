@@ -4,7 +4,7 @@ import { useStore } from '../store';
 import { filesApi, syncApi, ConflictError } from '../api';
 import { flushPendingSave, noteVersions, NOTES_CHANGED } from './Editor';
 import { applyPathChange, deletePath } from './fileActions';
-import { fileName, movedPath, noteTitle, parentFolder, renamedPath } from '../paths';
+import { fileName, isNote, movedPath, noteTitle, parentFolder, renamedPath } from '../paths';
 import { IconMenu } from './Icons';
 import { RenameDialog, MoveDialog, DeleteFileDialog, HistoryDialog } from './FileDialogs';
 import { isImage } from '../attachments';
@@ -12,6 +12,7 @@ import { t as translate, useT } from '../i18n';
 import { notify } from '../toast';
 import { MenuItem, focusMenuItem, onMenuKeyDown } from './menuNav';
 import { useLatest } from '../latestRef';
+import { openAiBar, useAiEnabled } from '../ai';
 import log from '../logger';
 
 export default function NoteMenu() {
@@ -26,6 +27,7 @@ export default function NoteMenu() {
   const setRawMode = useStore((s) => s.setRawMode);
   const gitSyncProvider = useStore((s) => s.gitSyncProvider);
   const setGitSyncProvider = useStore((s) => s.setGitSyncProvider);
+  const aiEnabled = useAiEnabled();
 
   const ref = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -226,6 +228,16 @@ export default function NoteMenu() {
           </MenuItem>
           {!activeIsImage && (
             <>
+              {aiEnabled && isNote(activeTab) && (
+                <MenuItem
+                  onClick={() => {
+                    closeMenu();
+                    openAiBar();
+                  }}
+                >
+                  {t('ai.edit')}
+                </MenuItem>
+              )}
               {editMode && (
                 <MenuItem
                   onClick={() => {

@@ -68,6 +68,14 @@ export const IconEdit = make(
     <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
   </>,
 );
+// Edición con IA
+export const IconSparkles = make(
+  <>
+    <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" />
+    <path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" />
+    <path d="M5 2v4M3 4h4" />
+  </>,
+);
 export const IconBook = make(
   <>
     <path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z" />

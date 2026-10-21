@@ -135,6 +135,18 @@ El **explorador** te muestra la estructura de carpetas.
 
 ---
 
+## ✨ Editar con IA
+
+Si está configurada (**⚙️ → IA**), puedes pedir a una IA que edite la nota o el texto seleccionado:
+
+1. Pulsa `Ctrl+K`, el botón **✨** de la barra del editor o **Editar con IA** en el menú de la nota.
+2. Escribe qué quieres («corrige la ortografía», «resume en viñetas»...) y pulsa `Intro`, o usa una acción rápida.
+3. El cambio se aplica directamente. Si no te gusta, `Ctrl+Z` o el botón **Deshacer** lo revierten.
+
+Cómo configurarla y resolver problemas: [Edición con IA](IA.md).
+
+---
+
 ## ⚙️ Preferencias
 
 Abre **⚙️** (arriba a la derecha) para cambiar:
@@ -151,6 +163,9 @@ Abre **⚙️** (arriba a la derecha) para cambiar:
 ### 📂 Archivos
 - **Carpeta de adjuntos**: dónde se guardan imágenes y archivos subidos
 - **Carpeta del vault**: puedes cambiarla aquí (exige contraseña)
+
+### ✨ IA
+- **Proveedores**, claves de API (se guardan cifradas), respaldo y acciones rápidas. Ver [Edición con IA](IA.md)
 
 ---
 
@@ -187,6 +202,7 @@ Cuando **eliminas una nota**, va a la carpeta `.trash/` (papelera).
 | `Ctrl+E` | Cambiar leer ↔ editar |
 | `Ctrl+S` | Guardar ahora |
 | `Ctrl+B` | Mostrar/ocultar explorador |
+| `Ctrl+K` | Editar con IA |
 | `Ctrl+W` | Cerrar pestaña |
 | `Escape` | Cerrar diálogos y menús |
 

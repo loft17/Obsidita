@@ -14,3 +14,7 @@ export const loadZipArchive = () => (archiverPromise ??= import('archiver').then
 // Nivel de compresión de los ZIP: el 6 (el de zlib por defecto) comprime casi igual que el 9
 // con bastante menos CPU, y las imágenes y adjuntos ya vienen comprimidos
 export const ZIP_LEVEL = 6;
+
+// Cliente de IA (server/ai.js): solo se carga con la primera edición, y solo si hay proveedores
+let aiPromise;
+export const loadAi = () => (aiPromise ??= import('./ai.js'));

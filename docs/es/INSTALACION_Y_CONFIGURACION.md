@@ -636,6 +636,8 @@ UPDATE_CHECK=1
 FONTS_DIR=/etc/obsidita/fonts
 ```
 
+Para la edición con IA (claves de los proveedores y límites `AI_*`), ver [IA.md](IA.md).
+
 ---
 
 ## 🔒 Seguridad

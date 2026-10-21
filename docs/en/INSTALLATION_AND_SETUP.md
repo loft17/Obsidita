@@ -555,6 +555,8 @@ UPDATE_CHECK=1
 FONTS_DIR=/etc/obsidita/fonts
 ```
 
+For AI editing (provider keys and `AI_*` limits), see [AI.md](AI.md).
+
 ---
 
 ## 🔒 Security

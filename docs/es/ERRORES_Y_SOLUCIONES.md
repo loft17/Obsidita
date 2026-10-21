@@ -18,6 +18,7 @@ Guía completa de **errores, causas y soluciones** para Obsidita.
 - [Errores de SSL/HTTPS](#errores-de-sslhttps)
 - [Errores de Base de Datos](#errores-de-base-de-datos)
 - [Errores de Rendimiento](#errores-de-rendimiento)
+- [Errores de la Edición con IA](#-errores-de-la-edición-con-ia)
 
 ---
 
@@ -906,6 +907,12 @@ gzip /var/log/*.log
 # 2. Mover vaults a otra partición
 # 3. Reducir tamaño de vaults (eliminar adjuntos no usados)
 ```
+
+---
+
+## ✨ Errores de la Edición con IA
+
+Los errores de la barra de IA y del botón **Probar** de Ajustes → IA (clave no válida, modelo inexistente, sin saldo, sin respuesta a tiempo...) están explicados uno a uno en [Edición con IA → Problemas frecuentes](IA.md#-problemas-frecuentes). El mensaje incluye el código HTTP y el motivo que da el proveedor, por ejemplo `(HTTP 404: ... model ... not found)`.
 
 ---
 

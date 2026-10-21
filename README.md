@@ -115,6 +115,7 @@ Your notes stay on your server, protected by a password, revocable sessions and 
 
 ### ☁️ Built for your server
 - **GitHub sync**, manual or scheduled.
+- Optional **AI editing** (`Ctrl+K`): DeepSeek, Gemini, OpenAI, Ollama...
 - **PDF export** from the browser.
 - **Word** and character **count**.
 - **Dark, light or system** theme, and a choice of fonts (your own too).
@@ -251,6 +252,7 @@ Each sync commits your changes, merges those from the repository and pushes the 
 | 📖 [User guide](docs/en/USER_GUIDE.md) | The basics to start writing and organizing your notes. |
 | ⚙️ [Installation and setup](docs/en/INSTALLATION_AND_SETUP.md) | Production deployment, nginx, environment variables and backups. |
 | ⌨️ [Keyboard shortcuts](docs/en/KEYBOARD_SHORTCUTS.md) | Every available shortcut. |
+| ✨ [AI editing](docs/en/AI.md) | Set up providers (DeepSeek, Gemini...) and edit notes with AI. |
 | 🩺 [Errors and solutions](docs/en/ERRORS_AND_SOLUTIONS.md) | Common problems and how to fix them. |
 | 🪶 [Limited resources](docs/en/OPTIMIZATION_LIMITED_RESOURCES.md) | How to tune it for small servers. |
 | 🧰 [Ready-to-use scripts](docs/en/READY_TO_USE_SCRIPTS.md) | Scripts to install, update and maintain the app. |

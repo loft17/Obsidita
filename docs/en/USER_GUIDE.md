@@ -135,6 +135,18 @@ The **explorer** shows your folder structure.
 
 ---
 
+## ✨ Edit with AI
+
+If it's configured (**⚙️ → AI**), you can ask an AI to edit the note or the selected text:
+
+1. Press `Ctrl+K`, the **✨** button in the editor toolbar, or **Edit with AI** in the note menu.
+2. Type what you want ("fix the spelling", "summarize as bullet points"...) and press `Enter`, or use a quick action.
+3. The change is applied directly. If you don't like it, `Ctrl+Z` or the **Undo** button revert it.
+
+Setup and troubleshooting: [AI editing](AI.md).
+
+---
+
 ## ⚙️ Preferences
 
 Open **⚙️** (top right) to change:
@@ -151,6 +163,9 @@ Open **⚙️** (top right) to change:
 ### 📂 Files
 - **Attachments Folder**: Where images and files upload
 - **Vault Folder**: You can change it here (requires password)
+
+### ✨ AI
+- **Providers**, API keys (stored encrypted), fallback and quick actions. See [AI editing](AI.md)
 
 ---
 
@@ -187,6 +202,7 @@ When you **delete a note**, it goes to `.trash/` folder (trash).
 | `Ctrl+E` | Toggle read ↔ edit |
 | `Ctrl+S` | Save now |
 | `Ctrl+B` | Show/hide explorer |
+| `Ctrl+K` | Edit with AI |
 | `Ctrl+W` | Close tab |
 | `Escape` | Close dialogs and menus |
 

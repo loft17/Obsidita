@@ -18,6 +18,7 @@ Complete guide of **errors, causes, and solutions** for Obsidita.
 - [SSL/HTTPS Errors](#sslhttps-errors)
 - [Database Errors](#database-errors)
 - [Performance Errors](#performance-errors)
+- [AI Editing Errors](#-ai-editing-errors)
 
 ---
 
@@ -683,6 +684,12 @@ gzip /var/log/*.log
 # 2. Move vaults to another partition
 # 3. Reduce vault size (delete unused attachments)
 ```
+
+---
+
+## ✨ AI Editing Errors
+
+Errors from the AI bar and the **Test** button in Settings → AI (invalid key, unknown model, no credit, timeout...) are explained one by one in [AI editing → Troubleshooting](AI.md#-troubleshooting). The message includes the HTTP status and the provider's reason, e.g. `(HTTP 404: ... model ... not found)`.
 
 ---
 

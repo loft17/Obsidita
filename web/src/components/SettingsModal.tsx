@@ -39,6 +39,7 @@ import {
   IconLock,
   IconReset,
   IconSearch,
+  IconSparkles,
   IconSync,
   IconUserCircle,
 } from './Icons';
@@ -46,6 +47,7 @@ import { runSync } from '../syncNotify';
 import { BUNDLED_FONTS, isBundledFont, loadBundledFont, type FontCategory } from '../fonts';
 import { useServerFonts } from '../serverFonts';
 import { useIsMobile } from '../mobile';
+import AiSettings from './AiSettings';
 
 interface Props {
   onClose: () => void;
@@ -57,6 +59,7 @@ const SECTIONS: { id: string; label: MessageKey; Icon: typeof IconEye }[] = [
   { id: 'editor', label: 'settings.section.editor', Icon: IconEdit },
   { id: 'files', label: 'settings.section.files', Icon: IconFolderNew },
   { id: 'sync', label: 'settings.section.sync', Icon: IconSync },
+  { id: 'ai', label: 'settings.section.ai', Icon: IconSparkles },
   { id: 'security', label: 'settings.section.security', Icon: IconLock },
   { id: 'shortcuts', label: 'settings.section.shortcuts', Icon: IconList },
   { id: 'variables', label: 'settings.section.variables', Icon: IconUserCircle },
@@ -1380,6 +1383,7 @@ const SHORTCUT_GROUPS: { title: MessageKey; items: { keys: string[]; desc: Messa
       { keys: ['Ctrl', 'S'], desc: 'shortcuts.save' },
       { keys: ['Ctrl', 'E'], desc: 'shortcuts.toggleMode' },
       { keys: ['Ctrl', 'B'], desc: 'shortcuts.toggleSidebar' },
+      { keys: ['Ctrl', 'K'], desc: 'shortcuts.aiEdit' },
       { keys: ['Esc'], desc: 'shortcuts.close' },
     ],
   },
@@ -1628,6 +1632,7 @@ export default function SettingsModal({ onClose }: Props) {
             {section === 'editor' && <EditorSection />}
             {section === 'files' && <FilesSection />}
             {section === 'sync' && <SyncSection />}
+            {section === 'ai' && <AiSettings />}
             {section === 'security' && <SecuritySection />}
             {section === 'shortcuts' && <ShortcutsSection />}
             {section === 'variables' && <VariablesSection />}

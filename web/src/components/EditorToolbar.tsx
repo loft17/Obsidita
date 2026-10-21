@@ -20,10 +20,12 @@ import {
   IconTable,
   IconImage,
   IconChevronDown,
+  IconSparkles,
 } from './Icons';
 import { t as translate, useT } from '../i18n';
 import { pickImages } from '../imageUpload';
 import { isMobile } from '../mobile';
+import { openAiBar, useAiEnabled } from '../ai';
 
 // Instantánea del editor sobre la que trabajan las acciones de formato
 interface TA {
@@ -402,6 +404,7 @@ export default function EditorToolbar({
   };
   const heading = (level: number) => <span className="toolbar-heading">H{level}</span>;
   const t = useT();
+  const aiEnabled = useAiEnabled();
 
   return (
     <div className="editor-toolbar" role="toolbar" aria-label={t('toolbar.format')}>
@@ -500,6 +503,14 @@ export default function EditorToolbar({
       <ToolButton title={t('toolbar.image')} onClick={() => viewRef.current && pickImages(viewRef.current, filePath)}>
         <IconImage />
       </ToolButton>
+      {aiEnabled && (
+        <>
+          <span className="toolbar-sep" />
+          <ToolButton title={`${t('ai.edit')} (Ctrl+K)`} onClick={openAiBar}>
+            <IconSparkles />
+          </ToolButton>
+        </>
+      )}
     </div>
   );
 }

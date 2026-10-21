@@ -12,12 +12,13 @@ import settingsRoutes from './routes/settings.js';
 import syncRoutes from './routes/sync.js';
 import fontsRoutes from './routes/fonts.js';
 import healthRoutes from './routes/health.js';
+import aiRoutes from './routes/ai.js';
 import { createSyncManager } from './sync.js';
 import { invalidateSnapshot } from './searchIndex.js';
 import { createSessionStore, createLoginLimiter } from './sessions.js';
 import { loadCookieSecret } from './cookieSecret.js';
 import { securityHeaders, csrfGuard } from './security.js';
-import { MAX_NOTE_MB, MAX_UPLOAD_MB, PROXY_MAX_BODY_MB } from './limits.js';
+import { MAX_NOTE_MB, MAX_UPLOAD_MB, PROXY_MAX_BODY_MB, AI_MAX_CHARS } from './limits.js';
 import { createLogger } from './logger.js';
 const log = createLogger('Server');
 
@@ -83,12 +84,13 @@ app.disable('x-powered-by');
 app.use(securityHeaders(distPath, () => getConfig()));
 app.use('/api', csrfGuard);
 // El JSON se lee antes de comprobar la sesión, así que por defecto solo se aceptan cuerpos
-// pequeños. Las notas (/api/files) pueden ser grandes: se leen con MAX_NOTE_MB más abajo,
-// después de la comprobación de sesión
+// pequeños. Las notas (/api/files) y el texto para la IA (/api/ai) pueden ser grandes: se leen
+// con su propio límite más abajo, después de la comprobación de sesión
 const apiPath = (req) => req.originalUrl.split('?')[0].toLowerCase();
 const isFilesApi = (req) => apiPath(req).startsWith('/api/files/');
+const isAiApi = (req) => apiPath(req).startsWith('/api/ai/');
 const smallJson = express.json({ limit: '100kb' });
-app.use((req, res, next) => (isFilesApi(req) ? next() : smallJson(req, res, next)));
+app.use((req, res, next) => (isFilesApi(req) || isAiApi(req) ? next() : smallJson(req, res, next)));
 app.use(cookieParser(cookieSecret));
 
 // Check if configured
@@ -195,7 +197,8 @@ app.use('/api', (req, res, next) => {
 // el recorrido del vault que reutiliza la búsqueda
 app.use('/api', (req, res, next) => {
   // También al terminar: una búsqueda hecha mientras tanto (p. ej. durante una sincronización) no vale
-  if (req.method !== 'GET' && req.method !== 'HEAD') {
+  // La edición con IA no escribe nada en el vault
+  if (req.method !== 'GET' && req.method !== 'HEAD' && !isAiApi(req)) {
     invalidateSnapshot();
     res.on('finish', invalidateSnapshot);
   }
@@ -215,6 +218,8 @@ app.use(
 app.use('/api/search', searchRoutes(dataDir, getConfig));
 app.use('/api/sync', syncRoutes(syncManager, getConfig));
 app.use('/api/fonts', fontsRoutes());
+// Hasta 4 bytes por carácter (UTF-8 y escapes de JSON) más la instrucción
+app.use('/api/ai', express.json({ limit: AI_MAX_CHARS * 4 + 64 * 1024 }), aiRoutes(dataDir, getConfig));
 
 // Cualquier /api que no haya casado es un 404 en JSON. Si cayera en el fallback del SPA
 // devolvería index.html con un 200 y el cliente fallaría al leer el mensaje de error

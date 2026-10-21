@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '../store';
 import { isUnder, noteTitle } from '../paths';
 import { filesApi, ConflictError } from '../api';
@@ -18,6 +18,7 @@ import { wikilinkCompletion } from '../wikilinkComplete';
 import { setEmbedContent } from '../noteEmbeds';
 import { subscribePendingScroll, takePendingLine } from '../wikilinks';
 import { useLatest } from '../latestRef';
+import { useAiStore } from '../ai';
 import { notify } from '../toast';
 import { t, useT } from '../i18n';
 import log from '../logger';
@@ -29,6 +30,9 @@ interface Props {
 }
 
 const AUTOSAVE_DELAY = 2000;
+
+// La barra de IA (y su diff) se descarga la primera vez que se abre
+const AiBar = lazy(() => import('./AiBar'));
 
 // Versión de cada nota tal como se leyó o guardó por última vez. Al guardar se envía
 // al servidor, que rechaza el guardado si la nota ha cambiado en otro sitio desde entonces
@@ -193,6 +197,7 @@ export default function Editor({ filePath, content, onContentChange }: Props) {
   const showLineNumbers = useStore((s) => s.showLineNumbers);
   const showInlineTitle = useStore((s) => s.showInlineTitle);
   const rawMode = useStore((s) => s.rawMode);
+  const aiOpen = useAiStore((s) => s.path === filePath);
   const tr = useT();
   const note = useMemo(() => parseNote(content), [content]);
   // Con un frontmatter inválido se edita el texto completo, sin panel de propiedades
@@ -366,6 +371,11 @@ export default function Editor({ filePath, content, onContentChange }: Props) {
         )}
         <div ref={hostRef} className="editor-cm" />
       </div>
+      {aiOpen && !rawMode && (
+        <Suspense fallback={null}>
+          <AiBar viewRef={viewRef} filePath={filePath} />
+        </Suspense>
+      )}
     </>
   );
 }

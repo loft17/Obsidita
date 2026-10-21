@@ -40,3 +40,8 @@ export const SEARCH_MAX_MATCHES_PER_FILE = int('SEARCH_MAX_MATCHES_PER_FILE', 5)
 // Sesiones
 export const SESSION_MAX_AGE = num('SESSION_MAX_DAYS', 30) * DAY;
 export const SESSION_IDLE = num('SESSION_IDLE_DAYS', 7) * DAY;
+
+// Edición con IA (sección `ai` de config.json)
+export const AI_MAX_CHARS = int('AI_MAX_CHARS', 40000); // texto enviado (selección o nota)
+export const AI_RATE_MAX = int('AI_RATE_MAX', 10); // peticiones por minuto y por sesión
+export const AI_TIMEOUT_MS = num('AI_TIMEOUT_S', 60) * 1000; // espera máxima por proveedor
