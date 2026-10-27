@@ -337,6 +337,12 @@ export const ca: Messages = {
     'Limita la longitud màxima de línia. Mostra menys contingut a la pantalla, però els paràgrafs llargs són més llegibles.',
   'settings.lineNumbers': 'Números de línia',
   'settings.lineNumbers.desc': 'Mostra els números de línia.',
+  'settings.behavior': 'Comportament',
+  'settings.autoPairBrackets': 'Tancar parèntesis automàticament',
+  'settings.autoPairBrackets.desc': 'Tanca automàticament parèntesis, claudàtors, claus i cometes, com un editor de codi.',
+  'settings.autoPairMarkdown': 'Tancar símbols de Markdown automàticament',
+  'settings.autoPairMarkdown.desc':
+    'Tanca automàticament símbols de Markdown com * _ i `. Amb text seleccionat, = i ~ també envolten la selecció.',
   'settings.pdfViewer': 'Visor de PDF',
   'settings.pdfViewer.desc':
     "Obre els fitxers PDF amb el visor integrat del navegador en lloc d'oferir descarregar-los.",

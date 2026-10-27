@@ -335,6 +335,12 @@ export const es = {
     'Limita la longitud de línea máxima. Muestra menos contenido en pantalla, pero los párrafos largos son más legibles.',
   'settings.lineNumbers': 'Números de línea',
   'settings.lineNumbers.desc': 'Muestra los números de línea.',
+  'settings.behavior': 'Comportamiento',
+  'settings.autoPairBrackets': 'Cerrar paréntesis automáticamente',
+  'settings.autoPairBrackets.desc': 'Cierra automáticamente paréntesis, corchetes, llaves y comillas, como un editor de código.',
+  'settings.autoPairMarkdown': 'Cerrar símbolos de Markdown automáticamente',
+  'settings.autoPairMarkdown.desc':
+    'Cierra automáticamente símbolos de Markdown como * _ y `. Con texto seleccionado, = y ~ también rodean la selección.',
   'settings.pdfViewer': 'Visor de PDF',
   'settings.pdfViewer.desc':
     'Abre los archivos PDF con el visor integrado del navegador en vez de ofrecer descargarlos.',

@@ -14,6 +14,7 @@ import { indentUnit } from '@codemirror/language';
 import { languages } from '../editorLanguages';
 import { livePreview, HighlightSyntax, notePath } from '../livePreview';
 import { imageUpload } from '../imageUpload';
+import { autoPair } from '../autoPair';
 import { wikilinkCompletion } from '../wikilinkComplete';
 import { setEmbedContent } from '../noteEmbeds';
 import { subscribePendingScroll, takePendingLine } from '../wikilinks';
@@ -160,6 +161,7 @@ const externalChange = Annotation.define<boolean>();
 
 const lineNumbersCompartment = new Compartment();
 const lineNumbersExtension = (show: boolean) => (show ? [lineNumbers(), highlightActiveLineGutter()] : []);
+const autoPairCompartment = new Compartment();
 
 function createState(doc: string, onChange: (doc: string) => void, getPath: () => string) {
   return EditorState.create({
@@ -175,6 +177,7 @@ function createState(doc: string, onChange: (doc: string) => void, getPath: () =
       markdown({ base: markdownLanguage, codeLanguages: languages, extensions: [HighlightSyntax] }),
       livePreview,
       lineNumbersCompartment.of(lineNumbersExtension(useStore.getState().showLineNumbers)),
+      autoPairCompartment.of(autoPair(useStore.getState().autoPairBrackets, useStore.getState().autoPairMarkdown)),
       imageUpload(getPath),
       wikilinkCompletion,
       // Tab sangra con un tabulador, como Obsidian (por defecto serían 2 espacios)
@@ -196,6 +199,8 @@ export default function Editor({ filePath, content, onContentChange }: Props) {
   const setTabDirty = useStore((s) => s.setTabDirty);
   const showLineNumbers = useStore((s) => s.showLineNumbers);
   const showInlineTitle = useStore((s) => s.showInlineTitle);
+  const autoPairBrackets = useStore((s) => s.autoPairBrackets);
+  const autoPairMarkdown = useStore((s) => s.autoPairMarkdown);
   const rawMode = useStore((s) => s.rawMode);
   const aiOpen = useAiStore((s) => s.path === filePath);
   const tr = useT();
@@ -299,6 +304,10 @@ export default function Editor({ filePath, content, onContentChange }: Props) {
   useEffect(() => {
     viewRef.current?.dispatch({ effects: lineNumbersCompartment.reconfigure(lineNumbersExtension(showLineNumbers)) });
   }, [showLineNumbers]);
+
+  useEffect(() => {
+    viewRef.current?.dispatch({ effects: autoPairCompartment.reconfigure(autoPair(autoPairBrackets, autoPairMarkdown)) });
+  }, [autoPairBrackets, autoPairMarkdown]);
 
   // Contenido cambiado desde fuera. Otra nota: estado nuevo, historial limpio. La misma nota
   // (cambiada en otro dispositivo, por la sincronización...): solo se sustituye el tramo

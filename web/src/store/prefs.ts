@@ -37,6 +37,10 @@ export interface PrefsSlice {
   setShowInlineTitle: (show: boolean) => void;
   showLineNumbers: boolean;
   setShowLineNumbers: (show: boolean) => void;
+  autoPairBrackets: boolean;
+  setAutoPairBrackets: (enabled: boolean) => void;
+  autoPairMarkdown: boolean;
+  setAutoPairMarkdown: (enabled: boolean) => void;
   readableLineLength: boolean;
   setReadableLineLength: (enabled: boolean) => void;
   showTabHeader: boolean;
@@ -60,6 +64,8 @@ const KEYS = {
   quickFontSize: synced('quickFontSize'),
   inlineTitle: synced('showInlineTitle'),
   lineNumbers: synced('showLineNumbers'),
+  autoPairBrackets: synced('autoPairBrackets'),
+  autoPairMarkdown: synced('autoPairMarkdown'),
   readableLine: synced('readableLineLength'),
   tabHeader: synced('showTabHeader'),
   ribbon: synced('showRibbon'),
@@ -130,6 +136,8 @@ const readPrefs = () => ({
   quickFontSize: readBool(KEYS.quickFontSize, false),
   showInlineTitle: readBool(KEYS.inlineTitle, true),
   showLineNumbers: readBool(KEYS.lineNumbers, false),
+  autoPairBrackets: readBool(KEYS.autoPairBrackets, true),
+  autoPairMarkdown: readBool(KEYS.autoPairMarkdown, true),
   readableLineLength: readBool(KEYS.readableLine, true),
   showTabHeader: readBool(KEYS.tabHeader, true),
   showRibbon: readBool(KEYS.ribbon, true),
@@ -202,6 +210,8 @@ export const createPrefsSlice: StateCreator<AppStore, [], [], PrefsSlice> = (set
     setQuickFontSize: boolPref('quickFontSize', KEYS.quickFontSize),
     setShowInlineTitle: boolPref('showInlineTitle', KEYS.inlineTitle),
     setShowLineNumbers: boolPref('showLineNumbers', KEYS.lineNumbers),
+    setAutoPairBrackets: boolPref('autoPairBrackets', KEYS.autoPairBrackets),
+    setAutoPairMarkdown: boolPref('autoPairMarkdown', KEYS.autoPairMarkdown),
     setReadableLineLength: (enabled) => {
       save(KEYS.readableLine, enabled);
       applyReadableLineLength(enabled);

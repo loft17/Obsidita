@@ -334,6 +334,12 @@ export const en: Messages = {
     'Limits the maximum line length. Less content fits on screen, but long paragraphs are easier to read.',
   'settings.lineNumbers': 'Line numbers',
   'settings.lineNumbers.desc': 'Show line numbers.',
+  'settings.behavior': 'Behavior',
+  'settings.autoPairBrackets': 'Auto pair brackets',
+  'settings.autoPairBrackets.desc': 'Automatically close brackets and quotes, like a code editor.',
+  'settings.autoPairMarkdown': 'Auto pair Markdown syntax',
+  'settings.autoPairMarkdown.desc':
+    'Automatically close Markdown symbols like * _ and `. With text selected, = and ~ also wrap the selection.',
   'settings.pdfViewer': 'PDF viewer',
   'settings.pdfViewer.desc':
     "Open PDF files with the browser's built-in viewer instead of offering to download them.",

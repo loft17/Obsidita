@@ -408,6 +408,10 @@ function EditorSection() {
   const setReadableLineLength = useStore((s) => s.setReadableLineLength);
   const pdfViewer = useStore((s) => s.pdfViewer);
   const setPdfViewer = useStore((s) => s.setPdfViewer);
+  const autoPairBrackets = useStore((s) => s.autoPairBrackets);
+  const setAutoPairBrackets = useStore((s) => s.setAutoPairBrackets);
+  const autoPairMarkdown = useStore((s) => s.autoPairMarkdown);
+  const setAutoPairMarkdown = useStore((s) => s.setAutoPairMarkdown);
   const t = useT();
   return (
     <>
@@ -424,6 +428,29 @@ function EditorSection() {
             <option value="view">{t('settings.defaultMode.view')}</option>
             <option value="edit">{t('settings.defaultMode.edit')}</option>
           </select>
+        </div>
+      </div>
+      <h3 className="settings-heading">{t('settings.behavior')}</h3>
+      <div className="settings-group">
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.autoPairBrackets')}</div>
+            <div className="setting-desc">{t('settings.autoPairBrackets.desc')}</div>
+          </div>
+          <label className="setting-toggle">
+            <input type="checkbox" checked={autoPairBrackets} onChange={(e) => setAutoPairBrackets(e.target.checked)} />
+            <span />
+          </label>
+        </div>
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.autoPairMarkdown')}</div>
+            <div className="setting-desc">{t('settings.autoPairMarkdown.desc')}</div>
+          </div>
+          <label className="setting-toggle">
+            <input type="checkbox" checked={autoPairMarkdown} onChange={(e) => setAutoPairMarkdown(e.target.checked)} />
+            <span />
+          </label>
         </div>
       </div>
       <h3 className="settings-heading">{t('settings.display')}</h3>
