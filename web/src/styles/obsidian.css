@@ -881,6 +881,12 @@ button.note-info-item {
   background-color: rgba(var(--interactive-accent-rgb), 0.3);
 }
 
+/* Por defecto la selección va detrás del texto y el fondo opaco de los bloques de código la tapa */
+.cm-editor .cm-selectionLayer {
+  z-index: 1 !important;
+  pointer-events: none;
+}
+
 /* Sugerencias de [[enlaces]] (wikilinkComplete.ts) */
 .cm-editor .cm-tooltip.cm-tooltip-autocomplete {
   background-color: var(--background-secondary);
