@@ -7,6 +7,7 @@ import { isImage } from './attachments';
 import { t } from './i18n';
 import { notify } from './toast';
 import { fileName } from './paths';
+import { convertImage } from './imageConvert';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -90,7 +91,11 @@ async function upload(view: EditorView, notePath: string, files: File[], range: 
   view.dispatch({ effects });
   try {
     const paths: string[] = [];
-    for (const file of files) paths.push((await filesApi.uploadAttachment(notePath, file, named(file))).path);
+    const { imageFormat, imageQuality } = useStore.getState();
+    for (const file of files) {
+      const image = await convertImage(file, named(file), imageFormat, imageQuality);
+      paths.push((await filesApi.uploadAttachment(notePath, image.file, image.name)).path);
+    }
     // Refrescar el árbol antes de insertar, para que el enlace se resuelva al pintarlo
     useStore.getState().setTree(await filesApi.getTree());
     const target = view.state.field(pendingUploads, false)?.get(id);

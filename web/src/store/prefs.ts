@@ -15,6 +15,11 @@ export const MAX_FONT_SIZE = 30;
 
 // Fuentes de la interfaz, del texto de las notas y monoespaciada (código). Vacío = la predeterminada;
 // se aplican con las variables CSS --font-interface, --font-text y --font-monospace
+// Formato al que se convierten las imágenes pegadas o arrastradas al editor ('original' = sin convertir)
+export type ImageFormat = 'original' | 'webp' | 'jpg';
+export const DEFAULT_IMAGE_QUALITY = 80;
+const clampQuality = (q: number) => Math.min(100, Math.max(10, Math.round(q)));
+
 export type FontKind = 'interface' | 'text' | 'monospace';
 export type Fonts = Record<FontKind, string>;
 
@@ -49,6 +54,10 @@ export interface PrefsSlice {
   setShowRibbon: (show: boolean) => void;
   pdfViewer: boolean;
   setPdfViewer: (enabled: boolean) => void;
+  imageFormat: ImageFormat;
+  setImageFormat: (format: ImageFormat) => void;
+  imageQuality: number;
+  setImageQuality: (quality: number) => void;
   // Vuelve a leer y aplicar todas las preferencias (tras recibir las del servidor)
   reloadPrefs: () => void;
 }
@@ -71,6 +80,8 @@ const KEYS = {
   ribbon: synced('showRibbon'),
   // Abrir los PDF con el visor nativo del navegador en vez de ofrecer descargarlos
   pdfViewer: synced('pdfViewer'),
+  imageFormat: synced('imageFormat'),
+  imageQuality: synced('imageQuality'),
 };
 
 const FONT_KEYS: Record<FontKind, string> = {
@@ -111,6 +122,11 @@ const applyFont = (kind: FontKind, name: string) => {
 const applyReadableLineLength = (enabled: boolean) =>
   document.documentElement.style.setProperty('--line-width', enabled ? '720px' : 'none');
 
+const readImageFormat = (): ImageFormat => {
+  const value = readString(KEYS.imageFormat);
+  return value === 'webp' || value === 'jpg' ? value : 'original';
+};
+
 const readTheme = (): Theme => {
   const value = readString(KEYS.theme);
   return value === 'light' || value === 'system' ? value : 'dark';
@@ -142,6 +158,8 @@ const readPrefs = () => ({
   showTabHeader: readBool(KEYS.tabHeader, true),
   showRibbon: readBool(KEYS.ribbon, true),
   pdfViewer: readBool(KEYS.pdfViewer, false),
+  imageFormat: readImageFormat(),
+  imageQuality: readNumber(KEYS.imageQuality, DEFAULT_IMAGE_QUALITY, clampQuality),
 });
 
 // Aplicar al documento las preferencias visuales
@@ -220,5 +238,14 @@ export const createPrefsSlice: StateCreator<AppStore, [], [], PrefsSlice> = (set
     setShowTabHeader: boolPref('showTabHeader', KEYS.tabHeader),
     setShowRibbon: boolPref('showRibbon', KEYS.ribbon),
     setPdfViewer: boolPref('pdfViewer', KEYS.pdfViewer),
+    setImageFormat: (format) => {
+      save(KEYS.imageFormat, format === 'original' ? null : format);
+      set({ imageFormat: format });
+    },
+    setImageQuality: (quality) => {
+      const value = clampQuality(quality);
+      save(KEYS.imageQuality, value);
+      set({ imageQuality: value });
+    },
   };
 };

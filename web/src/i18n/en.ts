@@ -348,6 +348,12 @@ export const en: Messages = {
     "Show images linked from other websites (![](https://...)). Loading them lets those servers see your IP. Applies to all devices.",
   'settings.remoteImages.reload': "Reload to apply",
   'settings.attachments': 'Default location for new attachments',
+  'settings.imageFormat': 'Convert pasted images',
+  'settings.imageFormat.desc':
+    'Converts images pasted, dropped or inserted into a note (PNG screenshots, photos...) to a lighter format. If the converted file is larger, the original is uploaded.',
+  'settings.imageFormat.original': "Don't convert",
+  'settings.imageQuality': 'Image quality',
+  'settings.imageQuality.desc': 'Lower quality takes less space. 80 is a good balance.',
   'settings.uploads': 'Allowed upload file types',
   'settings.uploads.desc':
     'Extensions you can upload by dragging files into the explorer, comma-separated, e.g. {a}. By default, notes (.md) and images.',

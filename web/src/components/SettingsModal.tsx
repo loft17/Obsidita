@@ -3,7 +3,9 @@ import {
   useStore,
   type FontKind,
   type Theme,
+  type ImageFormat,
   DEFAULT_FONT_SIZE,
+  DEFAULT_IMAGE_QUALITY,
   DEFAULT_SITE_TITLE,
   MIN_FONT_SIZE,
   MAX_FONT_SIZE,
@@ -605,6 +607,59 @@ function AttachmentsSetting() {
   );
 }
 
+// Conversión de las imágenes pegadas o arrastradas al editor para que ocupen menos
+function ImageFormatSetting() {
+  const imageFormat = useStore((s) => s.imageFormat);
+  const setImageFormat = useStore((s) => s.setImageFormat);
+  const imageQuality = useStore((s) => s.imageQuality);
+  const setImageQuality = useStore((s) => s.setImageQuality);
+  const t = useT();
+  const qualityPercent = ((imageQuality - 10) / 90) * 100;
+  return (
+    <>
+      <div className="setting-item">
+        <div className="setting-info">
+          <div className="setting-name">{t('settings.imageFormat')}</div>
+          <div className="setting-desc">{t('settings.imageFormat.desc')}</div>
+        </div>
+        <select value={imageFormat} onChange={(e) => setImageFormat(e.target.value as ImageFormat)}>
+          <option value="original">{t('settings.imageFormat.original')}</option>
+          <option value="webp">WebP</option>
+          <option value="jpg">JPG</option>
+        </select>
+      </div>
+      {imageFormat !== 'original' && (
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.imageQuality')}</div>
+            <div className="setting-desc">{t('settings.imageQuality.desc')}</div>
+          </div>
+          <div className="setting-slider">
+            <button
+              className="icon-btn"
+              title={t('settings.resetDefault')}
+              disabled={imageQuality === DEFAULT_IMAGE_QUALITY}
+              onClick={() => setImageQuality(DEFAULT_IMAGE_QUALITY)}
+            >
+              <IconReset size={16} />
+            </button>
+            <span className="setting-slider-value">{imageQuality}</span>
+            <input
+              type="range"
+              min={10}
+              max={100}
+              step={5}
+              value={imageQuality}
+              style={{ '--slider-fill': `${qualityPercent}%` } as CSSProperties}
+              onChange={(e) => setImageQuality(Number(e.target.value))}
+            />
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 // Extensiones que se pueden subir arrastrando archivos al explorador (se guarda en el servidor)
 function UploadsSetting() {
   const [value, setValue] = useState('');
@@ -954,6 +1009,7 @@ function FilesSection() {
       <h3 className="settings-heading">{t('settings.files.attachments')}</h3>
       <div className="settings-group">
         <AttachmentsSetting />
+        <ImageFormatSetting />
         <UploadsSetting />
       </div>
 

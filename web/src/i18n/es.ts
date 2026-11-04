@@ -349,6 +349,12 @@ export const es = {
     "Muestra las imágenes enlazadas desde otras webs (![](https://...)). Al cargarlas, esos servidores ven tu IP. Afecta a todos los dispositivos.",
   'settings.remoteImages.reload': "Recargar para aplicar",
   'settings.attachments': 'Ubicación predeterminada para los archivos adjuntos nuevos',
+  'settings.imageFormat': 'Convertir imágenes pegadas',
+  'settings.imageFormat.desc':
+    'Convierte las imágenes que se pegan, arrastran o insertan en una nota (capturas PNG, fotos...) a un formato más ligero. Si la conversión ocupa más que el original, se sube el original.',
+  'settings.imageFormat.original': 'No convertir',
+  'settings.imageQuality': 'Calidad de imagen',
+  'settings.imageQuality.desc': 'Menos calidad ocupa menos espacio. 80 es un buen equilibrio.',
   'settings.uploads': 'Tipos de archivo permitidos al subir',
   'settings.uploads.desc':
     'Extensiones que se pueden subir arrastrando archivos al explorador, separadas por comas, p. ej. {a}. Por defecto, notas (.md) e imágenes.',

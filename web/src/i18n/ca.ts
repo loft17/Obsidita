@@ -351,6 +351,12 @@ export const ca: Messages = {
     "Mostra les imatges enllaçades des d'altres webs (![](https://...)). En carregar-les, aquests servidors veuen la teva IP. Afecta tots els dispositius.",
   'settings.remoteImages.reload': "Recarrega per aplicar",
   'settings.attachments': 'Ubicació predeterminada dels fitxers adjunts nous',
+  'settings.imageFormat': 'Convertir imatges enganxades',
+  'settings.imageFormat.desc':
+    "Converteix les imatges que s'enganxen, s'arrosseguen o s'insereixen en una nota (captures PNG, fotos...) a un format més lleuger. Si la conversió ocupa més que l'original, es puja l'original.",
+  'settings.imageFormat.original': 'No convertir',
+  'settings.imageQuality': "Qualitat d'imatge",
+  'settings.imageQuality.desc': 'Menys qualitat ocupa menys espai. 80 és un bon equilibri.',
   'settings.uploads': 'Tipus de fitxer permesos en pujar',
   'settings.uploads.desc':
     "Extensions que es poden pujar arrossegant fitxers a l'explorador, separades per comes, p. ex. {a}. Per defecte, notes (.md) i imatges.",
