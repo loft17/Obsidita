@@ -1,10 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import './styles/obsidian.css';
 import { fitToVisualViewport } from './mobile';
 import { i18nReady } from './i18n';
 import { useStore } from './store';
+import { themeStyleReady } from './themes';
 
 fitToVisualViewport();
 
@@ -26,8 +26,8 @@ window.addEventListener('beforeunload', (e) => {
   }
 });
 
-// Se pinta cuando el idioma de la interfaz está disponible
-i18nReady.then(() => {
+// Se pinta cuando el idioma de la interfaz y el estilo visual están disponibles
+Promise.all([i18nReady, themeStyleReady()]).then(() => {
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
       <App />

@@ -10,6 +10,7 @@ import {
   MIN_FONT_SIZE,
   MAX_FONT_SIZE,
 } from '../store';
+import { THEME_STYLES } from '../themes';
 import {
   settingsApi,
   syncApi,
@@ -232,10 +233,14 @@ function SiteTitleSetting() {
   );
 }
 
+const THEME_MODES = ['light', 'dark', 'system'] as const;
+
 // Los cambios se guardan automáticamente (el store los persiste en localStorage)
 function AppearanceSection() {
   const theme = useStore((s) => s.theme);
   const setTheme = useStore((s) => s.setTheme);
+  const themeStyle = useStore((s) => s.themeStyle);
+  const setThemeStyle = useStore((s) => s.setThemeStyle);
   const fontSize = useStore((s) => s.fontSize);
   const setFontSize = useStore((s) => s.setFontSize);
   const showTabHeader = useStore((s) => s.showTabHeader);
@@ -269,10 +274,22 @@ function AppearanceSection() {
             <div className="setting-name">{t('settings.theme')}</div>
             <div className="setting-desc">{t('settings.theme.desc')}</div>
           </div>
-          <select value={theme} onChange={(e) => setTheme(e.target.value as Theme)}>
-            <option value="dark">{t('settings.theme.dark')}</option>
-            <option value="light">{t('settings.theme.light')}</option>
-            <option value="system">{t('settings.theme.system')}</option>
+          {/* Cada estilo de styles/themes/ en sus variantes; el valor es "estilo:variante" */}
+          <select
+            value={`${themeStyle}:${theme}`}
+            onChange={(e) => {
+              const [style, mode] = e.target.value.split(':');
+              setThemeStyle(style);
+              setTheme(mode as Theme);
+            }}
+          >
+            {THEME_STYLES.map(({ id, label }) =>
+              THEME_MODES.map((mode) => (
+                <option key={`${id}:${mode}`} value={`${id}:${mode}`}>
+                  {t(`settings.theme.${mode}`, { name: label })}
+                </option>
+              )),
+            )}
           </select>
         </div>
         <div className="setting-item">
@@ -1485,6 +1502,8 @@ const SHORTCUT_GROUPS: { title: MessageKey; items: { keys: string[]; desc: Messa
       { keys: ['Enter'], desc: 'shortcuts.nextResultShift' },
       { keys: ['F3'], desc: 'shortcuts.nextResult' },
       { keys: [SHIFT, 'F3'], desc: 'shortcuts.prevResult' },
+      { keys: ['Ctrl', 'H'], desc: 'shortcuts.openReplace' },
+      { keys: ['Enter'], desc: 'shortcuts.replaceKeys' },
     ],
   },
   {

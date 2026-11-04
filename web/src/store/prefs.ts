@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand';
 import { loadBundledFont } from '../fonts';
+import { applyThemeStyle, resolveThemeStyle } from '../themes';
 import { readBool, readNumber, readString, save, synced } from './storage';
 import type { AppStore } from './index';
 
@@ -32,6 +33,9 @@ export interface PrefsSlice {
   setDefaultEditMode: (mode: boolean) => void;
   theme: Theme;
   setTheme: (theme: Theme) => void;
+  // Estilo visual (un .css de styles/themes/, ver themes.ts); `theme` elige su variante clara u oscura
+  themeStyle: string;
+  setThemeStyle: (style: string) => void;
   fontSize: number;
   setFontSize: (size: number) => void;
   fonts: Fonts;
@@ -68,6 +72,7 @@ const KEYS = {
   defaultMode: synced('defaultNoteMode'),
   // Debe coincidir con el script en línea de index.html, que aplica el tema antes de pintar
   theme: synced('theme'),
+  themeStyle: synced('themeStyle'),
   fontSize: synced('fontSize'),
   // Ctrl + rueda del ratón (o pellizcar en el trackpad) sobre la nota cambia el tamaño de fuente
   quickFontSize: synced('quickFontSize'),
@@ -101,14 +106,19 @@ const clampFontSize = (size: number) => Math.min(MAX_FONT_SIZE, Math.max(MIN_FON
 
 const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
 
+// Color de la barra del navegador en el móvil, a juego con la cabecera (--background-secondary del estilo)
+const applyThemeColor = () => {
+  const color = getComputedStyle(document.documentElement).getPropertyValue('--background-secondary').trim();
+  if (color) document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color);
+};
+
 const applyTheme = (theme: Theme) => {
   const resolved = theme === 'system' ? (systemDark.matches ? 'dark' : 'light') : theme;
   document.documentElement.dataset.theme = resolved;
-  // Color de la barra del navegador en el móvil, a juego con la cabecera (--background-secondary)
-  document
-    .querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', resolved === 'light' ? '#f6f6f6' : '#1e1e1e');
+  applyThemeColor();
 };
+
+const applyStyle = (style: string) => void applyThemeStyle(style).then(applyThemeColor);
 
 const applyFontSize = (size: number) => document.documentElement.style.setProperty('--font-text-size', `${size}px`);
 
@@ -147,6 +157,7 @@ const readPrefs = () => ({
   hiddenExtensions: readString(KEYS.hiddenExtensions),
   defaultEditMode: readString(KEYS.defaultMode) !== 'view',
   theme: readTheme(),
+  themeStyle: resolveThemeStyle(readString(KEYS.themeStyle)),
   fontSize: readNumber(KEYS.fontSize, DEFAULT_FONT_SIZE, clampFontSize),
   fonts: readFonts(),
   quickFontSize: readBool(KEYS.quickFontSize, false),
@@ -163,8 +174,9 @@ const readPrefs = () => ({
 });
 
 // Aplicar al documento las preferencias visuales
-const applyPrefs = ({ theme, fontSize, fonts, readableLineLength }: ReturnType<typeof readPrefs>) => {
+const applyPrefs = ({ theme, themeStyle, fontSize, fonts, readableLineLength }: ReturnType<typeof readPrefs>) => {
   applyTheme(theme);
+  applyStyle(themeStyle);
   applyFontSize(fontSize);
   (Object.keys(fonts) as FontKind[]).forEach((kind) => {
     applyFont(kind, fonts[kind]);
@@ -210,6 +222,12 @@ export const createPrefsSlice: StateCreator<AppStore, [], [], PrefsSlice> = (set
       save(KEYS.theme, value);
       applyTheme(value);
       set({ theme: value });
+    },
+    setThemeStyle: (style) => {
+      const value = resolveThemeStyle(style);
+      save(KEYS.themeStyle, value);
+      applyStyle(value);
+      set({ themeStyle: value });
     },
     setFontSize: (size) => {
       const value = clampFontSize(size);

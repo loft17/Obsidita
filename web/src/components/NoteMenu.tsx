@@ -14,10 +14,14 @@ import { MenuItem, focusMenuItem, onMenuKeyDown } from './menuNav';
 import { useLatest } from '../latestRef';
 import { openAiBar, useAiEnabled } from '../ai';
 import log from '../logger';
+import '../styles/search.css';
 
 export default function NoteMenu() {
   const [open, setOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+  // Barra de búsqueda: solo buscar, o también reemplazar (en edición). `searchFocus` cambia en cada
+  // apertura para que el atajo vuelva a poner el foco en la búsqueda aunque la barra ya esté abierta
+  const [search, setSearch] = useState<'find' | 'replace' | null>(null);
+  const [searchFocus, setSearchFocus] = useState(0);
   const [dialog, setDialog] = useState<'rename' | 'move' | 'delete' | 'history' | null>(null);
 
   const activeTab = useStore((s) => s.activeTab);
@@ -71,19 +75,30 @@ export default function NoteMenu() {
     if (open && focusOnOpen) focusMenuItem(menuRef.current, focusOnOpen);
   }, [open, focusOnOpen]);
 
+  const openSearch = (mode: 'find' | 'replace') => {
+    setSearch(mode);
+    setSearchFocus((n) => n + 1);
+  };
+
   // La búsqueda y los diálogos pertenecen al documento mostrado
   useEffect(() => {
-    setSearchOpen(false);
+    setSearch(null);
     setDialog(null);
   }, [activeTab]);
 
-  // Ctrl/Cmd+F abre la búsqueda en el documento en lugar de la del navegador
+  // Ctrl/Cmd+F abre la búsqueda en el documento en lugar de la del navegador, y Ctrl/Cmd+H buscar y
+  // reemplazar (solo en una nota en edición; si no, el atajo queda para el navegador)
   useEffect(() => {
     if (!activeTab || isImage(activeTab)) return;
     const onKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'f') {
+      if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey) return;
+      const key = e.key.toLowerCase();
+      if (key === 'f') {
         e.preventDefault();
-        setSearchOpen(true);
+        openSearch('find');
+      } else if (key === 'h' && useStore.getState().editMode && isNote(activeTab)) {
+        e.preventDefault();
+        openSearch('replace');
       }
     };
     document.addEventListener('keydown', onKey);
@@ -226,40 +241,58 @@ export default function NoteMenu() {
           >
             {t('note.info')}
           </MenuItem>
+          {!activeIsImage && gitSyncProvider === 'github' && (
+            <MenuItem onClick={() => openDialog('history')}>{t('note.history')}</MenuItem>
+          )}
           {!activeIsImage && (
             <>
-              {aiEnabled && isNote(activeTab) && (
-                <MenuItem
-                  onClick={() => {
-                    closeMenu();
-                    openAiBar();
-                  }}
-                >
-                  {t('ai.edit')}
-                </MenuItem>
+              {/* Grupos separados: el de IA y texto sin formato solo si tiene alguna opción */}
+              {((aiEnabled && isNote(activeTab)) || editMode) && (
+                <>
+                  <hr className="dropdown-divider" />
+                  {aiEnabled && isNote(activeTab) && (
+                    <MenuItem
+                      onClick={() => {
+                        closeMenu();
+                        openAiBar();
+                      }}
+                    >
+                      {t('ai.edit')}
+                    </MenuItem>
+                  )}
+                  {editMode && (
+                    <MenuItem
+                      onClick={() => {
+                        closeMenu();
+                        setRawMode(!rawMode);
+                      }}
+                    >
+                      {rawMode ? t('note.exitRawMode') : t('note.rawMode')}
+                    </MenuItem>
+                  )}
+                </>
               )}
-              {editMode && (
-                <MenuItem
-                  onClick={() => {
-                    closeMenu();
-                    setRawMode(!rawMode);
-                  }}
-                >
-                  {rawMode ? t('note.exitRawMode') : t('note.rawMode')}
-                </MenuItem>
-              )}
+              <hr className="dropdown-divider" />
               <MenuItem onClick={handleExportPDF}>{t('note.exportPdf')}</MenuItem>
               <MenuItem onClick={handleDownloadMd}>{t('note.downloadMd')}</MenuItem>
+              <hr className="dropdown-divider" />
               <MenuItem
                 onClick={() => {
                   closeMenu();
-                  setSearchOpen(true);
+                  openSearch('find');
                 }}
               >
                 {t('note.find')}
               </MenuItem>
-              {gitSyncProvider === 'github' && (
-                <MenuItem onClick={() => openDialog('history')}>{t('note.history')}</MenuItem>
+              {editMode && isNote(activeTab) && (
+                <MenuItem
+                  onClick={() => {
+                    closeMenu();
+                    openSearch('replace');
+                  }}
+                >
+                  {t('note.findReplace')}
+                </MenuItem>
               )}
             </>
           )}
@@ -269,7 +302,16 @@ export default function NoteMenu() {
           </MenuItem>
         </div>
       )}
-      {searchOpen && <SearchBar onClose={() => setSearchOpen(false)} />}
+      {search && (
+        <SearchBar
+          // Reemplazar solo en una nota en edición: es la única vista con editor
+          canReplace={editMode && isNote(activeTab)}
+          replace={search === 'replace'}
+          onReplaceChange={(on) => setSearch(on ? 'replace' : 'find')}
+          focusKey={searchFocus}
+          onClose={() => setSearch(null)}
+        />
+      )}
       {dialog === 'rename' && (
         <RenameDialog initialName={noteTitle(activeTab)} onSubmit={handleRename} onClose={() => setDialog(null)} />
       )}
@@ -327,9 +369,18 @@ function findRanges(root: HTMLElement, query: string): Range[] {
   return ranges;
 }
 
-function SearchBar({ onClose }: { onClose: () => void }) {
+interface SearchBarProps {
+  canReplace: boolean;
+  replace: boolean;
+  onReplaceChange: (replace: boolean) => void;
+  focusKey: number;
+  onClose: () => void;
+}
+
+function SearchBar({ canReplace, replace, onReplaceChange, focusKey, onClose }: SearchBarProps) {
   const editMode = useStore((s) => s.editMode);
   const [query, setQuery] = useState('');
+  const [replacement, setReplacement] = useState('');
   const [index, setIndex] = useState(0);
   const [total, setTotal] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -377,11 +428,45 @@ function SearchBar({ onClose }: { onClose: () => void }) {
     }
   };
 
+  // Reemplazar el resultado seleccionado y pasar al siguiente. Si la selección no es un resultado
+  // (aún no se ha buscado, o se ha movido el cursor), primero se va al siguiente sin reemplazar
+  const replaceOne = () => {
+    const view = getEditor();
+    if (!view || !query) return;
+    const { from, to } = view.state.selection.main;
+    if (to - from === query.length && editorMatches(view).includes(from)) {
+      view.dispatch({ changes: { from, to, insert: replacement }, userEvent: 'input.replace' });
+      // Se busca desde el final del texto nuevo: si contiene lo buscado, no se vuelve a reemplazar
+      const after = from + replacement.length;
+      const next = editorMatches(view).findIndex((pos) => pos >= after);
+      show(Math.max(next, 0), false);
+    } else {
+      const next = editorMatches(view).findIndex((pos) => pos >= from);
+      show(Math.max(next, 0), false);
+    }
+  };
+
+  // Todos de una vez, en un solo cambio: se deshace entero con un Ctrl+Z
+  const replaceAll = () => {
+    const view = getEditor();
+    if (!view || !query) return;
+    const found = editorMatches(view);
+    if (found.length === 0) return;
+    view.dispatch({
+      changes: found.map((pos) => ({ from: pos, to: pos + query.length, insert: replacement })),
+      userEvent: 'input.replace',
+    });
+    setIndex(0);
+    setTotal(editorMatches(view).length);
+    notify('replaceAll', t('note.replacedCount', { count: found.length }));
+  };
+
   useEffect(() => {
     inputRef.current?.focus();
     inputRef.current?.select();
-    return clearHighlights;
-  }, []);
+  }, [focusKey]);
+
+  useEffect(() => clearHighlights, []);
 
   // Recalcular resultados al cambiar el texto buscado o el modo
   useEffect(() => {
@@ -427,42 +512,92 @@ function SearchBar({ onClose }: { onClose: () => void }) {
 
   const step = (delta: number) => show(index + delta, editMode);
 
+  const showReplace = canReplace && replace;
+
   return (
     <div className="search-bar">
-      <input
-        ref={inputRef}
-        type="text"
-        placeholder={t('note.findPlaceholder')}
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            // En edición la primera pulsación va al primer resultado; las siguientes avanzan
-            step(e.shiftKey ? -1 : editMode && getEditor()?.state.selection.main.empty ? 0 : 1);
-          }
-        }}
-      />
-      <span className="search-count">{query ? `${total ? index + 1 : 0}/${total}` : ''}</span>
-      <button
-        type="button"
-        title={`${t('note.findPrev')} (Shift+F3)`}
-        onMouseDown={(e) => e.preventDefault()}
-        onClick={() => step(-1)}
-      >
-        ↑
-      </button>
-      <button
-        type="button"
-        title={`${t('note.findNext')} (F3)`}
-        onMouseDown={(e) => e.preventDefault()}
-        onClick={() => step(1)}
-      >
-        ↓
-      </button>
-      <button type="button" title={t('common.close')} onClick={onClose}>
-        ✕
-      </button>
+      <div className="search-row">
+        {canReplace && (
+          <button
+            type="button"
+            className="search-toggle"
+            title={t('note.toggleReplace')}
+            aria-label={t('note.toggleReplace')}
+            aria-expanded={showReplace}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => onReplaceChange(!replace)}
+          >
+            {showReplace ? '▾' : '▸'}
+          </button>
+        )}
+        <input
+          ref={inputRef}
+          type="text"
+          placeholder={t('note.findPlaceholder')}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              // En edición la primera pulsación va al primer resultado; las siguientes avanzan
+              step(e.shiftKey ? -1 : editMode && getEditor()?.state.selection.main.empty ? 0 : 1);
+            }
+          }}
+        />
+        <span className="search-count">{query ? `${total ? index + 1 : 0}/${total}` : ''}</span>
+        <button
+          type="button"
+          title={`${t('note.findPrev')} (Shift+F3)`}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => step(-1)}
+        >
+          ↑
+        </button>
+        <button
+          type="button"
+          title={`${t('note.findNext')} (F3)`}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => step(1)}
+        >
+          ↓
+        </button>
+        <button type="button" title={t('common.close')} onClick={onClose}>
+          ✕
+        </button>
+      </div>
+      {showReplace && (
+        <div className="search-row search-row-replace">
+          <input
+            type="text"
+            placeholder={t('note.replacePlaceholder')}
+            value={replacement}
+            onChange={(e) => setReplacement(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key !== 'Enter') return;
+              e.preventDefault();
+              // Intro reemplaza uno; Ctrl/Cmd+Intro, todos
+              if (e.ctrlKey || e.metaKey) replaceAll();
+              else replaceOne();
+            }}
+          />
+          <button
+            type="button"
+            title={`${t('note.replaceOne')} (Enter)`}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={replaceOne}
+          >
+            {t('note.replaceOne')}
+          </button>
+          <button
+            type="button"
+            title={`${t('note.replaceAll')} (Ctrl+Enter)`}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={replaceAll}
+          >
+            {t('note.replaceAll')}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

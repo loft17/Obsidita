@@ -149,7 +149,7 @@ Obsidian-Web/
 │   │   │   ├── mobile.ts     # Detección y soporte móvil
 │   │   │   └── [otros]       # fonts, toast, templates, etc
 │   │   │
-│   │   └── styles/           # CSS global y temas
+│   │   └── styles/           # CSS de componentes; themes/ con los temas (ver themes.ts)
 │   │
 │   ├── public/               # Assets estáticos
 │   ├── dist/                 # Build output (generado)
@@ -1207,7 +1207,8 @@ router.post('/notes/:path', requireAuth, async (req, res) => {
 - `conflicts` - Conflictos de guardado pendientes (se muestran de uno en uno)
 
 **Preferencias de interfaz** (guardadas en `localStorage` - **por navegador, no por usuario**):
-- `theme` - Tema oscuro o claro
+- `theme` - Variante clara, oscura o según el sistema
+- `themeStyle` - Tema (un `.css` de `styles/themes/`)
 - `fontSize` - Tamaño de fuente
 - `editorMode` - Modo editor (`'preview'` / `'source'`)
 - `inlineTitle` - Mostrar título inline

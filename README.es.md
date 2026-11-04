@@ -95,7 +95,7 @@ Tus notas se quedan en tu servidor, protegidas con contraseña, sesiones revocab
 - Los enlaces a notas inexistentes se ven atenuados y **crean la nota** al pulsarlos.
 - **Búsqueda global** en nombres y contenido, con contexto.
 - Filtra por etiqueta con `tag:proyecto`.
-- Búsqueda dentro de la nota con `Ctrl+F`.
+- Búsqueda dentro de la nota con `Ctrl+F`, y buscar y reemplazar con `Ctrl+H`.
 
 </td>
 </tr>
@@ -118,7 +118,7 @@ Tus notas se quedan en tu servidor, protegidas con contraseña, sesiones revocab
 - **Edición con IA** opcional (`Ctrl+K`): DeepSeek, Gemini, OpenAI, Ollama...
 - **Exportación a PDF** desde el navegador.
 - **Recuento de palabras** y caracteres.
-- Tema **oscuro, claro o del sistema**, y fuentes a elegir (también las tuyas).
+- **Temas** claros y oscuros (o según el sistema), [instalables](docs/es/TEMAS.md), y fuentes a elegir (también las tuyas).
 - Interfaz en **español, inglés o catalán**.
 
 </td>
@@ -253,6 +253,7 @@ Cada sincronización hace commit de los cambios, integra los del repositorio y s
 | ⚙️ [Instalación y configuración](docs/es/INSTALACION_Y_CONFIGURACION.md) | Despliegue en producción, nginx, variables de entorno y copias de seguridad. |
 | ⌨️ [Atajos de teclado](docs/es/ATAJOS.md) | Todos los atajos disponibles. |
 | ✨ [Edición con IA](docs/es/IA.md) | Configurar proveedores (DeepSeek, Gemini...) y editar notas con IA. |
+| 🎨 [Temas](docs/es/TEMAS.md) | Instalar temas nuevos o crear el tuyo. |
 | 🩺 [Errores y soluciones](docs/es/ERRORES_Y_SOLUCIONES.md) | Problemas frecuentes y cómo resolverlos. |
 | 🪶 [Recursos limitados](docs/es/OPTIMIZACION_RECURSOS_LIMITADOS.md) | Cómo ajustarlo para servidores pequeños. |
 | 🧰 [Scripts listos](docs/es/SCRIPTS_LISTOS.md) | Scripts para instalar, actualizar y mantener la app. |

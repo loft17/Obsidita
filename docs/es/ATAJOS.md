@@ -30,6 +30,8 @@ Disponibles cuando estás escribiendo en modo edición:
 | <kbd>Shift</kbd> + <kbd>Tab</kbd> | **Desangrar** | Reduce la indentación de la línea actual |
 | <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Z</kbd> | **Deshacer** | Revierte el último cambio |
 | <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Y</kbd> | **Rehacer** | Rehace el cambio deshecho |
+| <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>F</kbd> | **Buscar** | Busca en la nota (<kbd>Enter</kbd> / <kbd>F3</kbd> siguiente, <kbd>Shift</kbd> para el anterior) |
+| <kbd>Ctrl</kbd> + <kbd>H</kbd> | **Buscar y reemplazar** | Abre la búsqueda con el campo de reemplazo. En él, <kbd>Enter</kbd> reemplaza uno y <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Enter</kbd> todos (se deshace con un solo <kbd>Ctrl</kbd> + <kbd>Z</kbd>) |
 
 ---
 

@@ -93,6 +93,12 @@ While editing, use these shortcuts:
 
 - `Ctrl+F` while reading/editing → type → `Enter` next, `Shift+Enter` previous
 
+### Find and replace
+
+- In edit mode, `Ctrl+H` (or the **⋯ → Find and replace** menu, or the ▸ arrow in the search bar)
+- Type what you're looking for and the new text → **Replace** changes the current match and jumps to the next; **Replace all** changes them all at once
+- It's case-insensitive, and `Ctrl+Z` undoes the replacement
+
 ### Search by Tag
 
 - In global search, type `tag:project` to see all notes with that tag
@@ -153,7 +159,7 @@ Open **⚙️** (top right) to change:
 
 ### 👁️ Appearance
 - **Language**: Spanish, English, Catalan
-- **Theme**: Dark, Light, or System
+- **Theme**: every installed style in a light, dark or follow-system version (see [Themes](THEMES.md))
 - **Font Size**: Adjustable with `Ctrl+wheel`
 
 ### ✏️ Editor
@@ -199,6 +205,7 @@ When you **delete a note**, it goes to `.trash/` folder (trash).
 | `Ctrl+P` | Open note (quick search) |
 | `Ctrl+Shift+F` | Search entire vault |
 | `Ctrl+F` | Search this note |
+| `Ctrl+H` | Find and replace (when editing) |
 | `Ctrl+E` | Toggle read ↔ edit |
 | `Ctrl+S` | Save now |
 | `Ctrl+B` | Show/hide explorer |

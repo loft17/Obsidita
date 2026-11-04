@@ -30,6 +30,8 @@ Available when writing in edit mode:
 | <kbd>Shift</kbd> + <kbd>Tab</kbd> | **Dedent** | Reduce indentation of the current line |
 | <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Z</kbd> | **Undo** | Revert the last change |
 | <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Y</kbd> | **Redo** | Redo the undone change |
+| <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>F</kbd> | **Find** | Search the note (<kbd>Enter</kbd> / <kbd>F3</kbd> next, <kbd>Shift</kbd> for previous) |
+| <kbd>Ctrl</kbd> + <kbd>H</kbd> | **Find and replace** | Opens search with the replace field. In it, <kbd>Enter</kbd> replaces one and <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Enter</kbd> all of them (undone with a single <kbd>Ctrl</kbd> + <kbd>Z</kbd>) |
 
 ---
 

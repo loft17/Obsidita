@@ -149,7 +149,7 @@ Obsidian-Web/
 │   │   │   ├── mobile.ts     # Mobile detection & support
 │   │   │   └── [others]      # fonts, toast, templates, etc
 │   │   │
-│   │   └── styles/           # Global CSS and themes
+│   │   └── styles/           # Component CSS; themes/ holds the themes (see themes.ts)
 │   │
 │   ├── public/               # Static assets
 │   ├── dist/                 # Build output (generated)

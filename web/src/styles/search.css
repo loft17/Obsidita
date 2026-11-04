@@ -1,0 +1,29 @@
+/* Barra de búsqueda en la nota (SearchBar en components/NoteMenu.tsx). El aspecto de la barra, los
+   campos y los botones lo pone el tema; aquí solo la fila de reemplazar, igual con cualquier tema */
+.search-bar {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.search-bar .search-toggle {
+  flex: none;
+  width: 28px;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Alineada con el campo de búsqueda cuando está el botón de desplegar */
+.search-row-replace {
+  padding-left: 34px;
+}
+
+.search-row-replace button {
+  white-space: nowrap;
+}

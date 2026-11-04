@@ -23,6 +23,11 @@
       document.documentElement.dataset.theme = t === 'light' ? 'light' : 'dark';
     } catch (e) {}
   </script>
+  <!-- Fondo mientras se descarga el estilo visual (themes.ts lo aplica desde JS) -->
+  <style>
+    html { background: #1a1a1a; }
+    html[data-theme="light"] { background: #ffffff; }
+  </style>
 </head>
 <body>
   <div id="root"></div>

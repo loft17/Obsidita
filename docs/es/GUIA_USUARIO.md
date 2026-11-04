@@ -93,6 +93,12 @@ Los **wikilinks** son cómo conectas unas notas con otras.
 
 - `Ctrl+F` mientras lees/editas → escribe → `Enter` siguiente, `Shift+Enter` anterior
 
+### Buscar y reemplazar
+
+- En modo edición, `Ctrl+H` (o menú **⋯ → Buscar y reemplazar**, o la flecha ▸ de la barra de búsqueda)
+- Escribe lo que buscas y el texto nuevo → **Reemplazar** cambia el resultado actual y salta al siguiente; **Reemplazar todo** los cambia todos de una vez
+- No distingue mayúsculas de minúsculas, y `Ctrl+Z` deshace el reemplazo
+
 ### Buscar por etiqueta
 
 - En la búsqueda global, escribe `tag:proyecto` para ver todas las notas con esa etiqueta
@@ -153,7 +159,7 @@ Abre **⚙️** (arriba a la derecha) para cambiar:
 
 ### 👁️ Apariencia
 - **Idioma**: español, inglés, catalán
-- **Tema**: oscuro, claro o del sistema
+- **Tema**: cada estilo instalado en versión clara, oscura o según el sistema (ver [Temas](TEMAS.md))
 - **Tamaño de fuente**: ajustable con `Ctrl+rueda` del ratón
 
 ### ✏️ Editor
@@ -199,6 +205,7 @@ Cuando **eliminas una nota**, va a la carpeta `.trash/` (papelera).
 | `Ctrl+P` | Abrir nota (búsqueda rápida) |
 | `Ctrl+Shift+F` | Buscar en todo el vault |
 | `Ctrl+F` | Buscar en esta nota |
+| `Ctrl+H` | Buscar y reemplazar (en edición) |
 | `Ctrl+E` | Cambiar leer ↔ editar |
 | `Ctrl+S` | Guardar ahora |
 | `Ctrl+B` | Mostrar/ocultar explorador |
