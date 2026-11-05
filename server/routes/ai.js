@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { join } from 'path';
 import { loadAi } from '../lazy.js';
 import { AI_MAX_CHARS, AI_RATE_MAX } from '../limits.js';
-import { createSecretBox } from '../secretBox.js';
+import { createSecretBox, secretsKeyEnv } from '../secretBox.js';
 import { writeFileAtomic } from '../dataFiles.js';
 import { publicError } from '../security.js';
 import { createLogger } from '../logger.js';
@@ -19,6 +19,7 @@ const MAX_PROVIDERS = 20;
 const MAX_ACTIONS = 20;
 const NAME = /^[\w.-]{1,40}$/;
 const ENV_NAME = /^[A-Za-z_][A-Za-z0-9_]{0,99}$/;
+const INTERNAL_SECRET_ENV = /^(COOKIE_SECRET|SECRETS_KEY|AI_KEYS_SECRET)$/i;
 
 // Normaliza la sección `ai`: descarta proveedores sin URL http(s) o sin modelo, y nombres raros
 export const readAiConfig = (cfg) => {
@@ -91,6 +92,12 @@ const buildAiSection = (body, previous, box) => {
     if (!model || model.length > 200) fail(`Falta el modelo de ${name}`);
     const apiKeyEnv = String(p.apiKeyEnv ?? '').trim();
     if (apiKeyEnv && !ENV_NAME.test(apiKeyEnv)) fail(`Nombre de variable no válido en ${name}`);
+    // La clave de la variable se envía como cabecera al servidor que indique baseUrl: solo se
+    // admiten variables con forma de clave de API, nunca los secretos internos de la app
+    // (COOKIE_SECRET, SECRETS_KEY...) que se podrían filtrar a una URL elegida desde la web
+    if (apiKeyEnv && (!/(KEY|TOKEN)$/i.test(apiKeyEnv) || INTERNAL_SECRET_ENV.test(apiKeyEnv))) {
+      fail(`La variable ${apiKeyEnv} no es una clave de API válida en ${name} (debe terminar en _API_KEY o similar)`);
+    }
 
     const prev = old[typeof p.from === 'string' && old[p.from] ? p.from : name];
     const entry = { baseUrl, model };
@@ -127,7 +134,7 @@ const buildAiSection = (body, previous, box) => {
 export default (dataDir, getConfig) => {
   const router = Router();
   const configPath = join(dataDir, 'config.json');
-  const box = createSecretBox(join(dataDir, '.ai-secret'));
+  const box = createSecretBox(dataDir);
 
   // Claves de cada proveedor: primero la variable de entorno, después la guardada desde la web
   const resolveKeys = (ai) => {
@@ -161,7 +168,7 @@ export default (dataDir, getConfig) => {
       fallback: Array.isArray(ai?.fallback) ? ai.fallback : [],
       providers: list,
       actions: Array.isArray(ai?.actions) ? ai.actions : [],
-      keysSecretFromEnv: Boolean(process.env.AI_KEYS_SECRET?.trim()),
+      keysSecretFromEnv: Boolean(secretsKeyEnv()),
     };
   };
 

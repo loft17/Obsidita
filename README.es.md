@@ -197,6 +197,7 @@ cp .env.example .env && nano .env
 | `TRUST_PROXY` | Ponla a `1` si hay un proxy inverso delante (Caddy, nginx). |
 | `VAULTS_ROOT` | Limita el vault a una carpeta concreta, p. ej. `/srv/vaults`. |
 | `UPDATE_CHECK` | Con `0`, el servidor no comprueba si hay versiones nuevas en GitHub. |
+| `SECRETS_KEY` | Clave que cifra las claves de IA y el token de GitHub guardados desde la web. Ver [la guía de la clave de cifrado](docs/es/INSTALACION_Y_CONFIGURACION.md#-clave-de-cifrado-de-los-secretos). |
 | `MAX_UPLOAD_MB`, `MAX_NOTE_MB`… | Límites de tamaño, búsqueda, contraseña y sesiones. |
 
 <div align="justify">
@@ -232,7 +233,7 @@ La lista completa está en [Atajos de teclado](docs/es/ATAJOS.md).
 
 Obsidita puede mantener tu vault sincronizado con un repositorio de GitHub y, a través de él, con Obsidian de escritorio usando el plugin **Obsidian Git**. Se configura desde **Preferencias → Sincronización**: indica el repositorio (mejor privado, porque se suben todas las notas), la rama y un **token de acceso personal** limitado a ese repositorio.
 
-Cada sincronización hace commit de los cambios, integra los del repositorio y sube el resultado. Si una nota ha cambiado en los dos lados, se conserva la versión del servidor. Puedes sincronizar a mano o elegir una frecuencia automática, desde cada 5 minutos hasta una vez al día. El token se guarda solo en el servidor y nunca llega al navegador; la papelera `.trash` no se sube.
+Cada sincronización hace commit de los cambios, integra los del repositorio y sube el resultado. Si una nota ha cambiado en los dos lados, se conserva la versión del servidor. Puedes sincronizar a mano o elegir una frecuencia automática, desde cada 5 minutos hasta una vez al día. El token se guarda cifrado en el servidor y nunca llega al navegador; la papelera `.trash` no se sube.
 
 </div>
 

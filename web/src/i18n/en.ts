@@ -149,6 +149,8 @@ export const en: Messages = {
   'note.find': 'Find',
   'note.info': 'Note info',
   'note.history': 'Version history',
+  'note.copyLink': 'Copy link',
+  'note.linkCopied': 'Link copied: {link}',
   'note.popupBlocked': 'The browser blocked the pop-up window. Allow pop-ups to export to PDF.',
   'note.findPlaceholder': 'Find in document...',
   'note.findPrev': 'Previous',
@@ -546,8 +548,8 @@ export const en: Messages = {
   'aiSettings.actionProvider': 'Provider',
   'aiSettings.actionProvider.default': 'The one chosen in the bar',
   'aiSettings.addAction': 'Add action',
-  'aiSettings.encryption.env': 'Keys are stored encrypted (AES-256-GCM) with the key from AI_KEYS_SECRET.',
-  'aiSettings.encryption.file': 'Keys are stored encrypted (AES-256-GCM) with the key in {file}. So that a copy of data/ is not enough to read them, set {env} in the server environment (64 hex characters) and type the keys again.',
+  'aiSettings.encryption.env': 'Secrets (AI keys and the GitHub token) are stored encrypted (AES-256-GCM) with the key from SECRETS_KEY.',
+  'aiSettings.encryption.file': 'Secrets (AI keys and the GitHub token) are stored encrypted (AES-256-GCM) with the key in {file}. So that a copy of data/ is not enough to read them, set {env} in the server environment (64 hex characters) and type the AI keys and the GitHub token again.',
 
   // About and variables
   'about.version': 'Version {version}',

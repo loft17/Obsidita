@@ -15,20 +15,20 @@ type Mermaid = typeof import('mermaid').default;
 type DiagramModule = { diagram: unknown };
 
 const MODULES = {
-  flowchart: () => import('mermaid/dist/chunks/mermaid.core/flowDiagram-HODETNUW.mjs'),
-  sequence: () => import('mermaid/dist/chunks/mermaid.core/sequenceDiagram-WJ2MYXX4.mjs'),
-  class: () => import('mermaid/dist/chunks/mermaid.core/classDiagram-v2-VYDZK3BY.mjs'),
-  er: () => import('mermaid/dist/chunks/mermaid.core/erDiagram-RLTQ6QDP.mjs'),
-  state: () => import('mermaid/dist/chunks/mermaid.core/stateDiagram-v2-MP3YSRHH.mjs'),
-  pie: () => import('mermaid/dist/chunks/mermaid.core/pieDiagram-E7YTZNPT.mjs'),
-  gantt: () => import('mermaid/dist/chunks/mermaid.core/ganttDiagram-EL5Y4UJY.mjs'),
-  journey: () => import('mermaid/dist/chunks/mermaid.core/journeyDiagram-3NMN7TZE.mjs'),
-  mindmap: () => import('mermaid/dist/chunks/mermaid.core/mindmap-definition-YA3MSWOX.mjs'),
-  timeline: () => import('mermaid/dist/chunks/mermaid.core/timeline-definition-24CTP7MA.mjs'),
-  quadrant: () => import('mermaid/dist/chunks/mermaid.core/quadrantDiagram-AXDQQJYC.mjs'),
-  sankey: () => import('mermaid/dist/chunks/mermaid.core/sankeyDiagram-P5KCCOFB.mjs'),
-  xychart: () => import('mermaid/dist/chunks/mermaid.core/xychartDiagram-S5SC5T6Z.mjs'),
-  info: () => import('mermaid/dist/chunks/mermaid.core/infoDiagram-27XIBGKW.mjs'),
+  flowchart: () => import('mermaid/dist/chunks/mermaid.core/flowDiagram-MALGAFMO.mjs'),
+  sequence: () => import('mermaid/dist/chunks/mermaid.core/sequenceDiagram-5NDRBG5M.mjs'),
+  class: () => import('mermaid/dist/chunks/mermaid.core/classDiagram-v2-L25IHNXF.mjs'),
+  er: () => import('mermaid/dist/chunks/mermaid.core/erDiagram-EYBAPDEH.mjs'),
+  state: () => import('mermaid/dist/chunks/mermaid.core/stateDiagram-v2-FJ4FJNEA.mjs'),
+  pie: () => import('mermaid/dist/chunks/mermaid.core/pieDiagram-J4AKIIQI.mjs'),
+  gantt: () => import('mermaid/dist/chunks/mermaid.core/ganttDiagram-23REXITY.mjs'),
+  journey: () => import('mermaid/dist/chunks/mermaid.core/journeyDiagram-OPLOXDXO.mjs'),
+  mindmap: () => import('mermaid/dist/chunks/mermaid.core/mindmap-definition-I2QAS2VK.mjs'),
+  timeline: () => import('mermaid/dist/chunks/mermaid.core/timeline-definition-SEUHKTQE.mjs'),
+  quadrant: () => import('mermaid/dist/chunks/mermaid.core/quadrantDiagram-XTYBLID2.mjs'),
+  sankey: () => import('mermaid/dist/chunks/mermaid.core/sankeyDiagram-WGJFYUXA.mjs'),
+  xychart: () => import('mermaid/dist/chunks/mermaid.core/xychartDiagram-GGNKY7IX.mjs'),
+  info: () => import('mermaid/dist/chunks/mermaid.core/infoDiagram-KBXO4MBG.mjs'),
 } satisfies Record<string, () => Promise<DiagramModule>>;
 
 // Bloque de diagrama de mermaid: id, texto con el que se reconoce y carga de su módulo
@@ -165,7 +165,11 @@ let nextId = 0;
 
 const PENDING = '.mermaid-diagram:not(.is-rendered):not(.is-error)';
 
+// false si el build se hizo con OBSIDITA_MERMAID=0: los bloques mermaid se muestran como código
+export const MERMAID_ENABLED = __MERMAID__;
+
 export function renderMermaidDiagrams(root: HTMLElement, errorLabel: string) {
+  if (!MERMAID_ENABLED) return;
   const blocks = root.querySelectorAll<HTMLElement>(PENDING);
   if (!blocks.length) return;
   loadMermaid()

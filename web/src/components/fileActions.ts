@@ -10,6 +10,19 @@ import { t } from '../i18n';
 
 export const refreshTree = async () => useStore.getState().setTree(await filesApi.getTree());
 
+// Copia del archivo en su misma carpeta (el servidor elige el nombre). Devuelve la ruta nueva, o null si falla
+export const copyPath = async (path: string) => {
+  try {
+    await flushPendingSave(path);
+    const copy = await filesApi.copyFile(path);
+    await refreshTree();
+    return copy.path;
+  } catch (err) {
+    notify('copy', t('file.copyError', { error: (err as Error).message }), 'error');
+    return null;
+  }
+};
+
 // Nota nueva "Sin título.md" ("Sin título 1.md"...) en la carpeta de la pestaña activa (la raíz si
 // no hay ninguna). Se abre en una pestaña nueva y en modo edición; el nombre se cambia en el título
 export const createUntitledNote = async () => {

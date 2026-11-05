@@ -20,9 +20,10 @@ import {
 import { embedSection, getEmbedContent, getEmbedsVersion, refreshEmbeds, subscribeEmbeds } from '../noteEmbeds';
 import { cancelPendingSave, NOTES_CHANGED, saveNote } from './Editor';
 import { highlightCodeBlocks } from '../codeHighlight';
-import { cachedDiagram, currentDiagramTheme, renderMermaidDiagrams } from '../mermaidDiagrams';
+import { MERMAID_ENABLED, cachedDiagram, currentDiagramTheme, renderMermaidDiagrams } from '../mermaidDiagrams';
 import { t, useI18n } from '../i18n';
 import { fileName } from '../paths';
+import { copyText } from '../clipboard';
 
 const md = markdownIt({
   html: false,
@@ -382,7 +383,7 @@ function renderMermaidFence(source: string) {
 const defaultFence = md.renderer.rules.fence!;
 md.renderer.rules.fence = (tokens, idx, options, env, self) => {
   const lang = tokens[idx].info.trim().split(/\s+/)[0];
-  if (lang.toLowerCase() === 'mermaid') return renderMermaidFence(tokens[idx].content);
+  if (MERMAID_ENABLED && lang.toLowerCase() === 'mermaid') return renderMermaidFence(tokens[idx].content);
   const label = lang ? `<span class="code-block-lang">${md.utils.escapeHtml(lang)}</span>` : '<span></span>';
   const copy = md.utils.escapeHtml(t('common.copy'));
   return (
@@ -394,22 +395,6 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
     '</div>'
   );
 };
-
-async function copyText(text: string) {
-  try {
-    await navigator.clipboard.writeText(text);
-  } catch {
-    // Fallback for non-secure contexts (http)
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed';
-    ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    ta.remove();
-  }
-}
 
 // Clic en [[enlace]]: abre la nota (Ctrl/Cmd o botón central → pestaña nueva);
 // [[#encabezado]] o un enlace a la propia nota solo desplaza la vista

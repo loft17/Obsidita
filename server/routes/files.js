@@ -193,7 +193,8 @@ ${md.render(body)}
     }
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-    const folderName = folderPath.split('/').pop() || 'vault';
+    // Sin comillas ni caracteres raros: el nombre va dentro de la cabecera Content-Disposition
+    const folderName = (folderPath.split('/').pop() || 'vault').replace(/[^\p{L}\p{N} ._-]/gu, '_') || 'vault';
     const filename = `${folderName}-${timestamp}.zip`;
 
     res.setHeader('Content-Type', 'application/zip');

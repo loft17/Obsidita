@@ -158,11 +158,11 @@ When the provider returns an error, the bar or the **Test** button show the code
 - **What leaves the server**: only the text being edited (the selection or the note) and your instruction, sent to the chosen provider. Nothing else from the vault.
 - **What isn't stored**: there's no conversation history. Logs never include the text or the keys; with `LOG_LEVEL=info` they only show the provider, HTTP status and response time.
 - **Keys**: encrypted with AES-256-GCM and stored in `data/config.json` (`apiKeyEnc`). Settings never shows them; it only tells you whether one is saved.
-- **Encryption key**: by default it's generated in `data/.ai-secret`, readable only by the service user. That protects the keys if `config.json` is shared or leaked, but someone with a copy of the whole `data/` folder (including the copies in `data/backups/`) could decrypt them. To avoid that, set the encryption key outside `data/`, in `.env` or in the service environment:
+- **Encryption key**: by default it's generated in `data/.secrets-key`, readable only by the service user. That protects the keys if `config.json` is shared or leaked, but someone with a copy of the whole `data/` folder (including the copies in `data/backups/`) could decrypt them. To avoid that, set the encryption key outside `data/`, in `.env` or in the service environment:
 
   ```env
   # 64 hex characters: openssl rand -hex 32
-  AI_KEYS_SECRET=...
+  SECRETS_KEY=...
   ```
 
   When you set or change it, saved keys can no longer be read: Settings → AI shows it and you just type them again.
@@ -211,7 +211,7 @@ GEMINI_API_KEY=AIza...
 | `AI_MAX_CHARS` | `40000` | Characters of the text sent (selection or note) |
 | `AI_RATE_MAX` | `10` | Requests per minute and per session |
 | `AI_TIMEOUT_S` | `60` | Seconds to wait for each provider |
-| `AI_KEYS_SECRET` | — | Encryption key for saved keys (64 hex characters) |
+| `SECRETS_KEY` | — | Encryption key for saved secrets: AI keys and GitHub token (64 hex characters) |
 
 ### Endpoints
 

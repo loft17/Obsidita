@@ -621,8 +621,8 @@ export default function AiSettings() {
           <Trans
             k="aiSettings.encryption.file"
             values={{
-              file: <code>data/.ai-secret</code>,
-              env: <code>AI_KEYS_SECRET</code>,
+              file: <code>data/.secrets-key</code>,
+              env: <code>SECRETS_KEY</code>,
             }}
           />
         )}

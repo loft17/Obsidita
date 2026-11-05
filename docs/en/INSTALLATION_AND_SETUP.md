@@ -508,6 +508,57 @@ tail -f /var/log/nginx/obsidita-access.log
 
 ---
 
+## 🔐 Secrets encryption key
+
+Obsidita stores two kinds of secrets encrypted (AES-256-GCM): the API keys of the AI providers (Settings → AI) and the GitHub token used for sync (Preferences → Sync). Both use the same key, which is set with the `SECRETS_KEY` variable.
+
+If you don't set it, the key is generated the first time in `data/.secrets-key`. That protects the secrets if only `config.json` or `sync.json` leaks, but anyone with a copy of the whole `data/` folder can decrypt them. Backups in `data/backups/` also include that key.
+
+To keep it outside `data/`:
+
+1. **Generate the key** and store it in an environment file that only root can read:
+
+   ```bash
+   sudo mkdir -p /etc/obsidita
+   sudo sh -c 'echo "SECRETS_KEY=$(openssl rand -hex 32)" > /etc/obsidita/obsidita.env'
+   sudo chmod 600 /etc/obsidita/obsidita.env
+   ```
+
+   Keep a copy of the key in a password manager. If you lose it, the saved secrets can't be read and must be entered again.
+
+2. **Point the systemd service to the file**, in the `[Service]` section:
+
+   ```ini
+   [Service]
+   EnvironmentFile=/etc/obsidita/obsidita.env
+   ```
+
+3. **Restart** the service:
+
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl restart obsidita
+   ```
+
+4. **Enter the secrets again.** The new key can't read secrets saved with the old one: type the AI keys again in Settings → AI and the GitHub token in Preferences → Sync.
+
+5. **Delete the old key** and the backups that contain it:
+
+   ```bash
+   sudo rm -f /opt/obsidita/data/.secrets-key /opt/obsidita/data/.ai-secret
+   sudo rm -rf /opt/obsidita/data/backups
+   ```
+
+   To keep your backup history, delete only the `.secrets-key` and `.ai-secret` files inside the backup folders.
+
+**How to check:** in Settings → AI, the encryption note shows which key is in use. If it says `SECRETS_KEY`, the variable is active. If the variable isn't valid (it must be 64 hexadecimal characters), the server logs a warning and uses `data/.secrets-key`.
+
+**Changing it later** (rotation) has the same effect as step 4: the secrets must be entered again.
+
+**Compatibility:** `AI_KEYS_SECRET` is the previous name of the variable and still works. `data/.ai-secret` is renamed automatically to `data/.secrets-key` the first time it's used.
+
+---
+
 ## 🌍 Environment Variables
 
 Create or edit `/opt/obsidita/.env`:

@@ -3,11 +3,13 @@ import { readFileSync, existsSync, mkdirSync, appendFileSync } from 'fs';
 import { opendir } from 'fs/promises';
 import { join } from 'path';
 import { writeFileAtomic } from './dataFiles.js';
+import { createSecretBox } from './secretBox.js';
 import { createLogger } from './logger.js';
 const log = createLogger('Sync');
 
 // Sincronización del vault con un repositorio de GitHub (git).
-// La configuración y el token viven en data/sync.json; el token nunca sale hacia el cliente
+// La configuración vive en data/sync.json; el token va cifrado (AES-256-GCM, ver secretBox.js)
+// y nunca sale hacia el cliente
 
 export const PROVIDERS = ['none', 'github'];
 export const INTERVALS = [0, 5, 15, 30, 60, 180, 1440];
@@ -223,24 +225,41 @@ export const noteAtCommit = async (vaultPath, relPath, commit, maxBytes) => {
 
 export const createSyncManager = (dataDir, getConfig) => {
   const configPath = join(dataDir, 'sync.json');
+  // Misma clave que las claves de IA (SECRETS_KEY o data/.secrets-key)
+  const secretBox = createSecretBox(dataDir);
   let running = null;
 
-  const load = () => {
-    let saved = {};
+  const readSaved = () => {
     try {
-      if (existsSync(configPath)) saved = JSON.parse(readFileSync(configPath, 'utf8'));
+      if (existsSync(configPath)) return JSON.parse(readFileSync(configPath, 'utf8'));
     } catch (err) {
       log.error('No se pudo leer sync.json:', err.message);
     }
+    return {};
+  };
+
+  const load = () => {
+    const saved = readSaved();
+    // `token` es la versión antigua en claro; `tokenEnc` la cifrada que se escribe ahora
+    const { token: plain = '', tokenEnc = '', ...github } = saved.github ?? {};
+    const token = tokenEnc ? secretBox.decrypt(tokenEnc) ?? '' : plain;
     return {
       provider: PROVIDERS.includes(saved.provider) ? saved.provider : 'none',
       interval: INTERVALS.includes(saved.interval) ? saved.interval : 0,
-      github: { ...DEFAULTS.github, ...saved.github },
+      github: { ...DEFAULTS.github, ...github, token },
       status: { ...DEFAULTS.status, ...saved.status },
     };
   };
 
-  const save = (cfg) => writeFileAtomic(configPath, JSON.stringify(cfg, null, 2));
+  // En disco el token nunca va en claro: se guarda cifrado en `tokenEnc`
+  const save = (cfg) => {
+    const { token, ...github } = cfg.github;
+    const onDisk = { ...cfg, github: { ...github, tokenEnc: token ? secretBox.encrypt(token) : '' } };
+    writeFileAtomic(configPath, JSON.stringify(onDisk, null, 2));
+  };
+
+  // Un token guardado en claro por una versión anterior se cifra al arrancar
+  if (readSaved().github?.token) save(load());
 
   const updateStatus = (changes) => {
     const cfg = load();

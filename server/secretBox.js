@@ -1,39 +1,51 @@
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, renameSync } from 'fs';
+import { join } from 'path';
 import crypto from 'crypto';
 import { validSecret } from './cookieSecret.js';
 import { writeFileAtomic } from './dataFiles.js';
 import { createLogger } from './logger.js';
 const log = createLogger('Security');
 
-// Cifrado de las claves de API que se guardan desde la web (AES-256-GCM). La clave de cifrado
-// sale de AI_KEYS_SECRET (64 caracteres hexadecimales) o, si no está, de data/.ai-secret, que
-// se genera la primera vez. Con la variable de entorno la clave no está junto a los datos
-// cifrados: una copia de data/ (o de config.json) no basta para leer las claves de API.
-// Cambiar la clave de cifrado deja ilegibles las guardadas: hay que volver a escribirlas
+// Cifrado de los secretos que se guardan desde la web (claves de API de la IA y token de GitHub),
+// con AES-256-GCM. La clave sale de SECRETS_KEY (64 caracteres hexadecimales) o, si no está, de
+// data/.secrets-key, que se genera la primera vez. AI_KEYS_SECRET es el nombre anterior y sigue
+// funcionando. Con la variable de entorno la clave no está junto a los datos cifrados: una copia
+// de data/ (o de config.json o sync.json) no basta para leerlos.
+// Cambiar la clave deja ilegibles los secretos guardados: hay que volver a escribirlos
 
 const PREFIX = 'v1.';
+const KEY_FILE = '.secrets-key';
+const LEGACY_KEY_FILE = '.ai-secret'; // nombre anterior de data/.secrets-key
+const ENV_NAMES = ['SECRETS_KEY', 'AI_KEYS_SECRET'];
 
-const loadKey = (keyPath) => {
-  const fromEnv = process.env.AI_KEYS_SECRET;
-  if (fromEnv !== undefined && fromEnv.trim() !== '') {
-    const secret = validSecret(fromEnv);
+// Variable de entorno que define la clave (la primera con valor), o null
+export const secretsKeyEnv = () => ENV_NAMES.find((name) => process.env[name]?.trim()) ?? null;
+
+const loadKey = (dataDir) => {
+  const keyPath = join(dataDir, KEY_FILE);
+  const envName = secretsKeyEnv();
+  if (envName) {
+    const secret = validSecret(process.env[envName]);
     if (secret) return Buffer.from(secret, 'hex');
-    log.warn('AI_KEYS_SECRET no es válido (se esperan 64 caracteres hexadecimales); se usa data/.ai-secret');
+    log.warn(`${envName} no es válido (se esperan 64 caracteres hexadecimales); se usa data/${KEY_FILE}`);
   }
+  // Instalaciones anteriores: la clave estaba en data/.ai-secret. Se renombra, así es la misma clave
+  const legacyPath = join(dataDir, LEGACY_KEY_FILE);
+  if (!existsSync(keyPath) && existsSync(legacyPath)) renameSync(legacyPath, keyPath);
   if (existsSync(keyPath)) {
     const secret = validSecret(readFileSync(keyPath, 'utf8'));
     if (secret) return Buffer.from(secret, 'hex');
-    log.warn(`${keyPath} no contiene una clave válida; se genera otra y las claves de API guardadas dejarán de valer`);
+    log.warn(`data/${KEY_FILE} no contiene una clave válida; se genera otra y los secretos guardados dejarán de valer`);
   }
   const secret = crypto.randomBytes(32).toString('hex');
   writeFileAtomic(keyPath, secret);
   return Buffer.from(secret, 'hex');
 };
 
-export const createSecretBox = (keyPath) => {
-  // Se lee la primera vez que hace falta: sin claves guardadas no se crea el archivo
+export const createSecretBox = (dataDir) => {
+  // Se lee la primera vez que hace falta: sin secretos guardados no se crea el archivo
   let key;
-  const getKey = () => (key ??= loadKey(keyPath));
+  const getKey = () => (key ??= loadKey(dataDir));
 
   return {
     encrypt(text) {

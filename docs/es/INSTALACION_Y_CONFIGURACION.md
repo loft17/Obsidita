@@ -564,6 +564,57 @@ tail -f /var/log/nginx/obsidita-access.log
 
 ---
 
+## 🔐 Clave de cifrado de los secretos
+
+Obsidita guarda cifrados (AES-256-GCM) dos tipos de secretos: las claves de API de los proveedores de IA (Ajustes → IA) y el token de GitHub de la sincronización (Preferencias → Sincronización). Ambos usan la misma clave, que se define con la variable `SECRETS_KEY`.
+
+Si no la defines, la clave se genera la primera vez en `data/.secrets-key`. Eso protege los secretos si solo se filtra `config.json` o `sync.json`, pero quien tenga una copia de toda la carpeta `data/` puede descifrarlos. Las copias de seguridad de `data/backups/` también incluyen esa clave.
+
+Para tenerla fuera de `data/`:
+
+1. **Genera la clave** y guárdala en un archivo de entorno que solo pueda leer root:
+
+   ```bash
+   sudo mkdir -p /etc/obsidita
+   sudo sh -c 'echo "SECRETS_KEY=$(openssl rand -hex 32)" > /etc/obsidita/obsidita.env'
+   sudo chmod 600 /etc/obsidita/obsidita.env
+   ```
+
+   Guarda una copia de la clave en un gestor de contraseñas. Si la pierdes, los secretos guardados no se podrán leer y habrá que volver a escribirlos.
+
+2. **Indícale el archivo al servicio** de systemd, en la sección `[Service]`:
+
+   ```ini
+   [Service]
+   EnvironmentFile=/etc/obsidita/obsidita.env
+   ```
+
+3. **Reinicia** el servicio:
+
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl restart obsidita
+   ```
+
+4. **Vuelve a escribir los secretos.** La clave nueva no puede leer los guardados con la anterior: escribe de nuevo las claves de IA en Ajustes → IA y el token de GitHub en Preferencias → Sincronización.
+
+5. **Borra la clave antigua** y las copias de seguridad que la contienen:
+
+   ```bash
+   sudo rm -f /opt/obsidita/data/.secrets-key /opt/obsidita/data/.ai-secret
+   sudo rm -rf /opt/obsidita/data/backups
+   ```
+
+   Si quieres conservar el historial de copias, bórrales solo los archivos `.secrets-key` y `.ai-secret` que contengan.
+
+**Cómo comprobarlo:** en Ajustes → IA, el texto de cifrado indica con qué clave se guardan los secretos. Si pone `SECRETS_KEY`, la variable está activa. Si la variable no es válida (no son 64 caracteres hexadecimales), el servidor lo avisa en el log y usa `data/.secrets-key`.
+
+**Cambiarla más adelante** (rotación) tiene el mismo efecto que el paso 4: hay que volver a escribir los secretos.
+
+**Compatibilidad:** `AI_KEYS_SECRET` es el nombre anterior de la variable y sigue funcionando. `data/.ai-secret` se renombra automáticamente a `data/.secrets-key` la primera vez que se usa.
+
+---
+
 ## 🌍 Variables de Entorno
 
 Crea o edita el archivo `/opt/obsidita/.env`:

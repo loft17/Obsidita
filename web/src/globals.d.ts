@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
 declare const __APP_VERSION__: string;
+declare const __MERMAID__: boolean;
 
 // Módulos internos de mermaid con los diagramas (no tienen tipos: los usa mermaidDiagrams.ts
 // para registrar solo los que conocemos y descargar cada uno cuando aparece)

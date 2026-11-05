@@ -158,11 +158,11 @@ Cuando el proveedor devuelve un error, la barra o el botón **Probar** muestran 
 - **Qué sale del servidor**: solo el texto que se edita (la selección o la nota) y tu instrucción, hacia el proveedor elegido. Nada más del vault.
 - **Qué no se guarda**: no hay historial de conversaciones. Los logs no incluyen ni el texto ni las claves; con `LOG_LEVEL=info` solo aparecen el proveedor, el código HTTP y el tiempo de respuesta.
 - **Claves**: se cifran con AES-256-GCM y se guardan en `data/config.json` (`apiKeyEnc`). Ajustes nunca las muestra; solo indica si hay una guardada.
-- **Clave de cifrado**: por defecto se genera en `data/.ai-secret`, legible solo por el usuario del servicio. Eso protege las claves si se comparte o se filtra `config.json`, pero quien tenga una copia de toda la carpeta `data/` (incluidas las copias de `data/backups/`) podría descifrarlas. Para evitarlo, define la clave de cifrado fuera de `data/`, en el `.env` o en el entorno del servicio:
+- **Clave de cifrado**: por defecto se genera en `data/.secrets-key`, legible solo por el usuario del servicio. Eso protege las claves si se comparte o se filtra `config.json`, pero quien tenga una copia de toda la carpeta `data/` (incluidas las copias de `data/backups/`) podría descifrarlas. Para evitarlo, define la clave de cifrado fuera de `data/`, en el entorno del servicio (ver [la guía de instalación](INSTALACION_Y_CONFIGURACION.md#-clave-de-cifrado-de-los-secretos)):
 
   ```env
   # 64 caracteres hexadecimales: openssl rand -hex 32
-  AI_KEYS_SECRET=...
+  SECRETS_KEY=...
   ```
 
   Al definirla o cambiarla, las claves guardadas dejan de poder leerse: Ajustes → IA lo indica y basta con volver a escribirlas.
@@ -211,7 +211,7 @@ GEMINI_API_KEY=AIza...
 | `AI_MAX_CHARS` | `40000` | Caracteres del texto enviado (selección o nota) |
 | `AI_RATE_MAX` | `10` | Peticiones por minuto y por sesión |
 | `AI_TIMEOUT_S` | `60` | Segundos de espera por proveedor |
-| `AI_KEYS_SECRET` | — | Clave de cifrado de las claves guardadas (64 caracteres hexadecimales) |
+| `SECRETS_KEY` | — | Clave de cifrado de los secretos guardados: claves de IA y token de GitHub (64 caracteres hexadecimales) |
 
 ### Endpoints
 

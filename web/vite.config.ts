@@ -1,8 +1,13 @@
-import { defineConfig, type Plugin } from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { brotliCompressSync, gzipSync, constants } from 'zlib';
 import { readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+
+// Variables del .env de la raíz del proyecto (el mismo que lee el servidor). Las del entorno
+// del proceso tienen prioridad sobre el fichero
+const rootEnv = loadEnv('', join(dirname(fileURLToPath(import.meta.url)), '..'), '');
 
 // Versiones comprimidas (.br y .gz) de los JS, CSS y SVG del build: el servidor las envía
 // tal cual, sin comprimir en cada petición (ver server/index.js). Brotli para HTTPS, gzip para el resto
@@ -43,6 +48,9 @@ export default defineConfig({
   plugins: [react(), woff2Only(), precompress()],
   define: {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? '0.1.0'),
+    // Diagramas mermaid de la vista de lectura. Desactivados por defecto (el build necesita
+    // mucha menos memoria). Para incluirlos: OBSIDITA_MERMAID=1 en el .env o en el entorno
+    __MERMAID__: JSON.stringify(['1', 'true'].includes((process.env.OBSIDITA_MERMAID ?? rootEnv.OBSIDITA_MERMAID ?? '').trim().toLowerCase())),
   },
   build: {
     outDir: 'dist',

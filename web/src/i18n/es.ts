@@ -148,6 +148,8 @@ export const es = {
   'note.find': 'Buscar',
   'note.info': 'Información de la nota',
   'note.history': 'Historial de versiones',
+  'note.copyLink': 'Copiar enlace',
+  'note.linkCopied': 'Enlace copiado: {link}',
   'note.popupBlocked': 'El navegador bloqueó la ventana emergente. Permite ventanas emergentes para exportar a PDF.',
   'note.findPlaceholder': 'Buscar en el documento...',
   'note.findPrev': 'Anterior',
@@ -549,8 +551,8 @@ export const es = {
   'aiSettings.actionProvider': 'Proveedor',
   'aiSettings.actionProvider.default': 'El elegido en la barra',
   'aiSettings.addAction': 'Añadir acción',
-  'aiSettings.encryption.env': 'Las claves se guardan cifradas (AES-256-GCM) con la clave de AI_KEYS_SECRET.',
-  'aiSettings.encryption.file': 'Las claves se guardan cifradas (AES-256-GCM) con la clave de {file}. Para que una copia de data/ no baste para leerlas, define {env} en el entorno del servidor (64 caracteres hexadecimales) y vuelve a escribir las claves.',
+  'aiSettings.encryption.env': 'Los secretos (claves de IA y token de GitHub) se guardan cifrados (AES-256-GCM) con la clave de SECRETS_KEY.',
+  'aiSettings.encryption.file': 'Los secretos (claves de IA y token de GitHub) se guardan cifrados (AES-256-GCM) con la clave de {file}. Para que una copia de data/ no baste para leerlos, define {env} en el entorno del servidor (64 caracteres hexadecimales) y vuelve a escribir las claves de IA y el token de GitHub.',
 
   // Acerca de y variables
   'about.version': 'Versión {version}',

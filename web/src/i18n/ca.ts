@@ -150,6 +150,8 @@ export const ca: Messages = {
   'note.find': 'Cerca',
   'note.info': 'Informació de la nota',
   'note.history': 'Historial de versions',
+  'note.copyLink': 'Copiar enllaç',
+  'note.linkCopied': 'Enllaç copiat: {link}',
   'note.popupBlocked':
     'El navegador ha bloquejat la finestra emergent. Permet les finestres emergents per exportar a PDF.',
   'note.findPlaceholder': 'Cerca al document...',
@@ -551,8 +553,8 @@ export const ca: Messages = {
   'aiSettings.actionProvider': 'Proveïdor',
   'aiSettings.actionProvider.default': 'El triat a la barra',
   'aiSettings.addAction': 'Afegeix una acció',
-  'aiSettings.encryption.env': 'Les claus es desen xifrades (AES-256-GCM) amb la clau d’AI_KEYS_SECRET.',
-  'aiSettings.encryption.file': "Les claus es desen xifrades (AES-256-GCM) amb la clau de {file}. Perquè una còpia de data/ no basti per llegir-les, defineix {env} a l'entorn del servidor (64 caràcters hexadecimals) i torna a escriure les claus.",
+  'aiSettings.encryption.env': 'Els secrets (claus d’IA i token de GitHub) es desen xifrats (AES-256-GCM) amb la clau de SECRETS_KEY.',
+  'aiSettings.encryption.file': "Els secrets (claus d’IA i token de GitHub) es desen xifrats (AES-256-GCM) amb la clau de {file}. Perquè una còpia de data/ no basti per llegir-los, defineix {env} a l'entorn del servidor (64 caràcters hexadecimals) i torna a escriure les claus d’IA i el token de GitHub.",
 
   // Quant a i variables
   'about.version': 'Versió {version}',

@@ -197,6 +197,7 @@ cp .env.example .env && nano .env
 | `TRUST_PROXY` | Set it to `1` if there's a reverse proxy in front (Caddy, nginx). |
 | `VAULTS_ROOT` | Restricts the vault to a specific folder, e.g. `/srv/vaults`. |
 | `UPDATE_CHECK` | With `0`, the server doesn't check GitHub for new versions. |
+| `SECRETS_KEY` | Key that encrypts the AI keys and the GitHub token saved from the web. See [the secrets key guide](docs/en/INSTALLATION_AND_SETUP.md#-secrets-encryption-key). |
 | `MAX_UPLOAD_MB`, `MAX_NOTE_MB`… | Limits for size, search, password and sessions. |
 
 <div align="justify">
@@ -232,7 +233,7 @@ The full list is in [Keyboard shortcuts](docs/en/KEYBOARD_SHORTCUTS.md).
 
 Obsidita can keep your vault in sync with a GitHub repository and, through it, with Obsidian desktop using the **Obsidian Git** plugin. Set it up under **Preferences → Sync**: enter the repository (preferably private, since all your notes are uploaded), the branch and a **personal access token** scoped to that repository.
 
-Each sync commits your changes, merges those from the repository and pushes the result. If a note changed on both sides, the server's version wins. You can sync manually or pick an automatic interval, from every 5 minutes to once a day. The token is stored only on the server and never reaches the browser; the `.trash` folder is not uploaded.
+Each sync commits your changes, merges those from the repository and pushes the result. If a note changed on both sides, the server's version wins. You can sync manually or pick an automatic interval, from every 5 minutes to once a day. The token is stored encrypted on the server and never reaches the browser; the `.trash` folder is not uploaded.
 
 </div>
 

@@ -2,8 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useStore, hiddenMatchers, isHiddenPath, parseHiddenExtensions, hasHiddenExtension } from '../store';
 import { filesApi } from '../api';
 import type { TreeItem } from '../types';
-import { flushPendingSave } from './Editor';
-import { applyPathChange, deletePath, refreshTree } from './fileActions';
+import { applyPathChange, copyPath, deletePath, refreshTree } from './fileActions';
 import { fileName, isUnder, joinPath, movedPath, parentFolder, renamedPath } from '../paths';
 import { RenameDialog, MoveDialog, DeleteFileDialog } from './FileDialogs';
 import { useT } from '../i18n';
@@ -254,15 +253,7 @@ export default function FileExplorer() {
     setDialog(null);
   };
 
-  const handleCopy = async (path: string) => {
-    try {
-      await flushPendingSave(path);
-      await filesApi.copyFile(path);
-      await refreshTree();
-    } catch (err) {
-      notify('copy', t('file.copyError', { error: (err as Error).message }), 'error');
-    }
-  };
+  const handleCopy = (path: string) => copyPath(path);
 
   const handleDownloadFolder = (path: string) => {
     const url = filesApi.downloadFolder(path);

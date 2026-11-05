@@ -3,7 +3,7 @@ import { EditorView } from '@codemirror/view';
 import { useStore } from '../store';
 import { filesApi, syncApi, ConflictError } from '../api';
 import { flushPendingSave, noteVersions, NOTES_CHANGED } from './Editor';
-import { applyPathChange, deletePath } from './fileActions';
+import { applyPathChange, copyPath, deletePath } from './fileActions';
 import { fileName, isNote, movedPath, noteTitle, parentFolder, renamedPath } from '../paths';
 import { IconMenu } from './Icons';
 import { RenameDialog, MoveDialog, DeleteFileDialog, HistoryDialog } from './FileDialogs';
@@ -14,6 +14,8 @@ import { MenuItem, focusMenuItem, onMenuKeyDown } from './menuNav';
 import { useLatest } from '../latestRef';
 import { openAiBar, useAiEnabled } from '../ai';
 import log from '../logger';
+import { copyText } from '../clipboard';
+import { wikilinkTo } from '../wikilinkComplete';
 import '../styles/search.css';
 
 export default function NoteMenu() {
@@ -167,6 +169,23 @@ export default function NoteMenu() {
     setDialog(null);
   };
 
+  // La copia se abre en una pestaña nueva, como en Obsidian
+  const handleMakeCopy = async () => {
+    closeMenu();
+    const copy = await copyPath(activeTab);
+    if (!copy) return;
+    const { addTab, setActiveTab } = useStore.getState();
+    addTab(copy, fileName(copy));
+    setActiveTab(copy);
+  };
+
+  const handleCopyLink = async () => {
+    closeMenu();
+    const link = wikilinkTo(activeTab);
+    await copyText(link);
+    notify('copyLink', translate('note.linkCopied', { link }));
+  };
+
   const handleDownloadMd = async () => {
     closeMenu();
     try {
@@ -233,6 +252,8 @@ export default function NoteMenu() {
         >
           <MenuItem onClick={() => openDialog('rename')}>{t('file.rename')}</MenuItem>
           <MenuItem onClick={() => openDialog('move')}>{t('file.moveFile')}</MenuItem>
+          <MenuItem onClick={handleMakeCopy}>{t('file.makeCopy')}</MenuItem>
+          <MenuItem onClick={handleCopyLink}>{t('note.copyLink')}</MenuItem>
           <MenuItem
             onClick={() => {
               closeMenu();
