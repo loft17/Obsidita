@@ -514,14 +514,28 @@ Obsidita stores two kinds of secrets encrypted (AES-256-GCM): the API keys of th
 
 If you don't set it, the key is generated the first time in `data/.secrets-key`. That protects the secrets if only `config.json` or `sync.json` leaks, but anyone with a copy of the whole `data/` folder can decrypt them. Backups in `data/backups/` also include that key.
 
-To keep it outside `data/`:
+To keep it outside `data/`, follow these steps.
 
-1. **Generate the key** and store it in an environment file that only root can read:
+1. **Choose the key:**
+
+   - **If you already have saved secrets**, use the same key that is in `data/.secrets-key`. This way you won't have to enter them again:
+
+     ```bash
+     sudo sh -c 'echo "SECRETS_KEY=$(cat /opt/obsidita/data/.secrets-key)" > /etc/obsidita/obsidita.env'
+     ```
+
+   - **If it's a new installation**, generate a new key:
+
+     ```bash
+     sudo mkdir -p /etc/obsidita
+     sudo sh -c 'echo "SECRETS_KEY=$(openssl rand -hex 32)" > /etc/obsidita/obsidita.env'
+     ```
+
+   Then restrict the file to root:
 
    ```bash
-   sudo mkdir -p /etc/obsidita
-   sudo sh -c 'echo "SECRETS_KEY=$(openssl rand -hex 32)" > /etc/obsidita/obsidita.env'
    sudo chmod 600 /etc/obsidita/obsidita.env
+   sudo chown root:root /etc/obsidita/obsidita.env
    ```
 
    Keep a copy of the key in a password manager. If you lose it, the saved secrets can't be read and must be entered again.
@@ -533,6 +547,14 @@ To keep it outside `data/`:
    EnvironmentFile=/etc/obsidita/obsidita.env
    ```
 
+   Notes:
+
+   - The file should contain only `SECRETS_KEY`. Other variables (`HOST`, `PORT`, `VAULTS_ROOT`...) are set in the unit with `Environment=`; you may also put them in the file, but don't repeat them.
+   - **Don't write the key directly with `Environment=SECRETS_KEY=...`**: the value would be visible in the unit and in `systemctl show`.
+   - If a variable is set both in `Environment=` and in the file, `Environment=` wins.
+   - The file name is up to you, but the server only loads a `.env` file from the app folder automatically. A file with another name, such as `obsidita.env`, must be loaded with `EnvironmentFile`.
+   - You can store the file elsewhere, for example `/root/obsidita.env`. systemd reads it as root before switching to the service user. However, the unit often includes `ProtectHome=true`, which hides `/root` from the service. If the service fails to start with that path, use `/etc/obsidita/`.
+
 3. **Restart** the service:
 
    ```bash
@@ -540,16 +562,23 @@ To keep it outside `data/`:
    sudo systemctl restart obsidita
    ```
 
-4. **Enter the secrets again.** The new key can't read secrets saved with the old one: type the AI keys again in Settings → AI and the GitHub token in Preferences → Sync.
+   Check the log: there must be no warning that `SECRETS_KEY` is invalid, and no new `data/.secrets-key` should be created.
 
-5. **Delete the old key** and the backups that contain it:
+   ```bash
+   journalctl -u obsidita -n 50 --no-pager
+   ```
+
+   Restart the service every time you change the file: systemd only reads it at startup.
+
+4. **Only if you used a new key** (you didn't copy it from `data/.secrets-key`), enter the secrets again. The new key can't read secrets saved with the old one: type the AI keys again in Settings → AI and the GitHub token in Preferences → Sync.
+
+5. **Delete the old key** only once the service works with the variable, and if you changed the key, also delete the backups that contain the old one:
 
    ```bash
    sudo rm -f /opt/obsidita/data/.secrets-key /opt/obsidita/data/.ai-secret
-   sudo rm -rf /opt/obsidita/data/backups
    ```
 
-   To keep your backup history, delete only the `.secrets-key` and `.ai-secret` files inside the backup folders.
+   If you changed the key, the copies in `data/backups/` contain the old one and can't decrypt the current secrets. You can delete them with `sudo rm -rf /opt/obsidita/data/backups`, or keep them and delete only the `.secrets-key` and `.ai-secret` files inside.
 
 **How to check:** in Settings → AI, the encryption note shows which key is in use. If it says `SECRETS_KEY`, the variable is active. If the variable isn't valid (it must be 64 hexadecimal characters), the server logs a warning and uses `data/.secrets-key`.
 

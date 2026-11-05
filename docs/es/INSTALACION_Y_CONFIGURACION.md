@@ -570,14 +570,28 @@ Obsidita guarda cifrados (AES-256-GCM) dos tipos de secretos: las claves de API 
 
 Si no la defines, la clave se genera la primera vez en `data/.secrets-key`. Eso protege los secretos si solo se filtra `config.json` o `sync.json`, pero quien tenga una copia de toda la carpeta `data/` puede descifrarlos. Las copias de seguridad de `data/backups/` también incluyen esa clave.
 
-Para tenerla fuera de `data/`:
+Para tenerla fuera de `data/`, sigue estos pasos.
 
-1. **Genera la clave** y guárdala en un archivo de entorno que solo pueda leer root:
+1. **Elige la clave:**
+
+   - **Si ya tienes secretos guardados**, usa la misma clave que está en `data/.secrets-key`. Así no tendrás que volver a escribirlos:
+
+     ```bash
+     sudo sh -c 'echo "SECRETS_KEY=$(cat /opt/obsidita/data/.secrets-key)" > /etc/obsidita/obsidita.env'
+     ```
+
+   - **Si es una instalación nueva**, genera una clave nueva:
+
+     ```bash
+     sudo mkdir -p /etc/obsidita
+     sudo sh -c 'echo "SECRETS_KEY=$(openssl rand -hex 32)" > /etc/obsidita/obsidita.env'
+     ```
+
+   Después, restringe el archivo a root:
 
    ```bash
-   sudo mkdir -p /etc/obsidita
-   sudo sh -c 'echo "SECRETS_KEY=$(openssl rand -hex 32)" > /etc/obsidita/obsidita.env'
    sudo chmod 600 /etc/obsidita/obsidita.env
+   sudo chown root:root /etc/obsidita/obsidita.env
    ```
 
    Guarda una copia de la clave en un gestor de contraseñas. Si la pierdes, los secretos guardados no se podrán leer y habrá que volver a escribirlos.
@@ -589,6 +603,14 @@ Para tenerla fuera de `data/`:
    EnvironmentFile=/etc/obsidita/obsidita.env
    ```
 
+   Consideraciones:
+
+   - El fichero contiene solo `SECRETS_KEY`. El resto de variables (`HOST`, `PORT`, `VAULTS_ROOT`...) se definen en la unit con `Environment=`, o también en el fichero, pero sin repetirlas.
+   - **No escribas la clave directamente con `Environment=SECRETS_KEY=...`**: el valor queda visible en la unit y en `systemctl show`.
+   - Si una variable aparece en `Environment=` y en el fichero, gana `Environment=`.
+   - El nombre del fichero es libre, pero el servidor solo carga automáticamente un `.env` de la carpeta de la app. Un fichero con otro nombre, como `obsidita.env`, hay que cargarlo con `EnvironmentFile`.
+   - Puedes guardar el fichero en otra ruta, por ejemplo `/root/obsidita.env`. systemd lo lee como root antes de cambiar al usuario del servicio. Pero la unit suele incluir `ProtectHome=true`, que oculta `/root` al servicio. Si el servicio no arranca con esa ruta, usa `/etc/obsidita/`.
+
 3. **Reinicia** el servicio:
 
    ```bash
@@ -596,16 +618,23 @@ Para tenerla fuera de `data/`:
    sudo systemctl restart obsidita
    ```
 
-4. **Vuelve a escribir los secretos.** La clave nueva no puede leer los guardados con la anterior: escribe de nuevo las claves de IA en Ajustes → IA y el token de GitHub en Preferencias → Sincronización.
+   Revisa el log: no debe aparecer el aviso de que `SECRETS_KEY` no es válida, y no debe crearse un `data/.secrets-key` nuevo.
 
-5. **Borra la clave antigua** y las copias de seguridad que la contienen:
+   ```bash
+   journalctl -u obsidita -n 50 --no-pager
+   ```
+
+   Cada vez que cambies el fichero, reinicia el servicio: systemd solo lo lee al arrancar.
+
+4. **Solo si usaste una clave nueva** (no la copiaste de `data/.secrets-key`), vuelve a escribir los secretos. La clave nueva no puede leer los guardados con la anterior: escribe de nuevo las claves de IA en Ajustes → IA y el token de GitHub en Preferencias → Sincronización.
+
+5. **Borra la clave antigua** solo cuando el servicio funcione con la variable y, si cambiaste de clave, borra también las copias de seguridad que la contienen:
 
    ```bash
    sudo rm -f /opt/obsidita/data/.secrets-key /opt/obsidita/data/.ai-secret
-   sudo rm -rf /opt/obsidita/data/backups
    ```
 
-   Si quieres conservar el historial de copias, bórrales solo los archivos `.secrets-key` y `.ai-secret` que contengan.
+   Si cambiaste de clave, las copias de `data/backups/` tienen la anterior y ya no sirven para leer los secretos. Puedes borrarlas con `sudo rm -rf /opt/obsidita/data/backups`, o conservarlas y borrar solo los archivos `.secrets-key` y `.ai-secret` que contengan.
 
 **Cómo comprobarlo:** en Ajustes → IA, el texto de cifrado indica con qué clave se guardan los secretos. Si pone `SECRETS_KEY`, la variable está activa. Si la variable no es válida (no son 64 caracteres hexadecimales), el servidor lo avisa en el log y usa `data/.secrets-key`.
 

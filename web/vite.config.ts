@@ -44,13 +44,23 @@ const woff2Only = (): Plugin => ({
   },
 });
 
+// Diagramas mermaid de la vista de lectura. Desactivados por defecto (el build necesita
+// mucha menos memoria). Para incluirlos: OBSIDITA_MERMAID=1 en el .env o en el entorno
+const mermaidEnabled = ['1', 'true'].includes((process.env.OBSIDITA_MERMAID ?? rootEnv.OBSIDITA_MERMAID ?? '').trim().toLowerCase());
+
+// Con mermaid desactivado, su import dinámico igualmente se transforma en el build y arrastra
+// todo su árbol de dependencias (dagre, d3...), que agota la memoria. Se sustituye por un stub vacío
+const mermaidStub = fileURLToPath(new URL('./src/mermaid-stub.ts', import.meta.url));
+
 export default defineConfig({
   plugins: [react(), woff2Only(), precompress()],
+  resolve: {
+    // Incluye las subrutas (mermaid/dist/chunks/...) que usan los diagramas cargados por tipo
+    alias: mermaidEnabled ? [] : [{ find: /^mermaid(\/.*)?$/, replacement: mermaidStub }],
+  },
   define: {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? '0.1.0'),
-    // Diagramas mermaid de la vista de lectura. Desactivados por defecto (el build necesita
-    // mucha menos memoria). Para incluirlos: OBSIDITA_MERMAID=1 en el .env o en el entorno
-    __MERMAID__: JSON.stringify(['1', 'true'].includes((process.env.OBSIDITA_MERMAID ?? rootEnv.OBSIDITA_MERMAID ?? '').trim().toLowerCase())),
+    __MERMAID__: JSON.stringify(mermaidEnabled),
   },
   build: {
     outDir: 'dist',
