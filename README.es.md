@@ -19,7 +19,7 @@
 
 ---
 
-## 💎 Tu vault de Obsidian, en cualquier navegador
+## 💎 Tu vault de Obsidian, en cualquier navegador.
 
 <div align="justify">
 
