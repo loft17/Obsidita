@@ -31,6 +31,22 @@ const md = markdownIt({
   breaks: true,
 });
 
+// Comentario `<!-- table-view: … -->` que guarda el orden y el filtro de una tabla (lo escribe
+// web/src/liveTables.ts): se consume como bloque vacío, para que no aparezca como texto
+const TABLE_VIEW_LINE = /^<!--\s*table-view:.*-->\s*$/;
+md.block.ruler.before(
+  'html_block',
+  'table_view_comment',
+  (state, startLine, _endLine, silent) => {
+    const start = state.bMarks[startLine] + state.tShift[startLine];
+    const line = state.src.slice(start, state.eMarks[startLine]);
+    if (!TABLE_VIEW_LINE.test(line)) return false;
+    if (!silent) state.line = startLine + 1;
+    return true;
+  },
+  { alt: ['paragraph'] },
+);
+
 // Línea de origen (0-indexed sobre el cuerpo) en cada bloque, para saltar a resultados de búsqueda.
 // Las notas incrustadas no la llevan: sus líneas son de otra nota
 md.core.ruler.push('source_line', (state) => {

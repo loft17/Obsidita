@@ -44,6 +44,7 @@ import {
   IconSearch,
   IconSparkles,
   IconSync,
+  IconTable,
   IconUserCircle,
 } from './Icons';
 import { runSync } from '../syncNotify';
@@ -60,6 +61,7 @@ const SECTIONS: { id: string; label: MessageKey; Icon: typeof IconEye }[] = [
   { id: 'about', label: 'settings.section.about', Icon: IconUserCircle },
   { id: 'appearance', label: 'settings.section.appearance', Icon: IconEye },
   { id: 'editor', label: 'settings.section.editor', Icon: IconEdit },
+  { id: 'tables', label: 'settings.section.tables', Icon: IconTable },
   { id: 'files', label: 'settings.section.files', Icon: IconFolderNew },
   { id: 'sync', label: 'settings.section.sync', Icon: IconSync },
   { id: 'ai', label: 'settings.section.ai', Icon: IconSparkles },
@@ -907,6 +909,97 @@ function NotesSettings() {
   );
 }
 
+function TablesSection() {
+  const t = useT();
+  const tableNumberColumns = useStore((s) => s.tableNumberColumns);
+  const setTableNumberColumns = useStore((s) => s.setTableNumberColumns);
+  const tableSortToFile = useStore((s) => s.tableSortToFile);
+  const setTableSortToFile = useStore((s) => s.setTableSortToFile);
+  const tableTitleRow = useStore((s) => s.tableTitleRow);
+  const setTableTitleRow = useStore((s) => s.setTableTitleRow);
+  const tableTitleColor = useStore((s) => s.tableTitleColor);
+  const setTableTitleColor = useStore((s) => s.setTableTitleColor);
+  const tableShowCount = useStore((s) => s.tableShowCount);
+  const setTableShowCount = useStore((s) => s.setTableShowCount);
+  const tableSearchFilters = useStore((s) => s.tableSearchFilters);
+  const setTableSearchFilters = useStore((s) => s.setTableSearchFilters);
+  return (
+    <>
+      <h3 className="settings-heading">{t('settings.section.tables')}</h3>
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.tableNumbers')}</div>
+            <div className="setting-desc">{t('settings.tableNumbers.desc')}</div>
+          </div>
+        </div>
+        <div className="setting-item">
+          <input
+            className="setting-input"
+            type="text"
+            placeholder="#, número, orden"
+            value={tableNumberColumns}
+            onChange={(e) => setTableNumberColumns(e.target.value)}
+          />
+        </div>
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.tableSortToFile')}</div>
+            <div className="setting-desc">{t('settings.tableSortToFile.desc')}</div>
+          </div>
+          <label className="setting-toggle">
+            <input type="checkbox" checked={tableSortToFile} onChange={(e) => setTableSortToFile(e.target.checked)} />
+            <span />
+          </label>
+        </div>
+      <div className="setting-item">
+        <div className="setting-info">
+          <div className="setting-name">{t('settings.tableTitle')}</div>
+          <div className="setting-desc">{t('settings.tableTitle.desc')}</div>
+        </div>
+        <label className="setting-toggle">
+          <input type="checkbox" checked={tableTitleRow} onChange={(e) => setTableTitleRow(e.target.checked)} />
+          <span />
+        </label>
+      </div>
+      <div className="setting-item">
+        <div className="setting-info">
+          <div className="setting-name">{t('settings.tableTitleColor')}</div>
+        </div>
+        <div className="setting-color">
+          <input
+            className="setting-color-input"
+            type="color"
+            value={tableTitleColor}
+            disabled={!tableTitleRow}
+            onChange={(e) => setTableTitleColor(e.target.value)}
+          />
+          <code>{tableTitleColor}</code>
+        </div>
+      </div>
+      <div className="setting-item">
+        <div className="setting-info">
+          <div className="setting-name">{t('settings.tableCount')}</div>
+          <div className="setting-desc">{t('settings.tableCount.desc')}</div>
+        </div>
+        <label className="setting-toggle">
+          <input type="checkbox" checked={tableShowCount} onChange={(e) => setTableShowCount(e.target.checked)} />
+          <span />
+        </label>
+      </div>
+      <div className="setting-item">
+        <div className="setting-info">
+          <div className="setting-name">{t('settings.tableSearchFilters')}</div>
+          <div className="setting-desc">{t('settings.tableSearchFilters.desc')}</div>
+        </div>
+        <label className="setting-toggle">
+          <input type="checkbox" checked={tableSearchFilters} onChange={(e) => setTableSearchFilters(e.target.checked)} />
+          <span />
+        </label>
+      </div>
+    </>
+  );
+}
+
 function FilesSection() {
   const hiddenFolders = useStore((s) => s.hiddenFolders);
   const setHiddenFolders = useStore((s) => s.setHiddenFolders);
@@ -1732,6 +1825,7 @@ export default function SettingsModal({ onClose }: Props) {
             {section === 'about' && <AboutSection />}
             {section === 'appearance' && <AppearanceSection />}
             {section === 'editor' && <EditorSection />}
+            {section === 'tables' && <TablesSection />}
             {section === 'files' && <FilesSection />}
             {section === 'sync' && <SyncSection />}
             {section === 'ai' && <AiSettings />}

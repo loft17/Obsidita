@@ -62,6 +62,23 @@ export interface PrefsSlice {
   setImageFormat: (format: ImageFormat) => void;
   imageQuality: number;
   setImageQuality: (quality: number) => void;
+  // Nombres de columna (separados por comas) que se numeran solas en las tablas, ver liveTables.ts
+  tableNumberColumns: string;
+  setTableNumberColumns: (value: string) => void;
+  // Ordenar una tabla reordena también las filas del archivo (si no, el orden solo se ve)
+  tableSortToFile: boolean;
+  setTableSortToFile: (enabled: boolean) => void;
+  // La cabecera de las tablas se destaca como título (color de fondo y negrita)
+  tableTitleRow: boolean;
+  setTableTitleRow: (enabled: boolean) => void;
+  tableTitleColor: string;
+  setTableTitleColor: (color: string) => void;
+  // Contador de filas debajo de cada tabla
+  tableShowCount: boolean;
+  setTableShowCount: (enabled: boolean) => void;
+  // La búsqueda de tablas oculta las filas que no coinciden (si no, solo resalta las celdas)
+  tableSearchFilters: boolean;
+  setTableSearchFilters: (enabled: boolean) => void;
   // Vuelve a leer y aplicar todas las preferencias (tras recibir las del servidor)
   reloadPrefs: () => void;
 }
@@ -87,6 +104,12 @@ const KEYS = {
   pdfViewer: synced('pdfViewer'),
   imageFormat: synced('imageFormat'),
   imageQuality: synced('imageQuality'),
+  tableNumberColumns: synced('tableNumberColumns'),
+  tableSortToFile: synced('tableSortToFile'),
+  tableTitleRow: synced('tableTitleRow'),
+  tableTitleColor: synced('tableTitleColor'),
+  tableShowCount: synced('tableShowCount'),
+  tableSearchFilters: synced('tableSearchFilters'),
 };
 
 const FONT_KEYS: Record<FontKind, string> = {
@@ -171,10 +194,43 @@ const readPrefs = () => ({
   pdfViewer: readBool(KEYS.pdfViewer, false),
   imageFormat: readImageFormat(),
   imageQuality: readNumber(KEYS.imageQuality, DEFAULT_IMAGE_QUALITY, clampQuality),
+  tableNumberColumns: readString(KEYS.tableNumberColumns),
+  tableSortToFile: readBool(KEYS.tableSortToFile, true),
+  tableTitleRow: readBool(KEYS.tableTitleRow, false),
+  tableTitleColor: readColorFromStorage(),
+  tableShowCount: readBool(KEYS.tableShowCount, true),
+  tableSearchFilters: readBool(KEYS.tableSearchFilters, false),
 });
 
+// Color de la cabecera-título de las tablas: #rrggbb válido o el predeterminado
+export const DEFAULT_TABLE_TITLE_COLOR = '#3b82f6';
+const readColor = (value: string) => (/^#[0-9a-f]{6}$/i.test(value) ? value.toLowerCase() : DEFAULT_TABLE_TITLE_COLOR);
+const readColorFromStorage = () => readColor(readString(KEYS.tableTitleColor));
+
+// Marca la cabecera de las tablas como título (lo lee la hoja de estilos con data-table-title)
+const applyTableTitle = (enabled: boolean, color: string) => {
+  document.documentElement.dataset.tableTitle = enabled ? 'on' : 'off';
+  document.documentElement.style.setProperty('--table-title-color', color);
+};
+
+// Muestra u oculta el contador de filas (lo lee la hoja de estilos con data-table-count)
+const applyTableCount = (enabled: boolean) => {
+  document.documentElement.dataset.tableCount = enabled ? 'on' : 'off';
+};
+
 // Aplicar al documento las preferencias visuales
-const applyPrefs = ({ theme, themeStyle, fontSize, fonts, readableLineLength }: ReturnType<typeof readPrefs>) => {
+const applyPrefs = ({
+  theme,
+  themeStyle,
+  fontSize,
+  fonts,
+  readableLineLength,
+  tableTitleRow,
+  tableTitleColor,
+  tableShowCount,
+}: ReturnType<typeof readPrefs>) => {
+  applyTableTitle(tableTitleRow, tableTitleColor);
+  applyTableCount(tableShowCount);
   applyTheme(theme);
   applyStyle(themeStyle);
   applyFontSize(fontSize);
@@ -213,6 +269,28 @@ export const createPrefsSlice: StateCreator<AppStore, [], [], PrefsSlice> = (set
     setHiddenExtensions: (value) => {
       save(KEYS.hiddenExtensions, value);
       set({ hiddenExtensions: value });
+    },
+    setTableNumberColumns: (value) => {
+      save(KEYS.tableNumberColumns, value);
+      set({ tableNumberColumns: value });
+    },
+    setTableSortToFile: boolPref('tableSortToFile', KEYS.tableSortToFile),
+    setTableSearchFilters: boolPref('tableSearchFilters', KEYS.tableSearchFilters),
+    setTableShowCount: (enabled) => {
+      save(KEYS.tableShowCount, enabled);
+      applyTableCount(enabled);
+      set({ tableShowCount: enabled });
+    },
+    setTableTitleRow: (enabled) => {
+      save(KEYS.tableTitleRow, enabled);
+      applyTableTitle(enabled, get().tableTitleColor);
+      set({ tableTitleRow: enabled });
+    },
+    setTableTitleColor: (color) => {
+      const value = readColor(color);
+      save(KEYS.tableTitleColor, value);
+      applyTableTitle(get().tableTitleRow, value);
+      set({ tableTitleColor: value });
     },
     setDefaultEditMode: (mode) => {
       save(KEYS.defaultMode, mode ? 'edit' : 'view');

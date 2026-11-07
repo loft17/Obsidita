@@ -1124,6 +1124,335 @@ button.note-info-item {
   border-top: none;
 }
 
+/* Barra de búsqueda y contador (solo vista: no cambia el Markdown) */
+.cm-lp-table-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 0.85em;
+  color: var(--text-muted);
+}
+
+.cm-lp-table-search {
+  flex: 0 1 220px;
+  min-width: 0;
+  padding: 2px 6px;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+}
+
+.cm-lp-table-search:focus {
+  outline: 2px solid rgba(var(--interactive-accent-rgb), 0.6);
+  outline-offset: -1px;
+}
+
+/* Celdas que coinciden con la búsqueda (modo «resaltar») */
+.cm-lp-table td.is-match,
+.cm-lp-table th.is-match {
+  background-color: color-mix(in srgb, var(--text-highlight-bg, #facc15) 45%, transparent);
+}
+
+/* Contador de filas debajo de la tabla (ajuste de Tablas) */
+.cm-lp-table-count {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
+:root[data-table-count='off'] .cm-lp-table-count {
+  display: none;
+}
+
+/* Ordenar y borrar: aparecen al pasar por la cabecera o la fila (siempre en táctil) */
+.cm-lp-table-btn {
+  padding: 0 3px;
+  margin-left: 2px;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 12px;
+  line-height: 1.4;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.cm-lp-table th:hover .cm-lp-table-btn,
+.cm-lp-table tr:hover .cm-lp-table-btn,
+.cm-lp-table-btn:focus-visible,
+.cm-lp-table-btn.is-active {
+  opacity: 1;
+}
+
+.cm-lp-table-btn:hover:not(:disabled) {
+  background-color: var(--interactive-hover);
+  color: var(--text-normal);
+}
+
+.cm-lp-table-btn:disabled {
+  display: none;
+}
+
+.cm-lp-table-btn.is-active {
+  color: var(--interactive-accent);
+}
+
+.cm-lp-table .cm-lp-table-act {
+  width: 1%;
+  padding: 0 0 0 2px;
+  border: none;
+}
+
+/* Barra de herramientas: iconos a la derecha, con contador de criterios activos */
+.cm-lp-table-icons {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.cm-lp-table-tool-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.cm-lp-table-tool-btn:hover,
+.cm-lp-table-tool-btn:focus-visible {
+  background-color: var(--interactive-hover);
+  color: var(--text-normal);
+}
+
+.cm-lp-table-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: none;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent, #fff);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+}
+
+.cm-lp-table-badge.is-on {
+  display: block;
+}
+
+.cm-lp-table-search[hidden] {
+  display: none;
+}
+
+/* Paneles de Ordenar y Filtrar (van al body, fuera del widget) */
+.cm-lp-table-panel {
+  position: fixed;
+  z-index: 1000;
+  min-width: 300px;
+  max-width: calc(100vw - 16px);
+  padding: 10px;
+  font-size: 0.9em;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+}
+
+.cm-lp-panel-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.cm-lp-panel-select,
+.cm-lp-panel-input {
+  min-width: 0;
+  padding: 3px 6px;
+  font: inherit;
+  color: inherit;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+}
+
+.cm-lp-panel-select {
+  flex: 1 1 0;
+}
+
+.cm-lp-panel-input {
+  flex: 1 1 0;
+}
+
+.cm-lp-panel-del {
+  flex: 0 0 auto;
+  padding: 0 6px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 15px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.cm-lp-panel-del:hover {
+  background-color: var(--interactive-hover);
+  color: var(--text-normal);
+}
+
+.cm-lp-panel-add {
+  padding: 4px 0;
+  border: none;
+  background: transparent;
+  color: var(--interactive-accent);
+  font: inherit;
+  cursor: pointer;
+}
+
+.cm-lp-panel-add:disabled {
+  color: var(--text-faint);
+  cursor: default;
+}
+
+.cm-lp-panel-hint {
+  margin-bottom: 6px;
+  color: var(--text-muted);
+  font-size: 0.85em;
+}
+
+.cm-lp-panel-sep {
+  height: 1px;
+  margin: 6px 0;
+  background: var(--background-modifier-border);
+}
+
+/* Arrastrar filas y columnas */
+/* Controles de la cabecera: fijos en la esquina derecha, sin afectar a la alineación del texto.
+   La cabecera reserva ese espacio, así que el texto centrado o a la derecha no se mueve */
+.cm-lp-table thead th:not(.cm-lp-table-act) {
+  position: relative;
+  white-space: nowrap;
+  padding-right: 58px;
+}
+
+.cm-lp-th-actions {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+/* Tirador de filas a la izquierda, fuera de la tabla */
+.cm-lp-table-grid {
+  padding-left: 18px;
+}
+
+.cm-lp-table tbody td:first-child {
+  position: relative;
+}
+
+.cm-lp-table tbody .cm-lp-table-grip {
+  position: absolute;
+  left: -18px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.cm-lp-table-grip {
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.cm-lp-table .cm-lp-table-grip.is-disabled {
+  cursor: default;
+  opacity: 0.3 !important;
+}
+
+.cm-lp-table .is-dragging {
+  opacity: 0.4;
+}
+
+.cm-lp-table tr.is-drop-before > td {
+  box-shadow: inset 0 2px 0 var(--interactive-accent);
+}
+
+.cm-lp-table tr.is-drop-after > td {
+  box-shadow: inset 0 -2px 0 var(--interactive-accent);
+}
+
+.cm-lp-table th.is-drop-before {
+  box-shadow: inset 2px 0 0 var(--interactive-accent);
+}
+
+.cm-lp-table th.is-drop-after {
+  box-shadow: inset -2px 0 0 var(--interactive-accent);
+}
+
+/* Selector de color del título de las tablas: swatch visible con su código */
+.setting-color {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.setting-color-input {
+  width: 48px;
+  height: 30px;
+  padding: 2px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-primary);
+  cursor: pointer;
+}
+
+.setting-color-input:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Cabecera de las tablas como título (ajuste de Tablas): editor y vista de lectura */
+:root[data-table-title='on'] .cm-lp-table thead th:not(.cm-lp-table-act),
+:root[data-table-title='on'] .reading-view table thead th {
+  background-color: color-mix(in srgb, var(--table-title-color) 35%, transparent);
+  font-weight: 700;
+}
+
+/* Columnas numeradas: el número lo pone la tabla, no se edita */
+.cm-lp-table td.is-auto .cm-lp-cell-input {
+  color: var(--text-muted);
+  cursor: default;
+}
+
+@media (hover: none) {
+  .cm-lp-table-btn {
+    opacity: 1;
+  }
+}
+
 .cm-lp-link,
 .cm-lp-wikilink {
   color: var(--interactive-accent);

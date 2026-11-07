@@ -13,6 +13,7 @@ import { markdown, markdownKeymap, markdownLanguage } from '@codemirror/lang-mar
 import { indentUnit } from '@codemirror/language';
 import { languages } from '../editorLanguages';
 import { livePreview, HighlightSyntax, notePath } from '../livePreview';
+import { refreshTables } from '../liveTables';
 import { imageUpload } from '../imageUpload';
 import { autoPair } from '../autoPair';
 import { wikilinkCompletion } from '../wikilinkComplete';
@@ -198,6 +199,8 @@ export default function Editor({ filePath, content, onContentChange }: Props) {
   const viewRef = useRef<EditorView | null>(null);
   const setTabDirty = useStore((s) => s.setTabDirty);
   const showLineNumbers = useStore((s) => s.showLineNumbers);
+  const tableNumberColumns = useStore((s) => s.tableNumberColumns);
+  const tableSearchFilters = useStore((s) => s.tableSearchFilters);
   const showInlineTitle = useStore((s) => s.showInlineTitle);
   const autoPairBrackets = useStore((s) => s.autoPairBrackets);
   const autoPairMarkdown = useStore((s) => s.autoPairMarkdown);
@@ -304,6 +307,11 @@ export default function Editor({ filePath, content, onContentChange }: Props) {
   useEffect(() => {
     viewRef.current?.dispatch({ effects: lineNumbersCompartment.reconfigure(lineNumbersExtension(showLineNumbers)) });
   }, [showLineNumbers]);
+
+  // Cambiar las columnas numeradas repinta las tablas de la nota
+  useEffect(() => {
+    viewRef.current?.dispatch({ effects: refreshTables.of(null) });
+  }, [tableNumberColumns, tableSearchFilters]);
 
   useEffect(() => {
     viewRef.current?.dispatch({ effects: autoPairCompartment.reconfigure(autoPair(autoPairBrackets, autoPairMarkdown)) });
