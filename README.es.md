@@ -40,7 +40,7 @@ Tus notas se quedan en tu servidor, protegidas con contraseña, sesiones revocab
 
 ---
 
-## 📑 Índice
+## 📑 Índice.
 
 <table>
 <tr>
@@ -74,7 +74,7 @@ Tus notas se quedan en tu servidor, protegidas con contraseña, sesiones revocab
 
 ---
 
-## ✨ Características
+## ✨ Características.
 
 <table>
 <tr>
