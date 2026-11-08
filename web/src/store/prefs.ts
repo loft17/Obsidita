@@ -1,6 +1,7 @@
 import type { StateCreator } from 'zustand';
 import { loadBundledFont } from '../fonts';
 import { applyThemeStyle, resolveThemeStyle } from '../themes';
+import { setWideTables } from '../wideTables';
 import { readBool, readNumber, readString, save, synced } from './storage';
 import type { AppStore } from './index';
 
@@ -79,6 +80,9 @@ export interface PrefsSlice {
   // La búsqueda de tablas oculta las filas que no coinciden (si no, solo resalta las celdas)
   tableSearchFilters: boolean;
   setTableSearchFilters: (enabled: boolean) => void;
+  // Las tablas usan todo el ancho de la nota; el texto conserva su columna
+  tableWide: boolean;
+  setTableWide: (enabled: boolean) => void;
   // Vuelve a leer y aplicar todas las preferencias (tras recibir las del servidor)
   reloadPrefs: () => void;
 }
@@ -110,6 +114,7 @@ const KEYS = {
   tableTitleColor: synced('tableTitleColor'),
   tableShowCount: synced('tableShowCount'),
   tableSearchFilters: synced('tableSearchFilters'),
+  tableWide: synced('tableWide'),
 };
 
 const FONT_KEYS: Record<FontKind, string> = {
@@ -200,6 +205,7 @@ const readPrefs = () => ({
   tableTitleColor: readColorFromStorage(),
   tableShowCount: readBool(KEYS.tableShowCount, true),
   tableSearchFilters: readBool(KEYS.tableSearchFilters, false),
+  tableWide: readBool(KEYS.tableWide, false),
 });
 
 // Color de la cabecera-título de las tablas: #rrggbb válido o el predeterminado
@@ -228,6 +234,7 @@ const applyPrefs = ({
   tableTitleRow,
   tableTitleColor,
   tableShowCount,
+  tableWide,
 }: ReturnType<typeof readPrefs>) => {
   applyTableTitle(tableTitleRow, tableTitleColor);
   applyTableCount(tableShowCount);
@@ -240,6 +247,7 @@ const applyPrefs = ({
     void loadBundledFont(fonts[kind]);
   });
   applyReadableLineLength(readableLineLength);
+  setWideTables(tableWide);
 };
 
 export const createPrefsSlice: StateCreator<AppStore, [], [], PrefsSlice> = (set, get) => {
@@ -276,6 +284,11 @@ export const createPrefsSlice: StateCreator<AppStore, [], [], PrefsSlice> = (set
     },
     setTableSortToFile: boolPref('tableSortToFile', KEYS.tableSortToFile),
     setTableSearchFilters: boolPref('tableSearchFilters', KEYS.tableSearchFilters),
+    setTableWide: (enabled) => {
+      save(KEYS.tableWide, enabled);
+      setWideTables(enabled);
+      set({ tableWide: enabled });
+    },
     setTableShowCount: (enabled) => {
       save(KEYS.tableShowCount, enabled);
       applyTableCount(enabled);

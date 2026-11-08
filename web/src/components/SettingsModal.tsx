@@ -923,6 +923,8 @@ function TablesSection() {
   const setTableShowCount = useStore((s) => s.setTableShowCount);
   const tableSearchFilters = useStore((s) => s.tableSearchFilters);
   const setTableSearchFilters = useStore((s) => s.setTableSearchFilters);
+  const tableWide = useStore((s) => s.tableWide);
+  const setTableWide = useStore((s) => s.setTableWide);
   return (
     <>
       <h3 className="settings-heading">{t('settings.section.tables')}</h3>
@@ -993,6 +995,16 @@ function TablesSection() {
         </div>
         <label className="setting-toggle">
           <input type="checkbox" checked={tableSearchFilters} onChange={(e) => setTableSearchFilters(e.target.checked)} />
+          <span />
+        </label>
+      </div>
+      <div className="setting-item">
+        <div className="setting-info">
+          <div className="setting-name">{t('settings.tableWide')}</div>
+          <div className="setting-desc">{t('settings.tableWide.desc')}</div>
+        </div>
+        <label className="setting-toggle">
+          <input type="checkbox" checked={tableWide} onChange={(e) => setTableWide(e.target.checked)} />
           <span />
         </label>
       </div>

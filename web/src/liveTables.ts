@@ -408,6 +408,11 @@ function renderHead(wrap: TableDom) {
     const rule = view.sorts.find((s) => s.col === col);
     const grip = makeGrip(t('table.dragColumn'), true);
     grip.addEventListener('dragstart', (e) => startDrag(wrap, e, 'col', col, th));
+    // Menú de la columna (cortar, copiar, pegar, insertar, eliminar)
+    grip.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      openColMenu(wrap, col, grip, e.clientX, e.clientY);
+    });
     const sort = makeBtn(
       rule ? 'cm-lp-table-sort is-active' : 'cm-lp-table-sort',
       rule ? (rule.dir === 'asc' ? '↑' : '↓') : '↕',
@@ -446,7 +451,11 @@ function makeBodyRow(wrap: TableDom, i: number) {
   const off = viewActive(wrap.cmTable);
   const grip = makeGrip(off ? t('table.dragDisabled') : t('table.dragRow'), !off);
   grip.addEventListener('dragstart', (e) => startDrag(wrap, e, 'row', i, tr));
-  act.appendChild(makeBtn('cm-lp-table-del-row', '×', t('table.deleteRow'), () => deleteRow(wrap, i)));
+  // Menú de la fila (cortar, copiar, pegar, insertar, eliminar)
+  grip.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    openRowMenu(wrap, i, grip, e.clientX, e.clientY);
+  });
   tr.appendChild(act);
   // El tirador va a la izquierda de la fila (posicionado en CSS), sin añadir columnas
   tr.cells[0].prepend(grip);
@@ -504,6 +513,206 @@ function deleteRow(wrap: TableDom, i: number) {
   wrap.cmTable.model.body.splice(i, 1);
   commit(wrap, 'delete.table');
   renderBody(wrap);
+}
+
+// Portapapeles interno de filas (cortar/copiar desde el menú del tirador)
+let rowClipboard: string[][] | null = null;
+
+// Ajusta una fila al número de columnas de la tabla
+function fitRow(wrap: TableDom, cells: string[]) {
+  return wrap.cmTable.model.aligns.map((_, c) => cells[c] ?? '');
+}
+
+// Inserta filas en `at`; si quedarían ocultas por búsqueda o filtros, se quitan para verlas
+function insertRows(wrap: TableDom, at: number, rows: string[][]) {
+  const st = wrap.cmTable;
+  st.model.body.splice(at, 0, ...rows.map((r) => fitRow(wrap, r)));
+  if (!visibleRows(st).includes(at)) clearView(wrap);
+  commit(wrap, 'input.table');
+  renderBody(wrap);
+  focusCell(wrap, at, 0);
+}
+
+function copyRow(wrap: TableDom, i: number) {
+  const row = wrap.cmTable.model.body[i].slice();
+  rowClipboard = [row];
+  // También al portapapeles del sistema (como TSV), para pegarla en otras aplicaciones
+  navigator.clipboard?.writeText(row.join('\t')).catch(() => undefined);
+}
+
+function cutRow(wrap: TableDom, i: number) {
+  copyRow(wrap, i);
+  deleteRow(wrap, i);
+}
+
+async function pasteRows(wrap: TableDom, i: number) {
+  let rows = rowClipboard;
+  if (!rows) {
+    try {
+      rows = parseClipboard(await navigator.clipboard.readText());
+    } catch {
+      return;
+    }
+  }
+  if (rows.length) insertRows(wrap, i + 1, rows);
+}
+
+function clearRow(wrap: TableDom, i: number) {
+  wrap.cmTable.model.body[i] = wrap.cmTable.model.aligns.map(() => '');
+  commit(wrap, 'delete.table');
+  renderBody(wrap);
+}
+
+type MenuItem = { label: string; action: () => void } | 'sep';
+
+// Menú contextual genérico (filas y columnas). Se cierra como los paneles: clic fuera, Escape, redimensionar
+function openMenu(anchor: HTMLElement, x: number, y: number, items: MenuItem[]) {
+  closePanel?.();
+  const menu = document.createElement('div');
+  menu.className = 'cm-lp-row-menu';
+  menu.setAttribute('role', 'menu');
+  for (const it of items) {
+    if (it === 'sep') {
+      const s = document.createElement('div');
+      s.className = 'cm-lp-row-menu-sep';
+      menu.append(s);
+      continue;
+    }
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'cm-lp-row-menu-item';
+    b.setAttribute('role', 'menuitem');
+    b.textContent = it.label;
+    b.addEventListener('click', () => {
+      close();
+      it.action();
+    });
+    menu.append(b);
+  }
+  document.body.appendChild(menu);
+  const left = Math.min(x, window.innerWidth - menu.offsetWidth - 8);
+  const top = y + menu.offsetHeight + 4 > window.innerHeight ? y - menu.offsetHeight : y + 4;
+  menu.style.left = `${Math.max(8, left)}px`;
+  menu.style.top = `${Math.max(8, top)}px`;
+
+  const onPointer = (e: PointerEvent) => {
+    if (!menu.contains(e.target as Node)) close();
+  };
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key !== 'Escape') return;
+    e.preventDefault();
+    close();
+    anchor.focus();
+  };
+  const close = () => {
+    document.removeEventListener('pointerdown', onPointer, true);
+    document.removeEventListener('keydown', onKey, true);
+    window.removeEventListener('resize', close);
+    menu.remove();
+    closePanel = null;
+    panelAnchor = null;
+  };
+  closePanel = close;
+  panelAnchor = anchor;
+  document.addEventListener('pointerdown', onPointer, true);
+  document.addEventListener('keydown', onKey, true);
+  window.addEventListener('resize', close);
+}
+
+function openRowMenu(wrap: TableDom, i: number, anchor: HTMLElement, x: number, y: number) {
+  openMenu(anchor, x, y, [
+    { label: t('table.menu.cut'), action: () => cutRow(wrap, i) },
+    { label: t('table.menu.copy'), action: () => copyRow(wrap, i) },
+    { label: t('table.menu.paste'), action: () => void pasteRows(wrap, i) },
+    'sep',
+    { label: t('table.menu.insertAbove'), action: () => insertRows(wrap, i, [[]]) },
+    { label: t('table.menu.insertBelow'), action: () => insertRows(wrap, i + 1, [[]]) },
+    'sep',
+    { label: t('table.menu.deleteRow'), action: () => deleteRow(wrap, i) },
+    { label: t('table.menu.clearRow'), action: () => clearRow(wrap, i) },
+  ]);
+}
+
+// Portapapeles interno de columnas: cabecera, alineación y celdas
+interface ColumnClip {
+  head: string;
+  align: Align;
+  cells: string[];
+}
+let colClipboard: ColumnClip[] | null = null;
+
+// Inserta columnas en `at`, con sus criterios de orden y filtro desplazados
+function insertColumns(wrap: TableDom, at: number, cols: ColumnClip[]) {
+  const st = wrap.cmTable;
+  const m = st.model;
+  const n = cols.length;
+  m.head.splice(at, 0, ...cols.map((c) => c.head));
+  m.aligns.splice(at, 0, ...cols.map((c) => c.align));
+  const rows = Math.max(m.body.length, ...cols.map((c) => c.cells.length));
+  while (m.body.length < rows) m.body.push(m.aligns.map(() => ''));
+  m.body.forEach((r, ri) => {
+    const fill = cols.map((c) => c.cells[ri] ?? '');
+    r.splice(at, 0, ...fill);
+  });
+  const v = st.view;
+  const shift = (c: number) => (c >= at ? c + n : c);
+  v.sorts = v.sorts.map((s) => ({ ...s, col: shift(s.col) }));
+  v.filters = v.filters.map((f) => (f.col < 0 ? f : { ...f, col: shift(f.col) }));
+  commit(wrap, 'input.table');
+  render(wrap);
+  focusCell(wrap, -1, at);
+}
+
+function copyColumn(wrap: TableDom, col: number) {
+  const m = wrap.cmTable.model;
+  const clip: ColumnClip = { head: m.head[col], align: m.aligns[col], cells: m.body.map((r) => r[col]) };
+  colClipboard = [clip];
+  const text = [clip.head, ...clip.cells].join('\n');
+  navigator.clipboard?.writeText(text).catch(() => undefined);
+}
+
+function cutColumn(wrap: TableDom, col: number) {
+  copyColumn(wrap, col);
+  deleteColumn(wrap, col);
+}
+
+// Pegado desde el portapapeles del sistema: cada columna del texto pasa a una columna nueva sin cabecera
+async function pasteColumns(wrap: TableDom, col: number) {
+  let cols = colClipboard;
+  if (!cols) {
+    try {
+      const grid = parseClipboard(await navigator.clipboard.readText());
+      const width = Math.max(0, ...grid.map((r) => r.length));
+      cols = Array.from({ length: width }, (_, c) => ({
+        head: '',
+        align: null,
+        cells: grid.map((r) => r[c] ?? ''),
+      }));
+    } catch {
+      return;
+    }
+  }
+  if (cols.length) insertColumns(wrap, col + 1, cols);
+}
+
+function clearColumn(wrap: TableDom, col: number) {
+  wrap.cmTable.model.body.forEach((r) => (r[col] = ''));
+  commit(wrap, 'delete.table');
+  renderBody(wrap);
+}
+
+function openColMenu(wrap: TableDom, col: number, anchor: HTMLElement, x: number, y: number) {
+  openMenu(anchor, x, y, [
+    { label: t('table.menu.cut'), action: () => cutColumn(wrap, col) },
+    { label: t('table.menu.copy'), action: () => copyColumn(wrap, col) },
+    { label: t('table.menu.paste'), action: () => void pasteColumns(wrap, col) },
+    'sep',
+    { label: t('table.menu.insertLeft'), action: () => insertColumns(wrap, col, [{ head: '', align: null, cells: [] }]) },
+    { label: t('table.menu.insertRight'), action: () => insertColumns(wrap, col + 1, [{ head: '', align: null, cells: [] }]) },
+    'sep',
+    { label: t('table.deleteColumn'), action: () => deleteColumn(wrap, col) },
+    { label: t('table.menu.clearColumn'), action: () => clearColumn(wrap, col) },
+  ]);
 }
 
 function deleteColumn(wrap: TableDom, col: number) {

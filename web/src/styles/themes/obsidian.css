@@ -1158,6 +1158,7 @@ button.note-info-item {
 
 /* Contador de filas debajo de la tabla (ajuste de Tablas) */
 .cm-lp-table-count {
+  display: block;
   margin-top: 4px;
   color: var(--text-muted);
   font-size: 0.85em;
@@ -1209,12 +1210,12 @@ button.note-info-item {
   border: none;
 }
 
-/* Barra de herramientas: iconos a la derecha, con contador de criterios activos */
+/* Barra de herramientas: iconos a la izquierda, con contador de criterios activos */
 .cm-lp-table-icons {
   display: flex;
   align-items: center;
   gap: 2px;
-  margin-left: auto;
+  order: -1;
 }
 
 .cm-lp-table-tool-btn {
@@ -1264,6 +1265,44 @@ button.note-info-item {
 }
 
 /* Paneles de Ordenar y Filtrar (van al body, fuera del widget) */
+/* Menú del tirador de una fila (clic derecho) */
+.cm-lp-row-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 210px;
+  padding: 4px;
+  font-size: 0.9em;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+}
+
+.cm-lp-row-menu-item {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  text-align: left;
+  font: inherit;
+  color: var(--text-normal);
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cm-lp-row-menu-item:hover,
+.cm-lp-row-menu-item:focus-visible {
+  background: var(--background-modifier-hover);
+  outline: none;
+}
+
+.cm-lp-row-menu-sep {
+  height: 1px;
+  margin: 4px 2px;
+  background: var(--background-modifier-border);
+}
+
 .cm-lp-table-panel {
   position: fixed;
   z-index: 1000;
