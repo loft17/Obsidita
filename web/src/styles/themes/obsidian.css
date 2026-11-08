@@ -2005,6 +2005,73 @@ button.note-info-item {
   outline: none;
 }
 
+/* Selector de emojis de la barra de formato */
+.emoji-popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 296px;
+  padding: 8px;
+  background-color: var(--background-secondary-alt);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.emoji-search {
+  width: 100%;
+  height: 30px;
+  padding: 0 8px;
+  box-sizing: border-box;
+  font-size: 13px;
+}
+
+.emoji-scroll {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.emoji-label {
+  margin: 2px 2px 4px;
+  color: var(--text-faint);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+  margin-bottom: 6px;
+}
+
+.emoji-cell {
+  height: 34px;
+  padding: 0;
+  background: transparent;
+  border-radius: 4px;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.emoji-cell:hover,
+.emoji-cell:focus-visible {
+  background-color: var(--interactive-hover);
+  outline: none;
+}
+
+.emoji-empty {
+  padding: 12px 4px;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
 .reading-view mark {
   background-color: rgba(255, 208, 0, 0.35);
   color: inherit;
@@ -3463,6 +3530,15 @@ button.note-info-item {
   .toolbar-dropdown-item {
     padding: 10px 12px;
     font-size: 15px;
+  }
+
+  .emoji-popover {
+    width: min(296px, calc(100vw - 8px));
+  }
+
+  .emoji-cell {
+    height: 40px;
+    font-size: 24px;
   }
 
   /* Buscar en la nota: bajo la cabecera, a todo el ancho */

@@ -26,6 +26,7 @@ import { t as translate, useT } from '../i18n';
 import { pickImages } from '../imageUpload';
 import { isMobile } from '../mobile';
 import { openAiBar, useAiEnabled } from '../ai';
+import EmojiPicker from './EmojiPicker';
 
 // Instantánea del editor sobre la que trabajan las acciones de formato
 interface TA {
@@ -208,6 +209,12 @@ function clearFormat(ta: TA) {
 function historyCommand(ta: TA, cmd: typeof undo) {
   cmd(ta.view);
   ta.view.focus();
+}
+
+// Inserta el emoji en la posición del cursor (o sustituye la selección) y deja el cursor detrás
+function insertEmoji(ta: TA, emoji: string) {
+  const at = ta.selectionStart + emoji.length;
+  replaceRange(ta, ta.selectionStart, ta.selectionEnd, emoji, at, at);
 }
 
 // Evita que los botones roben el foco (y la selección) al editor
@@ -503,6 +510,7 @@ export default function EditorToolbar({
       <ToolButton title={t('toolbar.image')} onClick={() => viewRef.current && pickImages(viewRef.current, filePath)}>
         <IconImage />
       </ToolButton>
+      <EmojiPicker title={t('toolbar.emoji')} onPick={(emoji) => apply((ta) => insertEmoji(ta, emoji))} />
       {aiEnabled && (
         <>
           <span className="toolbar-sep" />

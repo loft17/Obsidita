@@ -76,6 +76,13 @@ export const IconSparkles = make(
     <path d="M5 2v4M3 4h4" />
   </>,
 );
+export const IconSmile = make(
+  <>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+    <path d="M9 9h.01M15 9h.01" />
+  </>,
+);
 export const IconBook = make(
   <>
     <path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z" />
