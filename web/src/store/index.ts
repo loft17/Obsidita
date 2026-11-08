@@ -15,7 +15,15 @@ export const useStore = create<AppStore>()((...a) => ({
 }));
 
 export type { Theme, FontKind, Fonts, ImageFormat } from './prefs';
-export { DEFAULT_FONT_SIZE, MIN_FONT_SIZE, MAX_FONT_SIZE, DEFAULT_IMAGE_QUALITY } from './prefs';
+export {
+  DEFAULT_FONT_SIZE,
+  MIN_FONT_SIZE,
+  MAX_FONT_SIZE,
+  DEFAULT_IMAGE_QUALITY,
+  DEFAULT_LINE_WIDTH,
+  MIN_LINE_WIDTH,
+  MAX_LINE_WIDTH,
+} from './prefs';
 export type { SidebarView } from './ui';
 export { DEFAULT_SITE_TITLE, DEFAULT_SIDEBAR_WIDTH, MIN_SIDEBAR_WIDTH, MAX_SIDEBAR_WIDTH } from './ui';
 export type { NoteConflict } from './docs';

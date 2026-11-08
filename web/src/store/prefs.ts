@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import { loadBundledFont } from '../fonts';
 import { applyThemeStyle, resolveThemeStyle } from '../themes';
-import { setWideTables } from '../wideTables';
+import { refreshWideTables, setWideTables } from '../wideTables';
 import { readBool, readNumber, readString, save, synced } from './storage';
 import type { AppStore } from './index';
 
@@ -14,6 +14,11 @@ export type Theme = 'dark' | 'light' | 'system';
 export const DEFAULT_FONT_SIZE = 15;
 export const MIN_FONT_SIZE = 10;
 export const MAX_FONT_SIZE = 30;
+
+// Ancho máximo de la columna del texto (px) cuando la longitud de línea legible está activa
+export const DEFAULT_LINE_WIDTH = 720;
+export const MIN_LINE_WIDTH = 480;
+export const MAX_LINE_WIDTH = 1200;
 
 // Fuentes de la interfaz, del texto de las notas y monoespaciada (código). Vacío = la predeterminada;
 // se aplican con las variables CSS --font-interface, --font-text y --font-monospace
@@ -53,6 +58,8 @@ export interface PrefsSlice {
   setAutoPairMarkdown: (enabled: boolean) => void;
   readableLineLength: boolean;
   setReadableLineLength: (enabled: boolean) => void;
+  lineWidth: number;
+  setLineWidth: (width: number) => void;
   showTabHeader: boolean;
   setShowTabHeader: (show: boolean) => void;
   showRibbon: boolean;
@@ -102,6 +109,7 @@ const KEYS = {
   autoPairBrackets: synced('autoPairBrackets'),
   autoPairMarkdown: synced('autoPairMarkdown'),
   readableLine: synced('readableLineLength'),
+  lineWidth: synced('lineWidth'),
   tabHeader: synced('showTabHeader'),
   ribbon: synced('showRibbon'),
   // Abrir los PDF con el visor nativo del navegador en vez de ofrecer descargarlos
@@ -131,6 +139,8 @@ const FONT_FALLBACKS: Record<FontKind, string> = {
 const cleanFont = (name: string) => name.replace(/["\\;{}]/g, '').trim();
 
 const clampFontSize = (size: number) => Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, Math.round(size)));
+const clampLineWidth = (width: number) =>
+  Math.min(MAX_LINE_WIDTH, Math.max(MIN_LINE_WIDTH, Math.round(width / 10) * 10));
 
 const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
 
@@ -156,9 +166,12 @@ const applyFont = (kind: FontKind, name: string) => {
   else style.removeProperty(`--font-${kind}`);
 };
 
-// Longitud de línea legible: limita el ancho del texto de la nota con la variable CSS --line-width
-const applyReadableLineLength = (enabled: boolean) =>
-  document.documentElement.style.setProperty('--line-width', enabled ? '720px' : 'none');
+// Longitud de línea legible: limita el ancho del texto de la nota con la variable CSS --line-width.
+// Las tablas de ancho completo se miden contra el área, no contra esta variable: hay que recolocarlas
+const applyReadableLineLength = (enabled: boolean, width: number) => {
+  document.documentElement.style.setProperty('--line-width', enabled ? `${width}px` : 'none');
+  refreshWideTables();
+};
 
 const readImageFormat = (): ImageFormat => {
   const value = readString(KEYS.imageFormat);
@@ -194,6 +207,7 @@ const readPrefs = () => ({
   autoPairBrackets: readBool(KEYS.autoPairBrackets, true),
   autoPairMarkdown: readBool(KEYS.autoPairMarkdown, true),
   readableLineLength: readBool(KEYS.readableLine, true),
+  lineWidth: readNumber(KEYS.lineWidth, DEFAULT_LINE_WIDTH, clampLineWidth),
   showTabHeader: readBool(KEYS.tabHeader, true),
   showRibbon: readBool(KEYS.ribbon, true),
   pdfViewer: readBool(KEYS.pdfViewer, false),
@@ -231,6 +245,7 @@ const applyPrefs = ({
   fontSize,
   fonts,
   readableLineLength,
+  lineWidth,
   tableTitleRow,
   tableTitleColor,
   tableShowCount,
@@ -246,7 +261,7 @@ const applyPrefs = ({
     // La fuente guardada también se carga bajo demanda
     void loadBundledFont(fonts[kind]);
   });
-  applyReadableLineLength(readableLineLength);
+  applyReadableLineLength(readableLineLength, lineWidth);
   setWideTables(tableWide);
 };
 
@@ -341,8 +356,14 @@ export const createPrefsSlice: StateCreator<AppStore, [], [], PrefsSlice> = (set
     setAutoPairMarkdown: boolPref('autoPairMarkdown', KEYS.autoPairMarkdown),
     setReadableLineLength: (enabled) => {
       save(KEYS.readableLine, enabled);
-      applyReadableLineLength(enabled);
+      applyReadableLineLength(enabled, get().lineWidth);
       set({ readableLineLength: enabled });
+    },
+    setLineWidth: (width) => {
+      const value = clampLineWidth(width);
+      save(KEYS.lineWidth, value);
+      applyReadableLineLength(get().readableLineLength, value);
+      set({ lineWidth: value });
     },
     setShowTabHeader: boolPref('showTabHeader', KEYS.tabHeader),
     setShowRibbon: boolPref('showRibbon', KEYS.ribbon),

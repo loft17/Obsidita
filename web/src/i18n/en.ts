@@ -408,6 +408,8 @@ export const en: Messages = {
   'settings.readableLine': 'Readable line length',
   'settings.readableLine.desc':
     'Limits the maximum line length. Less content fits on screen, but long paragraphs are easier to read.',
+  'settings.lineWidth': 'Text width',
+  'settings.lineWidth.desc': 'Maximum width of the text column in pixels, in the editor and the reading view. Full-width tables are not affected.',
   'settings.lineNumbers': 'Line numbers',
   'settings.lineNumbers.desc': 'Show line numbers.',
   'settings.behavior': 'Behavior',

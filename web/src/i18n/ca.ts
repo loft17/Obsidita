@@ -411,6 +411,8 @@ export const ca: Messages = {
   'settings.readableLine': 'Longitud de línia llegible',
   'settings.readableLine.desc':
     'Limita la longitud màxima de línia. Mostra menys contingut a la pantalla, però els paràgrafs llargs són més llegibles.',
+  'settings.lineWidth': 'Amplada del text',
+  'settings.lineWidth.desc': 'Amplada màxima de la columna del text en píxels, a l\'editor i al visor. Les taules d\'ample complet no canvien.',
   'settings.lineNumbers': 'Números de línia',
   'settings.lineNumbers.desc': 'Mostra els números de línia.',
   'settings.behavior': 'Comportament',

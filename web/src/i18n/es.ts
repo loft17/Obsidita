@@ -409,6 +409,8 @@ export const es = {
   'settings.readableLine': 'Longitud de línea legible',
   'settings.readableLine.desc':
     'Limita la longitud de línea máxima. Muestra menos contenido en pantalla, pero los párrafos largos son más legibles.',
+  'settings.lineWidth': 'Ancho del texto',
+  'settings.lineWidth.desc': 'Ancho máximo de la columna del texto en píxeles, en el editor y en el visor. Las tablas de ancho completo no cambian.',
   'settings.lineNumbers': 'Números de línea',
   'settings.lineNumbers.desc': 'Muestra los números de línea.',
   'settings.behavior': 'Comportamiento',

@@ -9,6 +9,9 @@ import {
   DEFAULT_SITE_TITLE,
   MIN_FONT_SIZE,
   MAX_FONT_SIZE,
+  DEFAULT_LINE_WIDTH,
+  MIN_LINE_WIDTH,
+  MAX_LINE_WIDTH,
 } from '../store';
 import { THEME_STYLES } from '../themes';
 import {
@@ -245,6 +248,9 @@ function AppearanceSection() {
   const setThemeStyle = useStore((s) => s.setThemeStyle);
   const fontSize = useStore((s) => s.fontSize);
   const setFontSize = useStore((s) => s.setFontSize);
+  const readableLineLength = useStore((s) => s.readableLineLength);
+  const lineWidth = useStore((s) => s.lineWidth);
+  const setLineWidth = useStore((s) => s.setLineWidth);
   const showTabHeader = useStore((s) => s.showTabHeader);
   const setShowTabHeader = useStore((s) => s.setShowTabHeader);
   const showRibbon = useStore((s) => s.showRibbon);
@@ -350,6 +356,38 @@ function AppearanceSection() {
             />
           </div>
         </div>
+        {readableLineLength && (
+          <div className="setting-item">
+            <div className="setting-info">
+              <div className="setting-name">{t('settings.lineWidth')}</div>
+              <div className="setting-desc">{t('settings.lineWidth.desc')}</div>
+            </div>
+            <div className="setting-slider">
+              <button
+                className="icon-btn"
+                title={t('settings.resetDefault')}
+                disabled={lineWidth === DEFAULT_LINE_WIDTH}
+                onClick={() => setLineWidth(DEFAULT_LINE_WIDTH)}
+              >
+                <IconReset size={16} />
+              </button>
+              <span className="setting-slider-value">{lineWidth}px</span>
+              <input
+                type="range"
+                min={MIN_LINE_WIDTH}
+                max={MAX_LINE_WIDTH}
+                step={10}
+                value={lineWidth}
+                style={
+                  {
+                    '--slider-fill': `${((lineWidth - MIN_LINE_WIDTH) / (MAX_LINE_WIDTH - MIN_LINE_WIDTH)) * 100}%`,
+                  } as CSSProperties
+                }
+                onChange={(e) => setLineWidth(Number(e.target.value))}
+              />
+            </div>
+          </div>
+        )}
         <div className="setting-item">
           <div className="setting-info">
             <div className="setting-name">{t('settings.quickFont')}</div>
