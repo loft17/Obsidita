@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
-import { useT } from '../i18n';
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
+import { useI18n, useT } from '../i18n';
 import { isMobile } from '../mobile';
-import { searchEmojis } from '../emojis';
+import { EMOJI_GROUPS, filterEmojis, loadEmojis, type EmojiItem } from '../emojis';
 import { IconChevronDown, IconSmile } from './Icons';
 
 const RECENT_KEY = 'obsidita.emojiRecent';
-const RECENT_MAX = 16;
+const RECENT_MAX = 24;
 
 // Recientes guardados en el navegador; si no hay acceso a localStorage, simplemente no se recuerdan
 function loadRecent(): string[] {
@@ -25,17 +25,21 @@ function saveRecent(list: string[]) {
   }
 }
 
-// Botón con desplegable de búsqueda de emojis; al elegir uno se llama a onPick con el emoji
+// Botón con desplegable de emojis por categorías y buscador; al elegir uno se llama a onPick
 export default function EmojiPicker({ title, onPick }: { title: string; onPick: (emoji: string) => void }) {
   const t = useT();
+  const lang = useI18n((s) => s.lang);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [items, setItems] = useState<EmojiItem[] | null>(null);
   const [recent, setRecent] = useState<string[]>(loadRecent);
   // En el móvil la barra se desliza en horizontal y recortaría el desplegable: se coloca fijo bajo el botón
   const [fixedAt, setFixedAt] = useState<CSSProperties>();
   const ref = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const uid = useId();
 
   useEffect(() => {
     if (!open) return;
@@ -58,16 +62,27 @@ export default function EmojiPicker({ title, onPick }: { title: string; onPick: 
     };
   }, [open]);
 
+  // Los datos se cargan la primera vez que se abre, y se vuelven a pedir si cambia el idioma
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    loadEmojis(lang).then((list) => alive && setItems(list));
+    return () => {
+      alive = false;
+    };
+  }, [open, lang]);
+
   const show = () => {
     if (isMobile() && buttonRef.current) {
       const r = buttonRef.current.getBoundingClientRect();
       setFixedAt({
         position: 'fixed',
         top: r.bottom + 4,
-        left: Math.max(4, Math.min(r.left, window.innerWidth - 310)),
+        left: Math.max(4, Math.min(r.left, window.innerWidth - 330)),
       });
     } else setFixedAt(undefined);
     setQuery('');
+    setItems(null);
     setOpen(true);
     // El foco pasa al buscador; la selección del editor se conserva
     requestAnimationFrame(() => inputRef.current?.focus());
@@ -82,14 +97,25 @@ export default function EmojiPicker({ title, onPick }: { title: string; onPick: 
   };
 
   const searching = query.trim() !== '';
-  const results = searchEmojis(query);
+  const results = useMemo(() => (items && searching ? filterEmojis(items, query) : []), [items, query, searching]);
+  const byGroup = useMemo(
+    () => EMOJI_GROUPS.map((g) => ({ ...g, list: items?.filter((it) => it.group === g.id) ?? [] })),
+    [items],
+  );
 
   // Intro en el buscador elige el primer resultado
   const onInputKey = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && results.length) {
       e.preventDefault();
-      pick(results[0]);
+      pick(results[0].emoji);
     }
+  };
+
+  // Lleva el desplazamiento del listado a la categoría pulsada en la barra inferior
+  const goTo = (id: string) => {
+    const box = scrollRef.current;
+    const el = box?.querySelector<HTMLElement>(`[data-section="${id}"]`);
+    if (box && el) box.scrollTop = el.offsetTop;
   };
 
   const cell = (emoji: string) => (
@@ -97,6 +123,7 @@ export default function EmojiPicker({ title, onPick }: { title: string; onPick: 
       key={emoji}
       type="button"
       className="emoji-cell"
+      title={emoji}
       onMouseDown={(e) => e.preventDefault()}
       onClick={() => pick(emoji)}
     >
@@ -132,19 +159,61 @@ export default function EmojiPicker({ title, onPick }: { title: string; onPick: 
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onInputKey}
           />
-          <div className="emoji-scroll">
-            {!searching && recent.length > 0 && (
+          <div className="emoji-scroll" ref={scrollRef}>
+            {!items ? (
+              <div className="emoji-empty">{t('emoji.loading')}</div>
+            ) : searching ? (
+              results.length > 0 ? (
+                <div className="emoji-grid">{results.map((it) => cell(it.emoji))}</div>
+              ) : (
+                <div className="emoji-empty">{t('emoji.none')}</div>
+              )
+            ) : (
               <>
-                <div className="emoji-label">{t('emoji.recent')}</div>
-                <div className="emoji-grid">{recent.map(cell)}</div>
+                {recent.length > 0 && (
+                  <div data-section={`${uid}-recent`}>
+                    <div className="emoji-label">{t('emoji.recent')}</div>
+                    <div className="emoji-grid">{recent.map(cell)}</div>
+                  </div>
+                )}
+                {byGroup.map((g) => (
+                  <div key={g.id} data-section={`${uid}-${g.id}`}>
+                    <div className="emoji-label">{t(`emoji.cat.${g.key}`)}</div>
+                    <div className="emoji-grid">{g.list.map((it) => cell(it.emoji))}</div>
+                  </div>
+                ))}
               </>
             )}
-            {results.length > 0 ? (
-              <div className="emoji-grid">{results.map(cell)}</div>
-            ) : (
-              <div className="emoji-empty">{t('emoji.none')}</div>
-            )}
           </div>
+          {items && !searching && (
+            <div className="emoji-categories" role="tablist" aria-label={t('emoji.categories')}>
+              {recent.length > 0 && (
+                <button
+                  type="button"
+                  className="emoji-cat"
+                  title={t('emoji.recent')}
+                  aria-label={t('emoji.recent')}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => goTo(`${uid}-recent`)}
+                >
+                  🕘
+                </button>
+              )}
+              {EMOJI_GROUPS.map((g) => (
+                <button
+                  key={g.id}
+                  type="button"
+                  className="emoji-cat"
+                  title={t(`emoji.cat.${g.key}`)}
+                  aria-label={t(`emoji.cat.${g.key}`)}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => goTo(`${uid}-${g.id}`)}
+                >
+                  {g.icon}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

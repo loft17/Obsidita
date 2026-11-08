@@ -2014,7 +2014,7 @@ button.note-info-item {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  width: 296px;
+  width: 320px;
   padding: 8px;
   background-color: var(--background-secondary-alt);
   border: 1px solid var(--background-modifier-border);
@@ -2031,8 +2031,39 @@ button.note-info-item {
 }
 
 .emoji-scroll {
-  max-height: 300px;
+  position: relative;
+  height: 320px;
   overflow-y: auto;
+}
+
+/* Barra inferior de categorías, como en el teclado del iPhone */
+.emoji-categories {
+  display: flex;
+  justify-content: space-between;
+  gap: 2px;
+  padding-top: 6px;
+  border-top: 1px solid var(--background-modifier-border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.emoji-cat {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: transparent;
+  border-radius: 4px;
+  font-size: 16px;
+  line-height: 1;
+  filter: grayscale(0.6);
+}
+
+.emoji-cat:hover,
+.emoji-cat:focus-visible {
+  background-color: var(--interactive-hover);
+  filter: none;
+  outline: none;
 }
 
 .emoji-label {
@@ -2045,7 +2076,7 @@ button.note-info-item {
 
 .emoji-grid {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
+  grid-template-columns: repeat(9, 1fr);
   gap: 2px;
   margin-bottom: 6px;
 }
@@ -3533,12 +3564,18 @@ button.note-info-item {
   }
 
   .emoji-popover {
-    width: min(296px, calc(100vw - 8px));
+    width: min(320px, calc(100vw - 8px));
   }
 
   .emoji-cell {
     height: 40px;
     font-size: 24px;
+  }
+
+  .emoji-cat {
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
   }
 
   /* Buscar en la nota: bajo la cabecera, a todo el ancho */
