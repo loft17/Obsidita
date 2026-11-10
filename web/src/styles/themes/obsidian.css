@@ -1175,17 +1175,33 @@ button.note-info-item {
 
 .cm-lp-image-resize {
   position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 18px;
-  height: 18px;
+  right: 6px;
+  bottom: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.55);
   cursor: nwse-resize;
   touch-action: none;
   opacity: 0;
   transition: opacity 0.12s;
-  background:
-    linear-gradient(135deg, transparent 0 45%, #fff 45% 52%, transparent 52% 65%, #fff 65% 72%, transparent 72%);
-  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.9));
+}
+
+/* Esquina «⌟» blanca, como un tirador de cambio de tamaño */
+.cm-lp-image-resize::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  border-bottom-right-radius: 2px;
+}
+
+.cm-lp-image-resize:hover {
+  background: rgba(0, 0, 0, 0.7);
 }
 
 .cm-lp-figure:hover .cm-lp-image-tools,
