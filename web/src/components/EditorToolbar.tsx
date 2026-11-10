@@ -24,6 +24,7 @@ import {
 } from './Icons';
 import { t as translate, useT } from '../i18n';
 import { pickImages } from '../imageUpload';
+import { pickImagesForCell } from '../liveTables';
 import { isMobile } from '../mobile';
 import { openAiBar, useAiEnabled } from '../ai';
 import EmojiPicker from './EmojiPicker';
@@ -507,7 +508,14 @@ export default function EditorToolbar({
       <ToolButton title={t('toolbar.table')} onClick={() => apply(insertTable)}>
         <IconTable />
       </ToolButton>
-      <ToolButton title={t('toolbar.image')} onClick={() => viewRef.current && pickImages(viewRef.current, filePath)}>
+      <ToolButton
+        title={t('toolbar.image')}
+        onClick={() => {
+          const view = viewRef.current;
+          // Con el foco en una celda de tabla, la imagen va a esa celda
+          if (view && !pickImagesForCell(view)) pickImages(view, filePath);
+        }}
+      >
         <IconImage />
       </ToolButton>
       <EmojiPicker title={t('toolbar.emoji')} onPick={(emoji) => apply((ta) => insertEmoji(ta, emoji))} />

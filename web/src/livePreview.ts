@@ -2,14 +2,18 @@
 // con formato y los marcadores (#, **, >, [](url)...) solo aparecen en la línea
 // donde está el cursor.
 import { syntaxTree, syntaxHighlighting, HighlightStyle } from '@codemirror/language';
-import { Facet, type EditorState, type Range } from '@codemirror/state';
+import { type EditorState, type Range } from '@codemirror/state';
 import { Decoration, EditorView, ViewPlugin, WidgetType, type DecorationSet, type ViewUpdate } from '@codemirror/view';
 import { Tag, tags } from '@lezer/highlight';
 import type { MarkdownConfig } from '@lezer/markdown';
 import { liveTables } from './liveTables';
+import { notePath } from './notePath';
 import { attachmentUrl, isImage, parseSize } from './attachments';
 import { followWikilink, isResolved } from './wikilinks';
 import { fileName } from './paths';
+import { findImages, imageFigure, imageWithWidth } from './imageTools';
+
+export { notePath };
 
 // ==resaltado== no forma parte de GFM: se define igual que el tachado de @lezer/markdown
 const highlightTag = Tag.define();
@@ -119,29 +123,68 @@ class ImageWidget extends WidgetType {
     readonly alt: string,
     readonly width?: number,
     readonly height?: number,
+    readonly after = false, // en la línea del cursor: va detrás de su Markdown en vez de sustituirlo
   ) {
     super();
   }
   eq(other: ImageWidget) {
     return (
-      other.src === this.src && other.alt === this.alt && other.width === this.width && other.height === this.height
+      other.src === this.src &&
+      other.alt === this.alt &&
+      other.width === this.width &&
+      other.height === this.height &&
+      other.after === this.after
     );
   }
-  toDOM() {
-    const img = document.createElement('img');
-    img.className = 'cm-lp-image';
-    img.src = this.src;
-    img.alt = this.alt;
-    if (this.width) img.width = this.width;
-    if (this.height) img.height = this.height;
-    return img;
+  toDOM(view: EditorView) {
+    const figure = imageFigure({
+      src: this.src,
+      alt: this.alt,
+      width: this.width,
+      height: this.height,
+      className: 'cm-lp-image',
+      onSource: () => {
+        // Selecciona su Markdown: la línea pasa a ser la del cursor y se ve el código
+        const at = imageAt(view, figure, this.after);
+        if (!at) return;
+        view.dispatch({ selection: { anchor: at.from, head: at.to }, scrollIntoView: true });
+        view.focus();
+      },
+      resize: view.state.readOnly
+        ? undefined
+        : {
+            // No más ancha que la columna del texto
+            maxWidth: () => {
+              const line = figure.closest<HTMLElement>('.cm-line') ?? view.contentDOM;
+              const cs = getComputedStyle(line);
+              return line.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+            },
+            onEnd: (width) => {
+              const at = imageAt(view, figure, this.after);
+              if (!at) return;
+              view.dispatch({
+                changes: { from: at.from, to: at.to, insert: imageWithWidth(at.text, at.ref, width) },
+                userEvent: 'input.resize',
+              });
+            },
+          },
+    });
+    figure.classList.add('is-note');
+    return figure;
   }
 }
 
-// Ruta de la nota abierta en el editor, para resolver las imágenes relativas
-export const notePath = Facet.define<() => string, () => string>({
-  combine: (values) => values[0] ?? (() => ''),
-});
+// Imagen del documento que pinta un widget: empieza en su posición o, en la línea del cursor
+// (`after`: la imagen se pinta detrás de su Markdown), acaba en ella
+function imageAt(view: EditorView, dom: HTMLElement, after: boolean) {
+  if (!dom.isConnected) return null;
+  const pos = view.posAtDOM(dom);
+  const line = view.state.doc.lineAt(pos);
+  const ref = findImages(line.text).find((r) => line.from + r.at + (after ? r.len : 0) === pos);
+  if (!ref) return null;
+  const from = line.from + ref.at;
+  return { from, to: from + ref.len, ref, text: line.text };
+}
 
 const hide = Decoration.replace({});
 const bullet = Decoration.replace({ widget: new BulletWidget() });
@@ -183,8 +226,9 @@ function build(view: EditorView): DecorationSet {
   const currentNote = state.facet(notePath)();
   const image = (from: number, to: number, src: string, altText: string) => {
     const { text, width, height } = parseSize(altText);
-    const widget = new ImageWidget(attachmentUrl(src, currentNote), text, width, height);
-    if (isActive(from)) decos.push(Decoration.widget({ widget, side: 1 }).range(to));
+    const after = isActive(from);
+    const widget = new ImageWidget(attachmentUrl(src, currentNote), text, width, height, after);
+    if (after) decos.push(Decoration.widget({ widget, side: 1 }).range(to));
     else add(Decoration.replace({ widget }), from, to);
   };
 

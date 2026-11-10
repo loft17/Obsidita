@@ -12,19 +12,19 @@ import { convertImage } from './imageConvert';
 const pad = (n: number) => String(n).padStart(2, '0');
 
 // Mismo nombre que usa Obsidian: "Pasted image 20240131120000.png"
-const pastedName = (file: File) => {
+export const pastedName = (file: File) => {
   const d = new Date();
   const stamp = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
   const ext = file.type.split('/')[1]?.replace('jpeg', 'jpg').replace('svg+xml', 'svg') || 'png';
   return `Pasted image ${stamp}.${ext}`;
 };
 
-const imageFiles = (list: FileList | null | undefined) =>
+export const imageFiles = (list: FileList | null | undefined) =>
   [...(list ?? [])].filter((f) => f.type.startsWith('image/') || isImage(f.name));
 
 // URL de imagen pegada como texto: una sola URL http(s) cuya ruta acaba en extensión de imagen
 // (se ignoran query y hash). Los paréntesis y espacios se escapan para no romper el ![](...)
-const imageUrl = (text: string | undefined) => {
+export const imageUrl = (text: string | undefined) => {
   const value = text?.trim();
   if (!value || /\s/.test(value)) return null;
   try {
@@ -83,6 +83,20 @@ const pendingUploads = StateField.define<Map<number, Pending>>({
 
 let nextId = 0;
 
+// Convierte y sube las imágenes como adjuntos de la nota; devuelve un `![[…]]` por imagen.
+// También lo usan las celdas de las tablas (ver liveTables.ts)
+export async function uploadImages(notePath: string, files: File[], named: (f: File) => string) {
+  const paths: string[] = [];
+  const { imageFormat, imageQuality } = useStore.getState();
+  for (const file of files) {
+    const image = await convertImage(file, named(file), imageFormat, imageQuality);
+    paths.push((await filesApi.uploadAttachment(notePath, image.file, image.name)).path);
+  }
+  // Refrescar el árbol antes de insertar, para que el enlace se resuelva al pintarlo
+  useStore.getState().setTree(await filesApi.getTree());
+  return paths.map((p) => `![[${linkTarget(p)}]]`);
+}
+
 // La selección no se borra hasta que la subida ha ido bien: si falla, el texto sigue ahí
 async function upload(view: EditorView, notePath: string, files: File[], range: Pending, named: (f: File) => string) {
   const id = nextId++;
@@ -90,18 +104,11 @@ async function upload(view: EditorView, notePath: string, files: File[], range: 
   if (!view.state.field(pendingUploads, false)) effects.unshift(StateEffect.appendConfig.of(pendingUploads));
   view.dispatch({ effects });
   try {
-    const paths: string[] = [];
-    const { imageFormat, imageQuality } = useStore.getState();
-    for (const file of files) {
-      const image = await convertImage(file, named(file), imageFormat, imageQuality);
-      paths.push((await filesApi.uploadAttachment(notePath, image.file, image.name)).path);
-    }
-    // Refrescar el árbol antes de insertar, para que el enlace se resuelva al pintarlo
-    useStore.getState().setTree(await filesApi.getTree());
+    const links = await uploadImages(notePath, files, named);
     const target = view.state.field(pendingUploads, false)?.get(id);
     // Editor cerrado u otra nota abierta: la imagen ya está subida, pero no hay dónde enlazarla
     if (!target || !view.dom.isConnected) return;
-    const text = paths.map((p) => `![[${linkTarget(p)}]]`).join('\n');
+    const text = links.join('\n');
     view.dispatch({
       changes: { from: target.from, to: target.to, insert: text },
       selection: { anchor: target.from + text.length },
@@ -117,19 +124,24 @@ async function upload(view: EditorView, notePath: string, files: File[], range: 
 
 // Botón "Insertar imagen" de la barra de herramientas: en el móvil no hay arrastrar y soltar, y
 // el selector de archivos permite elegir de la galería o hacer una foto con la cámara
-export function pickImages(view: EditorView, notePath: string) {
+export function chooseImages(onPick: (files: File[], named: (f: File) => string) => void) {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
   input.multiple = true;
   input.onchange = () => {
     const files = imageFiles(input.files);
-    if (!files.length) return;
-    const { from, to } = view.state.selection.main;
     // Las fotos de la cámara se llaman todas igual (image.jpg): mejor con fecha, como al pegar
-    upload(view, notePath, files, { from, to }, files.length > 1 ? (f) => f.name : pastedName);
+    if (files.length) onPick(files, files.length > 1 ? (f) => f.name : pastedName);
   };
   input.click();
+}
+
+export function pickImages(view: EditorView, notePath: string) {
+  chooseImages((files, named) => {
+    const { from, to } = view.state.selection.main;
+    upload(view, notePath, files, { from, to }, named);
+  });
 }
 
 export const imageUpload = (getPath: () => string) => [

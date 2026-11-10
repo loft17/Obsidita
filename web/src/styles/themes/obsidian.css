@@ -1093,6 +1093,200 @@ button.note-info-item {
   outline: none;
 }
 
+/* Imágenes en celdas (ver syncCellImages): debajo del texto, en la segunda fila de la rejilla */
+.cm-lp-cell-images {
+  grid-row: 2;
+  grid-column: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 2px 0;
+  cursor: text;
+}
+
+/* Cada imagen con sus controles: ampliar y ver el texto (arriba a la derecha) y el tirador para
+   cambiar el tamaño (abajo a la derecha). Aparecen al pasar el ratón; en pantallas táctiles, siempre */
+.cm-lp-figure {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+.cm-lp-cell-image {
+  display: block;
+  max-width: 240px;
+  max-height: 160px;
+  border-radius: 4px;
+  object-fit: contain;
+}
+
+/* Las medidas puestas a mano (![[img.png|300]] o con el tirador) mandan sobre el tamaño máximo */
+.cm-lp-cell-image[width] {
+  max-width: none;
+  max-height: none;
+}
+
+.cm-lp-cell-image:not([height]) {
+  height: auto;
+}
+
+.cm-lp-image-tools {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.cm-lp-image-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #fff;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.cm-lp-image-btn:hover,
+.cm-lp-image-btn:focus-visible {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.cm-lp-image-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cm-lp-image-resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  cursor: nwse-resize;
+  touch-action: none;
+  opacity: 0;
+  transition: opacity 0.12s;
+  background:
+    linear-gradient(135deg, transparent 0 45%, #fff 45% 52%, transparent 52% 65%, #fff 65% 72%, transparent 72%);
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.9));
+}
+
+.cm-lp-figure:hover .cm-lp-image-tools,
+.cm-lp-figure:focus-within .cm-lp-image-tools,
+.cm-lp-figure:hover .cm-lp-image-resize,
+.cm-lp-figure.is-resizing .cm-lp-image-resize {
+  opacity: 1;
+}
+
+.cm-lp-figure.is-resizing {
+  cursor: nwse-resize;
+  user-select: none;
+}
+
+/* Imágenes de la nota: un bloque del ancho de la imagen, sin pasar de la columna del texto */
+.cm-lp-figure.is-note {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+}
+
+@media (hover: none) {
+  .cm-lp-image-tools,
+  .cm-lp-image-resize {
+    opacity: 1;
+  }
+}
+
+/* Imagen ampliada a pantalla completa (ver openImageZoom) */
+.cm-lp-image-zoom {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.85);
+  cursor: zoom-out;
+}
+
+.cm-lp-image-zoom img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  cursor: zoom-in;
+}
+
+.cm-lp-image-zoom.is-actual-size {
+  display: block;
+  overflow: auto;
+}
+
+.cm-lp-image-zoom.is-actual-size img {
+  display: block;
+  max-width: none;
+  max-height: none;
+  margin: auto;
+  cursor: zoom-out;
+}
+
+.cm-lp-image-zoom-close {
+  position: fixed;
+  top: 12px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 24px;
+  line-height: 1;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+/* Celda con solo imágenes: el Markdown se oculta salvo con el foco en el input (botón </>) */
+.cm-lp-cell.is-only-images:not(:has(.cm-lp-cell-input:focus))::after {
+  display: none;
+}
+
+.cm-lp-cell.is-only-images:not(:has(.cm-lp-cell-input:focus)) .cm-lp-cell-input {
+  height: 0;
+  opacity: 0;
+}
+
+.cm-lp-table td.is-image-drop,
+.cm-lp-table th.is-image-drop {
+  outline: 2px dashed var(--interactive-accent);
+  outline-offset: -2px;
+}
+
+.reading-table-wrap td img:not([width]),
+.reading-table-wrap th img:not([width]) {
+  max-width: 240px;
+  max-height: 160px;
+  object-fit: contain;
+}
+
 .cm-lp-table-add {
   padding: 0;
   background: transparent;

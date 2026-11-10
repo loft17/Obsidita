@@ -9,6 +9,12 @@ import { StateEffect, StateField, Transaction, type EditorState, type Range } fr
 import { Decoration, EditorView, WidgetType, type DecorationSet } from '@codemirror/view';
 import { t, type MessageKey } from './i18n';
 import { useStore } from './store';
+import { attachmentUrl, parseSize } from './attachments';
+import { chooseImages, imageFiles, imageUrl, pastedName, uploadImages } from './imageUpload';
+import { notePath } from './notePath';
+import { findImages, imageFigure, imageWithWidth } from './imageTools';
+import { notify } from './toast';
+import { refreshWideTables } from './wideTables';
 
 type Align = 'left' | 'center' | 'right' | null;
 
@@ -282,7 +288,85 @@ const tableOf = (wrap: HTMLElement) => wrap.querySelector('table')!;
 const searchOf = (wrap: HTMLElement) => wrap.querySelector<HTMLInputElement>('input.cm-lp-table-search')!;
 const inputsOf = (wrap: HTMLElement) => [...tableOf(wrap).querySelectorAll<HTMLInputElement>('input.cm-lp-cell-input')];
 
-function makeCell(value: string, header: boolean, align: Align, auto = false) {
+// Imágenes de una celda: ![[imagen.png|200]] y ![alt|200](ruta). El input sigue mostrando el
+// Markdown; debajo se pintan las imágenes. Si la celda solo tiene imágenes, el texto se oculta
+// mientras no se edita la celda (botón </> de la imagen o llegando con el teclado)
+const noteOf = (wrap: TableDom) => wrap.cmView.state.facet(notePath)();
+
+// Muestra el Markdown de la imagen: foco en la celda con su texto seleccionado
+function showImageSource(sizer: HTMLElement, index: number) {
+  const input = sizer.querySelector<HTMLInputElement>('input.cm-lp-cell-input');
+  const target = input && findImages(input.value)[index];
+  if (!input || !target) return;
+  input.focus();
+  input.setSelectionRange(target.at, target.at + target.len);
+}
+
+// Solo puede crecer lo que queda libre a la derecha de la tabla: si no, las columnas siguientes
+// se saldrían del área visible. Si la tabla ya no cabe, solo se puede encoger
+function cellImageMax(sizer: HTMLElement, startW: number) {
+  const wrap = sizer.closest<HTMLElement>('.cm-lp-table-wrap');
+  const grid = wrap?.querySelector<HTMLElement>('.cm-lp-table-grid');
+  return wrap && grid ? startW + wrap.clientWidth - grid.offsetWidth : startW;
+}
+
+// Al soltar el tirador, el ancho se escribe en la celda pasando por el manejador de input de la
+// tabla (modelo, miniaturas y documento)
+function resizeCellImage(sizer: HTMLElement, index: number, width: number) {
+  const input = sizer.querySelector<HTMLInputElement>('input.cm-lp-cell-input');
+  const target = input && findImages(input.value)[index];
+  if (!input || !target) return;
+  const v = input.value;
+  input.value = v.slice(0, target.at) + imageWithWidth(v, target, width) + v.slice(target.at + target.len);
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function syncCellImages(sizer: HTMLElement, value: string, note: string) {
+  const imgs = findImages(value);
+  let rest = value;
+  for (const i of [...imgs].reverse()) rest = rest.slice(0, i.at) + rest.slice(i.at + i.len);
+  sizer.classList.toggle('is-only-images', imgs.length > 0 && !rest.trim());
+  let box = sizer.querySelector<HTMLElement>('.cm-lp-cell-images');
+  if (!imgs.length) {
+    box?.remove();
+    return;
+  }
+  // Mientras se escribe en la celda no se recargan las imágenes si no han cambiado
+  const key = imgs.map((i) => `${i.src}\u0000${i.alt}`).join('\u0001');
+  if (box?.dataset.key === key) return;
+  if (!box) {
+    box = document.createElement('span');
+    box.className = 'cm-lp-cell-images';
+    sizer.appendChild(box);
+  }
+  box.dataset.key = key;
+  const readOnly = !!sizer.querySelector<HTMLInputElement>('input.cm-lp-cell-input')?.readOnly;
+  box.replaceChildren(
+    ...imgs.map((i, index) => {
+      const { text, width, height } = parseSize(i.alt);
+      const figure = imageFigure({
+        src: attachmentUrl(i.src, note),
+        alt: text,
+        width,
+        height,
+        className: 'cm-lp-cell-image',
+        onSource: () => showImageSource(sizer, index),
+        resize: readOnly
+          ? undefined
+          : {
+              maxWidth: (startW) => cellImageMax(sizer, startW),
+              onMove: refreshWideTables, // con tablas a ancho completo, recentra la tabla mientras crece
+              onEnd: (w) => resizeCellImage(sizer, index, w),
+            },
+      });
+      // Clic en la imagen: el <label> no pasa el foco al input (el código solo se ve con el botón </>)
+      figure.addEventListener('click', (e) => e.preventDefault());
+      return figure;
+    }),
+  );
+}
+
+function makeCell(value: string, header: boolean, align: Align, auto = false, note = '') {
   const cell = document.createElement(header ? 'th' : 'td');
   if (align) cell.style.textAlign = align;
   // El <label> crece con el texto gracias al ::after con data-value (ver CSS)
@@ -300,6 +384,12 @@ function makeCell(value: string, header: boolean, align: Align, auto = false) {
     cell.classList.add('is-auto');
   }
   sizer.appendChild(input);
+  // Celda con solo imágenes: un clic en ella (fuera del botón </>) no pasa el foco al input, así
+  // el código de la imagen no se ve
+  sizer.addEventListener('click', (e) => {
+    if (sizer.classList.contains('is-only-images') && e.target !== input) e.preventDefault();
+  });
+  syncCellImages(sizer, value, note);
   cell.appendChild(sizer);
   return cell;
 }
@@ -409,7 +499,7 @@ function renderHead(wrap: TableDom) {
   const tr = document.createElement('tr');
   tr.dataset.idx = '-1';
   model.head.forEach((value, col) => {
-    const th = makeCell(value, true, model.aligns[col]);
+    const th = makeCell(value, true, model.aligns[col], false, noteOf(wrap));
     const rule = view.sorts.find((s) => s.col === col);
     const grip = makeGrip(t('table.dragColumn'), true);
     grip.addEventListener('dragstart', (e) => startDrag(wrap, e, 'col', col, th));
@@ -449,7 +539,8 @@ function makeBodyRow(wrap: TableDom, i: number) {
   const tr = document.createElement('tr');
   tr.dataset.idx = String(i);
   const auto = numberedCols(model.head, wrap.cmNames);
-  model.body[i].forEach((value, col) => tr.appendChild(makeCell(value, false, model.aligns[col], auto[col])));
+  const note = noteOf(wrap);
+  model.body[i].forEach((value, col) => tr.appendChild(makeCell(value, false, model.aligns[col], auto[col], note)));
   const act = document.createElement('td');
   act.className = 'cm-lp-table-act';
   // Mover filas solo sin orden ni filtro: si no, la posición en pantalla no es la del archivo
@@ -1088,6 +1179,114 @@ function pasteGrid(wrap: TableDom, input: HTMLInputElement, grid: string[][]) {
   focusCell(wrap, start, startCol);
 }
 
+// Escribe texto en la posición del cursor de la celda, como si se tecleara (pasa por el evento input)
+function insertInCell(input: HTMLInputElement, text: string) {
+  const start = input.selectionStart ?? input.value.length;
+  const end = input.selectionEnd ?? start;
+  input.setRangeText(text, start, end, 'end');
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+// Sube imágenes y las enlaza en la celda, donde estaba el cursor. Mientras se suben se puede seguir
+// editando: la celda se localiza otra vez al acabar (la fila puede haberse movido)
+async function insertCellImages(
+  wrap: TableDom,
+  input: HTMLInputElement,
+  files: File[],
+  named: (f: File) => string,
+  range?: [number, number],
+) {
+  const td = input.closest('td, th') as HTMLTableCellElement;
+  const idx = Number((td.parentElement as HTMLElement).dataset.idx);
+  const col = td.cellIndex;
+  const model = wrap.cmTable.model;
+  const row = idx < 0 ? model.head : model.body[idx];
+  // Sin foco en la celda (p. ej. al soltar), al final del texto
+  const focused = document.activeElement === input;
+  const [start, end] =
+    range ?? (focused ? [input.selectionStart ?? input.value.length, input.selectionEnd ?? input.value.length] : [input.value.length, input.value.length]);
+  let links: string[];
+  try {
+    links = await uploadImages(noteOf(wrap), files, named);
+  } catch (err) {
+    notify('imageUpload', t('image.uploadError', { error: (err as Error).message }), 'error');
+    return;
+  }
+  // Tabla cerrada o recargada desde fuera (deshacer, otra nota…): la imagen queda subida sin enlazar
+  const m = wrap.cmTable.model;
+  if (!wrap.isConnected || m !== model || (row !== m.head && !m.body.includes(row)) || col >= row.length) return;
+  const value = row[col];
+  const a = Math.min(start, value.length);
+  const b = Math.min(end, value.length);
+  // Separadas por un espacio de lo que haya alrededor (la celda es una sola línea)
+  const before = a > 0 && !/\s$/.test(value.slice(0, a)) ? ' ' : '';
+  const after = b < value.length && !/^\s/.test(value.slice(b)) ? ' ' : '';
+  const text = before + links.join(' ') + after;
+  row[col] = value.slice(0, a) + text + value.slice(b);
+  commit(wrap, 'input.table');
+  const at = row === m.head ? -1 : m.body.indexOf(row);
+  const table = tableOf(wrap);
+  const tr = at < 0 ? table.tHead?.rows[0] : table.tBodies[0].querySelector<HTMLTableRowElement>(`tr[data-idx="${at}"]`);
+  const cellInput = tr?.cells[col]?.querySelector<HTMLInputElement>('input.cm-lp-cell-input');
+  if (cellInput) {
+    cellInput.value = row[col];
+    const sizer = cellInput.parentElement as HTMLElement;
+    sizer.dataset.value = row[col];
+    syncCellImages(sizer, row[col], noteOf(wrap));
+    cellInput.focus();
+    cellInput.setSelectionRange(a + text.length, a + text.length);
+  }
+  markMatches(wrap);
+}
+
+// Botón «Insertar imagen» de la barra con el foco en una celda: la imagen va a la celda, no al
+// documento (allí el cursor está al inicio de la tabla). Devuelve false si el foco no está en una celda
+export function pickImagesForCell(view: EditorView): boolean {
+  const input = document.activeElement;
+  if (!(input instanceof HTMLInputElement) || !input.classList.contains('cm-lp-cell-input')) return false;
+  if (!view.dom.contains(input) || input.readOnly) return false;
+  const wrap = input.closest<HTMLElement>('.cm-lp-table-wrap') as TableDom | null;
+  if (!wrap) return false;
+  // El selector de archivos quita el foco: el cursor se guarda antes de abrirlo
+  const range: [number, number] = [input.selectionStart ?? input.value.length, input.selectionEnd ?? input.value.length];
+  chooseImages((files, named) => void insertCellImages(wrap, input, files, named, range));
+  return true;
+}
+
+// Soltar archivos de imagen sobre una celda
+const hasFiles = (e: DragEvent) => [...(e.dataTransfer?.items ?? [])].some((i) => i.kind === 'file');
+
+function dropCellInput(e: DragEvent) {
+  const td = e.target instanceof Element ? e.target.closest('td, th') : null;
+  const input = td?.querySelector<HTMLInputElement>('input.cm-lp-cell-input');
+  return input && !input.readOnly ? input : null;
+}
+
+function clearFileDrop(wrap: HTMLElement) {
+  wrap.querySelectorAll('.is-image-drop').forEach((el) => el.classList.remove('is-image-drop'));
+}
+
+function onFileDragOver(wrap: TableDom, e: DragEvent) {
+  if (!hasFiles(e)) return;
+  // Siempre se evita el comportamiento por defecto: el navegador abriría el archivo
+  e.preventDefault();
+  const input = dropCellInput(e);
+  const td = input?.closest('td, th');
+  if (e.dataTransfer) e.dataTransfer.dropEffect = input ? 'copy' : 'none';
+  if (td?.classList.contains('is-image-drop')) return;
+  clearFileDrop(wrap);
+  td?.classList.add('is-image-drop');
+}
+
+function onFileDrop(wrap: TableDom, e: DragEvent) {
+  if (!hasFiles(e)) return;
+  e.preventDefault();
+  clearFileDrop(wrap);
+  const input = dropCellInput(e);
+  const files = imageFiles(e.dataTransfer?.files);
+  if (input && files.length) void insertCellImages(wrap, input, files, (f) => f.name);
+}
+
 // Arrastrar filas y columnas. Los dos usan `moveOrder` para calcular el nuevo orden
 interface DragState {
   kind: 'row' | 'col';
@@ -1393,6 +1592,7 @@ class TableWidget extends WidgetType {
       const m = wrap.cmTable.model;
       (idx < 0 ? m.head : m.body[idx])[td.cellIndex] = target.value;
       (target.parentElement as HTMLElement).dataset.value = target.value;
+      syncCellImages(target.parentElement as HTMLElement, target.value, noteOf(wrap));
       commit(wrap, 'input.table');
       markMatches(wrap);
     });
@@ -1404,14 +1604,37 @@ class TableWidget extends WidgetType {
     wrap.addEventListener('paste', (e) => {
       const target = e.target as HTMLElement;
       if (!target.classList.contains('cm-lp-cell-input')) return;
+      const input = target as HTMLInputElement;
+      // Imagen del portapapeles: se sube como adjunto y se enlaza en la celda
+      const files = imageFiles(e.clipboardData?.files);
+      if (files.length) {
+        e.preventDefault();
+        if (!input.readOnly) void insertCellImages(wrap, input, files, pastedName);
+        return;
+      }
       // Un texto sin tabuladores ni saltos de línea se pega normal, dentro de la celda
       const text = (e.clipboardData?.getData('text/plain') ?? '').replace(/\r?\n$/, '');
+      const url = imageUrl(text);
+      if (url && !input.readOnly) {
+        e.preventDefault();
+        insertInCell(input, `![](${url})`);
+        return;
+      }
       if (!/[\t\n]/.test(text)) return;
       e.preventDefault();
       pasteGrid(wrap, target as HTMLInputElement, parseClipboard(text));
     });
-    wrap.addEventListener('dragover', (e) => onDragOver(wrap, e));
-    wrap.addEventListener('drop', (e) => onDrop(wrap, e));
+    wrap.addEventListener('dragover', (e) => {
+      if (!drag) onFileDragOver(wrap, e);
+      else onDragOver(wrap, e);
+    });
+    wrap.addEventListener('dragleave', (e) => {
+      if (!drag && !wrap.contains(e.relatedTarget as Node | null)) clearFileDrop(wrap);
+    });
+    wrap.addEventListener('drop', (e) => {
+      if (!drag) onFileDrop(wrap, e);
+      else onDrop(wrap, e);
+    });
     wrap.addEventListener('dragend', () => clearDrag(wrap));
     // Al salir de la tabla tras editar una celda, las filas se colocan según el orden activo.
     // Mientras se navega entre celdas no se mueven (no cambiaría la fila bajo el cursor)
