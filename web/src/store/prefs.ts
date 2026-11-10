@@ -66,6 +66,9 @@ export interface PrefsSlice {
   setShowRibbon: (show: boolean) => void;
   pdfViewer: boolean;
   setPdfViewer: (enabled: boolean) => void;
+  // Al entrar, volver a abrir las pestañas que estaban abiertas (ver session.ts)
+  restoreTabs: boolean;
+  setRestoreTabs: (enabled: boolean) => void;
   imageFormat: ImageFormat;
   setImageFormat: (format: ImageFormat) => void;
   imageQuality: number;
@@ -114,6 +117,7 @@ const KEYS = {
   ribbon: synced('showRibbon'),
   // Abrir los PDF con el visor nativo del navegador en vez de ofrecer descargarlos
   pdfViewer: synced('pdfViewer'),
+  restoreTabs: synced('restoreTabs'),
   imageFormat: synced('imageFormat'),
   imageQuality: synced('imageQuality'),
   tableNumberColumns: synced('tableNumberColumns'),
@@ -211,6 +215,7 @@ const readPrefs = () => ({
   showTabHeader: readBool(KEYS.tabHeader, true),
   showRibbon: readBool(KEYS.ribbon, true),
   pdfViewer: readBool(KEYS.pdfViewer, false),
+  restoreTabs: readBool(KEYS.restoreTabs, false),
   imageFormat: readImageFormat(),
   imageQuality: readNumber(KEYS.imageQuality, DEFAULT_IMAGE_QUALITY, clampQuality),
   tableNumberColumns: readString(KEYS.tableNumberColumns),
@@ -368,6 +373,7 @@ export const createPrefsSlice: StateCreator<AppStore, [], [], PrefsSlice> = (set
     setShowTabHeader: boolPref('showTabHeader', KEYS.tabHeader),
     setShowRibbon: boolPref('showRibbon', KEYS.ribbon),
     setPdfViewer: boolPref('pdfViewer', KEYS.pdfViewer),
+    setRestoreTabs: boolPref('restoreTabs', KEYS.restoreTabs),
     setImageFormat: (format) => {
       save(KEYS.imageFormat, format === 'original' ? null : format);
       set({ imageFormat: format });

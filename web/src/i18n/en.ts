@@ -402,6 +402,8 @@ export const en: Messages = {
   'settings.defaultMode.desc': 'How notes open when you select them',
   'settings.defaultMode.view': 'Reading mode',
   'settings.defaultMode.edit': 'Editing mode',
+  'settings.restoreTabs': 'Restore tabs on startup',
+  'settings.restoreTabs.desc': 'When you sign in, reopen the notes you had open in this browser last time.',
   'settings.display': 'Display',
   'settings.inlineTitle': 'Inline title',
   'settings.inlineTitle.desc': 'Show the file name as an editable title inline with the file contents.',

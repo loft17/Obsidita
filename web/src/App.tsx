@@ -4,6 +4,7 @@ import Setup from './components/Setup';
 import Login from './components/Login';
 import { useStore } from './store';
 import { pullPrefs } from './store/prefsSync';
+import { restoreSession } from './store/session';
 import { t, useT } from './i18n';
 import log from './logger';
 
@@ -35,6 +36,7 @@ export default function App() {
             setTree(tree);
             // Las preferencias del servidor (las de todos los dispositivos) antes de pintar
             await pullPrefs(true);
+            restoreSession();
             setAppState('main');
           } catch {
             setAppState('login');
@@ -66,6 +68,7 @@ export default function App() {
       const tree = await filesApi.getTree();
       setTree(tree);
       await pullPrefs(true);
+      restoreSession();
       setError('');
       setAppState('main');
     } catch (err) {

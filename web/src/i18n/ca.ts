@@ -405,6 +405,8 @@ export const ca: Messages = {
   'settings.defaultMode.desc': "Com s'obren les notes en seleccionar-les",
   'settings.defaultMode.view': 'Mode lectura',
   'settings.defaultMode.edit': 'Mode edició',
+  'settings.restoreTabs': "Restaura les pestanyes en obrir",
+  'settings.restoreTabs.desc': "En entrar, torna a obrir les notes que tenies obertes en aquest navegador l'última vegada.",
   'settings.display': 'Pantalla',
   'settings.inlineTitle': 'Títol en línia',
   'settings.inlineTitle.desc': 'Mostra el nom del fitxer com un títol editable en línia amb el contingut del fitxer.',

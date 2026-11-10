@@ -402,6 +402,8 @@ export const es = {
   'settings.defaultMode.desc': 'Cómo se abren las notas al seleccionarlas',
   'settings.defaultMode.view': 'Modo visor',
   'settings.defaultMode.edit': 'Modo edición',
+  'settings.restoreTabs': 'Restaurar pestañas al abrir',
+  'settings.restoreTabs.desc': 'Al entrar, vuelve a abrir las notas que tenías abiertas en este navegador la última vez.',
   'settings.display': 'Pantalla',
   'settings.inlineTitle': 'Título en línea',
   'settings.inlineTitle.desc':

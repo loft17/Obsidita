@@ -459,6 +459,8 @@ function RemoteImagesSetting() {
 function EditorSection() {
   const defaultEditMode = useStore((s) => s.defaultEditMode);
   const setDefaultEditMode = useStore((s) => s.setDefaultEditMode);
+  const restoreTabs = useStore((s) => s.restoreTabs);
+  const setRestoreTabs = useStore((s) => s.setRestoreTabs);
   const showInlineTitle = useStore((s) => s.showInlineTitle);
   const setShowInlineTitle = useStore((s) => s.setShowInlineTitle);
   const showLineNumbers = useStore((s) => s.showLineNumbers);
@@ -487,6 +489,16 @@ function EditorSection() {
             <option value="view">{t('settings.defaultMode.view')}</option>
             <option value="edit">{t('settings.defaultMode.edit')}</option>
           </select>
+        </div>
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.restoreTabs')}</div>
+            <div className="setting-desc">{t('settings.restoreTabs.desc')}</div>
+          </div>
+          <label className="setting-toggle">
+            <input type="checkbox" checked={restoreTabs} onChange={(e) => setRestoreTabs(e.target.checked)} />
+            <span />
+          </label>
         </div>
       </div>
       <h3 className="settings-heading">{t('settings.behavior')}</h3>
