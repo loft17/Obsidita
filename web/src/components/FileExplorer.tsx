@@ -436,15 +436,17 @@ export default function FileExplorer() {
   // árbol y se selecciona. Se pinta tras hacer scroll, así que el foco va por `pendingFocus`
   useEffect(() => {
     if (!revealRequest) return;
-    const { path } = revealRequest;
+    const { path, focus } = revealRequest;
     useStore.getState().clearRevealRequest();
     const index = flatItems.findIndex((f) => f.item.path === path);
     const container = explorerRef.current;
     if (index < 0 || !container) return;
-    setRevealedPath(path);
     setFocusedPath(path);
     container.scrollTop = Math.max(0, index * ITEM_HEIGHT - container.clientHeight / 2);
     updateRange(container);
+    // Al abrir una nota desde la búsqueda basta con la marca de nota activa; el foco sigue en la nota
+    if (!focus) return;
+    setRevealedPath(path);
     pendingFocus.current = path;
   }, [revealRequest, flatItems]);
 

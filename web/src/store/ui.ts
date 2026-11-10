@@ -28,8 +28,11 @@ export interface UiSlice {
   collapseAll: () => void;
   // Carpeta pedida desde fuera del árbol (el breadcrumb): el explorador la muestra y la selecciona.
   // `seq` permite repetir la petición con la misma carpeta
-  revealRequest: { path: string; seq: number } | null;
+  // `focus`: el elemento recibe el foco y el sombreado (breadcrumb); si no, solo se desplaza hasta él
+  revealRequest: { path: string; seq: number; focus: boolean } | null;
   revealFolder: (path: string) => void;
+  // Vuelve al explorador de archivos con la nota visible (sus carpetas desplegadas), sin quitar el foco
+  revealFile: (path: string) => void;
   clearRevealRequest: () => void;
   // Ancho de la barra lateral en el escritorio (px), ajustable arrastrando su borde
   sidebarWidth: number;
@@ -82,7 +85,18 @@ export const createUiSlice: StateCreator<AppStore, [], [], UiSlice> = (set) => (
         expandedFolders: expanded,
         sidebarOpen: true,
         sidebarView: 'files',
-        revealRequest: { path, seq: (state.revealRequest?.seq ?? 0) + 1 },
+        revealRequest: { path, seq: (state.revealRequest?.seq ?? 0) + 1, focus: true },
+      };
+    }),
+  revealFile: (path) =>
+    set((state) => {
+      const expanded = new Set(state.expandedFolders);
+      const parts = path.split('/');
+      for (let i = 1; i < parts.length; i++) expanded.add(parts.slice(0, i).join('/'));
+      return {
+        expandedFolders: expanded,
+        sidebarView: 'files',
+        revealRequest: { path, seq: (state.revealRequest?.seq ?? 0) + 1, focus: false },
       };
     }),
   clearRevealRequest: () => set({ revealRequest: null }),

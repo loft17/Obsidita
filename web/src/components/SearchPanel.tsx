@@ -5,6 +5,7 @@ import type { SearchResult, SearchMatch } from '../types';
 import { parentFolder } from '../paths';
 import { useT } from '../i18n';
 import { setPendingLine } from '../wikilinks';
+import { isMobile } from '../mobile';
 import { IconChevronRight, IconChevronDown, IconClose, IconSearch } from './Icons';
 
 // Enter/Espacio activan un elemento con role="button"; se ignoran las teclas
@@ -38,6 +39,7 @@ export default function SearchPanel() {
   const hiddenFolders = useStore((s) => s.hiddenFolders);
   const activeTab = useStore((s) => s.activeTab);
   const openFile = useStore((s) => s.openFile);
+  const revealFile = useStore((s) => s.revealFile);
   const query = useStore((s) => s.searchQuery);
   const setQuery = useStore((s) => s.setSearchQuery);
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -168,10 +170,15 @@ export default function SearchPanel() {
         {visible.map((r) => {
           const isOpen = !collapsed.has(r.path);
           const hasMatches = r.matches.length > 0;
-          const openResult = () => {
-            if (r.matches.length > 0) setPendingLine(r.path, r.matches[0].line);
+          // Abre la nota y vuelve al explorador con ella seleccionada (la búsqueda se conserva)
+          const open = (line?: number) => {
+            if (line !== undefined) setPendingLine(r.path, line);
             openFile(r.path, r.name);
+            revealFile(r.path);
+            // En el móvil la barra lateral tapa la nota
+            if (isMobile()) useStore.setState({ sidebarOpen: false });
           };
+          const openResult = () => open(r.matches[0]?.line);
           return (
             <div key={r.path} className="search-result">
               <div
@@ -214,10 +221,7 @@ export default function SearchPanel() {
               {hasMatches && isOpen && (
                 <div className="search-matches">
                   {r.matches.map((m, i) => {
-                    const openMatch = () => {
-                      setPendingLine(r.path, m.line);
-                      openFile(r.path, r.name);
-                    };
+                    const openMatch = () => open(m.line);
                     return (
                       <div
                         key={i}
