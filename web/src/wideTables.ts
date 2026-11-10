@@ -4,7 +4,8 @@
 // desde CSS no hay forma fiable de medir ese hueco.
 
 const GUTTER = 16; // margen con el borde del área de la nota
-const TABLE_SELECTOR = '.cm-lp-table-wrap, .reading-view table';
+// En el visor las tablas van dentro de .reading-table-wrap (con su barra), ver readingTables.ts
+const TABLE_SELECTOR = '.cm-lp-table-wrap, .reading-table-wrap, .reading-view table:not(.reading-table-wrap > table)';
 const SCROLLER_SELECTOR = '.cm-scroller, .reading-view';
 
 let started = false;
@@ -33,7 +34,7 @@ const fit = (table: HTMLElement) => {
   const available = scroller.clientWidth - 2 * GUTTER;
   const current = table.getBoundingClientRect();
   const targetLeft = box.left + scroller.clientLeft + GUTTER;
-  if (table.tagName === 'TABLE') {
+  if (table.tagName === 'TABLE' || table.classList.contains('reading-table-wrap')) {
     // Visor: la tabla toma su ancho natural (sin estirarse) hasta el ancho disponible, y se centra
     table.style.width = 'max-content';
     table.style.maxWidth = `${available}px`;

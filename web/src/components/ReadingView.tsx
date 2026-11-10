@@ -24,6 +24,7 @@ import { MERMAID_ENABLED, cachedDiagram, currentDiagramTheme, renderMermaidDiagr
 import { t, useI18n } from '../i18n';
 import { fileName } from '../paths';
 import { copyText } from '../clipboard';
+import { enhanceReadingTables, refreshReadingTables } from '../readingTables';
 
 const md = markdownIt({
   html: false,
@@ -32,20 +33,35 @@ const md = markdownIt({
 });
 
 // Comentario `<!-- table-view: … -->` que guarda el orden y el filtro de una tabla (lo escribe
-// web/src/liveTables.ts): se consume como bloque vacío, para que no aparezca como texto
-const TABLE_VIEW_LINE = /^<!--\s*table-view:.*-->\s*$/;
+// web/src/liveTables.ts): no se pinta, pero su vista pasa a la tabla de debajo como
+// `data-table-view`, y el visor la aplica al abrir la nota (ver readingTables.ts)
+const TABLE_VIEW_LINE = /^<!--\s*table-view:(.*)-->\s*$/;
 md.block.ruler.before(
   'html_block',
   'table_view_comment',
   (state, startLine, _endLine, silent) => {
     const start = state.bMarks[startLine] + state.tShift[startLine];
     const line = state.src.slice(start, state.eMarks[startLine]);
-    if (!TABLE_VIEW_LINE.test(line)) return false;
-    if (!silent) state.line = startLine + 1;
+    const m = TABLE_VIEW_LINE.exec(line);
+    if (!m) return false;
+    if (!silent) {
+      state.push('table_view', '', 0).meta = { json: m[1].trim() };
+      state.line = startLine + 1;
+    }
     return true;
   },
   { alt: ['paragraph'] },
 );
+
+md.core.ruler.after('block', 'table_view_attr', (state) => {
+  const tokens = state.tokens;
+  for (let i = 0; i < tokens.length - 1; i++) {
+    if (tokens[i].type === 'table_view' && tokens[i + 1].type === 'table_open')
+      tokens[i + 1].attrSet('data-table-view', String(tokens[i].meta?.json ?? ''));
+  }
+});
+
+md.renderer.rules.table_view = () => '';
 
 // Línea de origen (0-indexed sobre el cuerpo) en cada bloque, para saltar a resultados de búsqueda.
 // Las notas incrustadas no la llevan: sus líneas son de otra nota
@@ -524,7 +540,15 @@ export default function ReadingView({ content, filePath, onContentChange }: Prop
     if (!contentRef.current) return;
     highlightCodeBlocks(contentRef.current);
     renderMermaidDiagrams(contentRef.current, t('mermaid.error'));
+    // Barra de búsqueda, filtros y orden de las tablas (solo vista: no toca el archivo)
+    enhanceReadingTables(contentRef.current, notePath);
   }, [html]);
+
+  // El ajuste «buscar ocultando filas» cambia cómo se aplica la búsqueda
+  const tableSearchFilters = useStore((s) => s.tableSearchFilters);
+  useEffect(() => {
+    if (contentRef.current) refreshReadingTables(contentRef.current);
+  }, [tableSearchFilters]);
 
   // Clic en una casilla: se cambia en el texto de la nota y se guarda
   const toggleTaskAt = (line: number, checked: boolean) => {

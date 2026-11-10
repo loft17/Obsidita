@@ -18,20 +18,20 @@ interface TableModel {
   aligns: Align[];
 }
 
-interface SortRule {
+export interface SortRule {
   col: number;
   dir: 'asc' | 'desc';
 }
 
-type FilterOp = 'contains' | 'notContains' | 'equals' | 'empty' | 'notEmpty';
+export type FilterOp = 'contains' | 'notContains' | 'equals' | 'empty' | 'notEmpty';
 
-interface FilterRule {
+export interface FilterRule {
   col: number; // -1 = cualquier columna
   op: FilterOp;
   value: string;
 }
 
-interface TableView {
+export interface TableView {
   sorts: SortRule[]; // el primer criterio manda; los siguientes desempatan
   filters: FilterRule[]; // todos deben cumplirse
   query: string; // búsqueda global
@@ -53,8 +53,8 @@ interface TableDom extends HTMLElement {
 }
 
 const VIEW_LINE_RE = /^<!--\s*table-view:(.*)-->\s*$/;
-const FILTER_OPS: FilterOp[] = ['contains', 'notContains', 'equals', 'empty', 'notEmpty'];
-const OP_KEY: Record<FilterOp, MessageKey> = {
+export const FILTER_OPS: FilterOp[] = ['contains', 'notContains', 'equals', 'empty', 'notEmpty'];
+export const OP_KEY: Record<FilterOp, MessageKey> = {
   contains: 'table.op.contains',
   notContains: 'table.op.notContains',
   equals: 'table.op.equals',
@@ -114,13 +114,18 @@ function serializeTable({ head, body, aligns }: TableModel) {
 // Vista guardada en el comentario:
 // `{"sorts":[{"col":1,"dir":"desc"}],"filters":[{"col":0,"op":"contains","value":"x"}],"query":"t"}`
 function parseSource(source: string): { view: TableView; table: string } {
-  const view: TableView = { sorts: [], filters: [], query: '' };
   const nl = source.indexOf('\n');
   const first = nl < 0 ? source : source.slice(0, nl);
   const m = VIEW_LINE_RE.exec(first);
-  if (!m) return { view, table: source };
+  if (!m) return { view: { sorts: [], filters: [], query: '' }, table: source };
+  return { view: parseViewJson(m[1]), table: nl < 0 ? '' : source.slice(nl + 1) };
+}
+
+// JSON del comentario `table-view` → vista (también lo usa el visor, ver readingTables.ts)
+export function parseViewJson(json: string): TableView {
+  const view: TableView = { sorts: [], filters: [], query: '' };
   try {
-    const o = JSON.parse(m[1]);
+    const o = JSON.parse(json);
     if (Array.isArray(o.sorts)) {
       for (const s of o.sorts) {
         if (Number.isInteger(s?.col) && s.col >= 0) view.sorts.push({ col: s.col, dir: s.dir === 'desc' ? 'desc' : 'asc' });
@@ -140,7 +145,7 @@ function parseSource(source: string): { view: TableView; table: string } {
   } catch {
     // comentario dañado: se ignora y la tabla se muestra sin orden ni filtros
   }
-  return { view, table: nl < 0 ? '' : source.slice(nl + 1) };
+  return view;
 }
 
 function formatSource(st: TableState) {
@@ -167,7 +172,7 @@ function loadState(source: string, searchFilters: boolean): TableState {
 }
 
 // Para buscar: sin mayúsculas ni tildes
-const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+export const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 function toNum(v: string): number | null {
   const s = v.replace(/\s/g, '').replace(',', '.');
@@ -184,7 +189,7 @@ function compareCells(a: string, b: string, dir: number) {
 }
 
 // Varias ordenaciones: cada criterio desempata al anterior
-function compareByRules(a: string[], b: string[], sorts: SortRule[]): number {
+export function compareByRules(a: string[], b: string[], sorts: SortRule[]): number {
   for (const s of sorts) {
     const r = compareCells(a[s.col] ?? '', b[s.col] ?? '', s.dir === 'asc' ? 1 : -1);
     if (r) return r;
@@ -194,7 +199,7 @@ function compareByRules(a: string[], b: string[], sorts: SortRule[]): number {
 
 // Un filtro sobre una fila. Con "cualquier columna", las condiciones positivas basta con que
 // se cumplan en una celda y las negativas tienen que cumplirse en todas
-function matchesFilter(row: string[], f: FilterRule): boolean {
+export function matchesFilter(row: string[], f: FilterRule): boolean {
   const v = fold(f.value.trim());
   const test = (cell: string) => {
     const x = fold(cell.trim());
@@ -299,7 +304,7 @@ function makeCell(value: string, header: boolean, align: Align, auto = false) {
   return cell;
 }
 
-function makeBtn(cls: string, text: string, title: string, onClick: () => void) {
+export function makeBtn(cls: string, text: string, title: string, onClick: () => void) {
   const b = document.createElement('button');
   b.type = 'button';
   b.className = `cm-lp-table-btn ${cls}`;
@@ -779,11 +784,11 @@ function applySortToFile(wrap: TableDom) {
 let closePanel: (() => void) | null = null;
 let panelAnchor: HTMLElement | null = null;
 
-function headName(st: TableState, c: number) {
-  return st.model.head[c]?.trim() || t('table.columnN', { n: c + 1 });
+function headName(head: string[], c: number) {
+  return head[c]?.trim() || t('table.columnN', { n: c + 1 });
 }
 
-function makeSelect(options: [string, string][], value: string, onChange: (value: string) => void) {
+export function makeSelect(options: [string, string][], value: string, onChange: (value: string) => void) {
   const sel = document.createElement('select');
   sel.className = 'cm-lp-panel-select';
   for (const [v, label] of options) {
@@ -824,7 +829,7 @@ function panelButton(cls: string, label: string, onClick: () => void, disabled =
   return b;
 }
 
-function panelHint(text: string) {
+export function panelHint(text: string) {
   const p = document.createElement('div');
   p.className = 'cm-lp-panel-hint';
   p.textContent = text;
@@ -832,17 +837,16 @@ function panelHint(text: string) {
 }
 
 // Primera columna que aún no es criterio de orden
-function firstFreeCol(st: TableState, sorts: SortRule[]) {
+function firstFreeCol(cols: number, sorts: SortRule[]) {
   const used = new Set(sorts.map((s) => s.col));
   let c = 0;
-  while (used.has(c) && c < st.model.head.length - 1) c++;
+  while (used.has(c) && c < cols - 1) c++;
   return c;
 }
 
-function drawSortPanel(wrap: TableDom, panel: HTMLElement, redraw: () => void) {
-  const st = wrap.cmTable;
-  const v = st.view;
-  const heads: [string, string][] = st.model.head.map((_, c) => [String(c), headName(st, c)]);
+// Criterios de orden del panel (editor y visor). `onChange` aplica los criterios tras cada cambio
+export function drawSortRules(panel: HTMLElement, head: string[], v: TableView, onChange: () => void, redraw: () => void) {
+  const heads: [string, string][] = head.map((_, c) => [String(c), headName(head, c)]);
   panel.replaceChildren();
   if (!v.sorts.length) panel.appendChild(panelHint(t('table.noSorts')));
   v.sorts.forEach((rule, i) => {
@@ -850,7 +854,7 @@ function drawSortPanel(wrap: TableDom, panel: HTMLElement, redraw: () => void) {
     row.append(
       makeSelect(heads, String(rule.col), (val) => {
         rule.col = Number(val);
-        setSorts(wrap, v.sorts);
+        onChange();
         redraw();
       }),
       makeSelect(
@@ -861,13 +865,13 @@ function drawSortPanel(wrap: TableDom, panel: HTMLElement, redraw: () => void) {
         rule.dir,
         (val) => {
           rule.dir = val === 'desc' ? 'desc' : 'asc';
-          setSorts(wrap, v.sorts);
+          onChange();
           redraw();
         },
       ),
       panelDel(t('table.removeRule'), () => {
         v.sorts.splice(i, 1);
-        setSorts(wrap, v.sorts);
+        onChange();
         redraw();
       }),
     );
@@ -875,11 +879,17 @@ function drawSortPanel(wrap: TableDom, panel: HTMLElement, redraw: () => void) {
   });
   panel.appendChild(
     panelButton('cm-lp-panel-add', t('table.addSort'), () => {
-      v.sorts.push({ col: firstFreeCol(st, v.sorts), dir: 'asc' });
-      setSorts(wrap, v.sorts);
+      v.sorts.push({ col: firstFreeCol(head.length, v.sorts), dir: 'asc' });
+      onChange();
       redraw();
     }),
   );
+}
+
+function drawSortPanel(wrap: TableDom, panel: HTMLElement, redraw: () => void) {
+  const st = wrap.cmTable;
+  const v = st.view;
+  drawSortRules(panel, st.model.head, v, () => setSorts(wrap, v.sorts), redraw);
   // Con el ajuste activo el orden ya se escribe en el archivo: no hace falta aplicarlo a mano
   if (!sortOnFile()) {
     const sep = document.createElement('div');
@@ -892,12 +902,11 @@ function drawSortPanel(wrap: TableDom, panel: HTMLElement, redraw: () => void) {
   }
 }
 
-function drawFilterPanel(wrap: TableDom, panel: HTMLElement, redraw: () => void) {
-  const st = wrap.cmTable;
-  const v = st.view;
+// Filtros del panel (editor y visor). `onChange` vuelve a aplicar la vista tras cada cambio
+export function drawFilterRules(panel: HTMLElement, head: string[], v: TableView, onChange: () => void, redraw: () => void) {
   const heads: [string, string][] = [
     ['-1', t('table.anyColumn')],
-    ...st.model.head.map((_, c): [string, string] => [String(c), headName(st, c)]),
+    ...head.map((_, c): [string, string] => [String(c), headName(head, c)]),
   ];
   panel.replaceChildren();
   if (!v.filters.length) panel.appendChild(panelHint(t('table.noFilters')));
@@ -906,8 +915,7 @@ function drawFilterPanel(wrap: TableDom, panel: HTMLElement, redraw: () => void)
     row.append(
       makeSelect(heads, String(rule.col), (val) => {
         rule.col = Number(val);
-        renderBody(wrap);
-        persistViewLater(wrap);
+        onChange();
         redraw();
       }),
       makeSelect(
@@ -915,8 +923,7 @@ function drawFilterPanel(wrap: TableDom, panel: HTMLElement, redraw: () => void)
         rule.op,
         (val) => {
           rule.op = val as FilterOp;
-          renderBody(wrap);
-          persistViewLater(wrap);
+          onChange();
           redraw();
         },
       ),
@@ -932,16 +939,14 @@ function drawFilterPanel(wrap: TableDom, panel: HTMLElement, redraw: () => void)
       // Sin volver a pintar el panel: así no se pierde el foco al escribir
       input.addEventListener('input', () => {
         rule.value = input.value;
-        renderBody(wrap);
-        persistViewLater(wrap);
+        onChange();
       });
       row.appendChild(input);
     }
     row.appendChild(
       panelDel(t('table.removeRule'), () => {
         v.filters.splice(i, 1);
-        renderBody(wrap);
-        persistViewLater(wrap);
+        onChange();
         redraw();
       }),
     );
@@ -950,15 +955,29 @@ function drawFilterPanel(wrap: TableDom, panel: HTMLElement, redraw: () => void)
   panel.appendChild(
     panelButton('cm-lp-panel-add', t('table.addFilter'), () => {
       v.filters.push({ col: -1, op: 'contains', value: '' });
-      renderBody(wrap);
-      persistViewLater(wrap);
+      onChange();
       redraw();
     }),
   );
 }
 
+function drawFilterPanel(wrap: TableDom, panel: HTMLElement, redraw: () => void) {
+  const st = wrap.cmTable;
+  drawFilterRules(panel, st.model.head, st.view, () => {
+    renderBody(wrap);
+    persistViewLater(wrap);
+  }, redraw);
+}
+
 // Abre el panel junto a `anchor`. Pulsar el mismo botón otra vez lo cierra
 function openPanel(wrap: TableDom, kind: 'sort' | 'filter', anchor: HTMLElement) {
+  openFloatingPanel(anchor, (panel, redraw) =>
+    kind === 'sort' ? drawSortPanel(wrap, panel, redraw) : drawFilterPanel(wrap, panel, redraw),
+  );
+}
+
+// Panel flotante genérico (también lo usa el visor): `draw` lo rellena y recibe cómo repintarlo
+export function openFloatingPanel(anchor: HTMLElement, draw: (panel: HTMLElement, redraw: () => void) => void) {
   const wasOpenHere = panelAnchor === anchor;
   closePanel?.();
   if (wasOpenHere) return;
@@ -966,7 +985,7 @@ function openPanel(wrap: TableDom, kind: 'sort' | 'filter', anchor: HTMLElement)
   const panel = document.createElement('div');
   panel.className = 'cm-lp-table-panel';
   panel.setAttribute('role', 'dialog');
-  const redraw = () => (kind === 'sort' ? drawSortPanel(wrap, panel, redraw) : drawFilterPanel(wrap, panel, redraw));
+  const redraw = () => draw(panel, redraw);
   redraw();
   document.body.appendChild(panel);
   // Debajo del botón, sin salirse de la ventana
@@ -1241,7 +1260,7 @@ function onKeyDown(wrap: TableDom, e: KeyboardEvent) {
 }
 
 // Iconos de la barra (SVG en trazo, como en Notion)
-const ICON = {
+export const ICON = {
   filter: ['M3 5h18l-7 8v6l-4 2v-8z'],
   sort: ['M7 4v16', 'M3.5 8 7 4.5 10.5 8', 'M17 20V4', 'M13.5 16 17 19.5 20.5 16'],
   search: ['M10.5 4a6.5 6.5 0 1 0 0 13 6.5 6.5 0 1 0 0-13z', 'M20 20l-4.2-4.2'],
@@ -1268,7 +1287,7 @@ function svgIcon(paths: string[]) {
 }
 
 // Botón solo con icono; `badgeCls` añade el contador de criterios activos
-function iconBtn(cls: string, paths: string[], title: string, badgeCls: string, onClick: (b: HTMLButtonElement) => void) {
+export function iconBtn(cls: string, paths: string[], title: string, badgeCls: string, onClick: (b: HTMLButtonElement) => void) {
   const b = document.createElement('button');
   b.type = 'button';
   b.className = `cm-lp-table-tool-btn ${cls}`;

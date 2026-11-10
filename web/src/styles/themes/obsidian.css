@@ -2496,6 +2496,36 @@ button.note-info-item {
   font-weight: 700;
 }
 
+/* Tablas del visor con barra de búsqueda, filtros y orden (solo vista), ver readingTables.ts */
+.reading-table-wrap {
+  width: max-content;
+  max-width: 100%;
+  margin-bottom: 12px;
+}
+
+.reading-table-wrap table {
+  margin-bottom: 0;
+}
+
+.reading-table-wrap th {
+  white-space: nowrap;
+}
+
+.reading-table-wrap td.is-match,
+.reading-table-wrap th.is-match {
+  background-color: color-mix(in srgb, var(--text-highlight-bg, #facc15) 45%, transparent);
+}
+
+.reading-table-wrap th:hover .cm-lp-table-btn,
+.reading-table-wrap .cm-lp-table-btn:focus-visible,
+.reading-table-wrap .cm-lp-table-btn.is-active {
+  opacity: 1;
+}
+
+.reading-table-wrap tr[hidden] {
+  display: none;
+}
+
 /* Status bar */
 .status-bar {
   height: 26px;
