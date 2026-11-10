@@ -206,7 +206,8 @@ function activeLines(state: EditorState) {
   return lines;
 }
 
-function build(view: EditorView): DecorationSet {
+// `images` recibe los tramos de las imágenes ocultas: se tratan como un bloque (ver atomicRanges)
+function build(view: EditorView, images: Range<Decoration>[] = []): DecorationSet {
   const { state } = view;
   const { doc } = state;
   const active = activeLines(state);
@@ -222,14 +223,19 @@ function build(view: EditorView): DecorationSet {
     const last = doc.lineAt(to).number;
     for (let n = doc.lineAt(from).number; n <= last; n++) decos.push(line(cls).range(doc.line(n).from));
   };
-  // La imagen sustituye a su sintaxis; en la línea del cursor se ve debajo de ella
+  // La imagen sustituye a su sintaxis. El Markdown solo se ve (con la imagen debajo) si la selección
+  // entra en él, p. ej. con el botón </>: con el cursor al lado (al pegar una imagen) no
   const currentNote = state.facet(notePath)();
   const image = (from: number, to: number, src: string, altText: string) => {
     const { text, width, height } = parseSize(altText);
-    const after = isActive(from);
+    const after = state.selection.ranges.some((r) => r.from < to && r.to > from);
     const widget = new ImageWidget(attachmentUrl(src, currentNote), text, width, height, after);
     if (after) decos.push(Decoration.widget({ widget, side: 1 }).range(to));
-    else add(Decoration.replace({ widget }), from, to);
+    else if (to > from) {
+      const deco = Decoration.replace({ widget });
+      add(deco, from, to);
+      images.push(deco.range(from, to));
+    }
   };
 
   for (const { from, to } of view.visibleRanges) {
@@ -336,16 +342,28 @@ function build(view: EditorView): DecorationSet {
 const livePreviewPlugin = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet;
+    images: DecorationSet = Decoration.none;
     constructor(view: EditorView) {
-      this.decorations = build(view);
+      this.decorations = this.build(view);
     }
     update(u: ViewUpdate) {
       if (u.docChanged || u.viewportChanged || u.selectionSet || syntaxTree(u.startState) !== syntaxTree(u.state)) {
-        this.decorations = build(u.view);
+        this.decorations = this.build(u.view);
       }
     }
+    build(view: EditorView) {
+      const images: Range<Decoration>[] = [];
+      const decos = build(view, images);
+      this.images = Decoration.set(images, true);
+      return decos;
+    }
   },
-  { decorations: (v) => v.decorations },
+  {
+    decorations: (v) => v.decorations,
+    // Una imagen oculta es un bloque: el cursor la salta y Retroceso/Supr la borran entera, en vez
+    // de comerse un carácter de su Markdown invisible
+    provide: (plugin) => EditorView.atomicRanges.of((view) => view.plugin(plugin)?.images ?? Decoration.none),
+  },
 );
 
 const indentGuide = Decoration.mark({ class: 'cm-lp-indent' });
