@@ -57,6 +57,26 @@ Mientras editas, usa estos atajos:
 
 > **Tip**: Si hay barra de herramientas arriba del editor, haz clic en los botones para insertar formato.
 
+### 📦 Recuadros (callouts)
+
+Escribe un bloque de cita cuya primera línea empiece con `[!tipo]` y verás un recuadro con icono y título:
+
+```markdown
+> [!tip] Título opcional
+> Contenido del recuadro.
+```
+
+Tipos disponibles: `note`, `abstract` (o `summary`, `tldr`), `info`, `todo`, `tip` (o `hint`, `important`), `success` (o `check`, `done`), `question` (o `help`, `faq`), `warning` (o `caution`, `attention`), `failure` (o `fail`, `missing`), `danger` (o `error`), `bug`, `example`, `quote` (o `cite`).
+
+Si no escribes título, se usa el nombre del tipo.
+
+**Recuadros plegables**: añade `+` o `-` justo después del tipo. `+` deja el recuadro expandido por defecto y `-` lo deja contraído. Haz clic en el título para abrirlo o cerrarlo. Sin signo, el recuadro no se puede plegar.
+
+```markdown
+> [!faq]- ¿Los recuadros son plegables?
+> ¡Sí! En un recuadro plegable, el contenido se oculta cuando el recuadro está contraído.
+```
+
 ---
 
 ## 🔗 Wikilinks (conecta tus notas)

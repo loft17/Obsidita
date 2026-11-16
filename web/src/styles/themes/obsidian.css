@@ -2703,6 +2703,38 @@ button.note-info-item {
   display: none;
 }
 
+/* Recuadros plegables (> [!tipo]+ / > [!tipo]-) */
+.reading-view details.callout > summary {
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.reading-view details.callout > summary::-webkit-details-marker {
+  display: none;
+}
+
+.reading-view details.callout > summary:focus-visible {
+  outline: 2px solid rgb(var(--callout-color));
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.reading-view .callout-fold {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--text-faint);
+  transition: transform 0.15s ease;
+}
+
+.reading-view details.callout[open] > summary .callout-fold {
+  transform: rotate(90deg);
+}
+
+.reading-view details.callout:not([open]) > .callout-content {
+  display: none;
+}
+
 .reading-view .callout-content > :last-child {
   margin-bottom: 0;
 }

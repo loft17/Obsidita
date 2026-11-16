@@ -363,6 +363,10 @@ const CALLOUT_ICONS: Record<string, string> = {
   ),
 };
 
+type CalloutMeta = { type: string; title: string; fold: '' | '+' | '-' };
+
+const CALLOUT_FOLD_ICON = svg('<polyline points="9 18 15 12 9 6"/>');
+
 const CALLOUT_ALIASES: Record<string, string> = {
   summary: 'abstract',
   tldr: 'abstract',
@@ -392,14 +396,16 @@ md.core.ruler.before('inline', 'callout', (state) => {
     const raw = m[1].toLowerCase();
     const type = CALLOUT_ALIASES[raw] ?? raw;
     const title = m[3].trim() || raw.charAt(0).toUpperCase() + raw.slice(1);
-    tokens[i].meta = { callout: { type, title } };
+    // "+" = plegable expandido por defecto, "-" = plegable contraído, "" = no plegable
+    const fold = m[2] === '+' || m[2] === '-' ? m[2] : '';
+    tokens[i].meta = { callout: { type, title, fold } };
 
     // Cierre correspondiente (respetando blockquotes anidados)
     let depth = 0;
     for (let j = i; j < tokens.length; j++) {
       if (tokens[j].type === 'blockquote_open') depth++;
       else if (tokens[j].type === 'blockquote_close' && --depth === 0) {
-        tokens[j].meta = { callout: true };
+        tokens[j].meta = { callout: true, fold: fold !== '' };
         break;
       }
     }
@@ -412,19 +418,35 @@ md.core.ruler.before('inline', 'callout', (state) => {
 });
 
 md.renderer.rules.blockquote_open = (tokens, idx, options, env, self) => {
-  const callout = (tokens[idx].meta as { callout?: { type: string; title: string } } | null)?.callout;
+  const callout = (tokens[idx].meta as { callout?: CalloutMeta } | null)?.callout;
   if (!callout) return self.renderToken(tokens, idx, options);
   const icon = CALLOUT_ICONS[callout.type] ?? CALLOUT_ICONS.note;
+  const type = md.utils.escapeHtml(callout.type);
+  const title = md.renderInline(callout.title, env);
+  if (callout.fold) {
+    // Recuadro plegable: <details> nativo, con la línea de título como <summary>
+    const open = callout.fold === '+' ? ' open' : '';
+    return (
+      `<details class="callout is-foldable" data-callout="${type}"${open}>` +
+      `<summary class="callout-title"><span class="callout-fold">${CALLOUT_FOLD_ICON}</span>` +
+      `<span class="callout-icon">${icon}</span>` +
+      `<span class="callout-title-inner">${title}</span></summary>` +
+      '<div class="callout-content">'
+    );
+  }
   return (
-    `<div class="callout" data-callout="${md.utils.escapeHtml(callout.type)}">` +
+    `<div class="callout" data-callout="${type}">` +
     `<div class="callout-title"><span class="callout-icon">${icon}</span>` +
-    `<span class="callout-title-inner">${md.renderInline(callout.title, env)}</span></div>` +
+    `<span class="callout-title-inner">${title}</span></div>` +
     '<div class="callout-content">'
   );
 };
 
-md.renderer.rules.blockquote_close = (tokens, idx, options, _env, self) =>
-  tokens[idx].meta?.callout ? '</div></div>\n' : self.renderToken(tokens, idx, options);
+md.renderer.rules.blockquote_close = (tokens, idx, options, _env, self) => {
+  const meta = tokens[idx].meta as { callout?: boolean; fold?: boolean } | null;
+  if (!meta?.callout) return self.renderToken(tokens, idx, options);
+  return meta.fold ? '</div></details>\n' : '</div></div>\n';
+};
 
 const COPY_ICON =
   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
