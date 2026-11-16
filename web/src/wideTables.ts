@@ -88,6 +88,9 @@ const reset = (table: HTMLElement) => {
 export const refreshWideTables = () => {
   cancelAnimationFrame(frame);
   frame = requestAnimationFrame(() => {
+    // La tabla de una barra del visor (.reading-table-wrap > table) no se coloca: solo la barra.
+    // Si se midió antes de envolverla, conserva el margen de su posición anterior y queda descuadrada
+    document.querySelectorAll<HTMLElement>('.reading-table-wrap > table').forEach(reset);
     document.querySelectorAll<HTMLElement>(TABLE_SELECTOR).forEach((table) => {
       if (isEnabled()) {
         fit(table);
