@@ -89,8 +89,15 @@ export const refreshWideTables = () => {
   cancelAnimationFrame(frame);
   frame = requestAnimationFrame(() => {
     document.querySelectorAll<HTMLElement>(TABLE_SELECTOR).forEach((table) => {
-      if (isEnabled()) fit(table);
-      else reset(table);
+      if (isEnabled()) {
+        fit(table);
+        // La tabla cambia de ancho cuando carga la fuente o una imagen, después de medirla:
+        // se vigila para volver a centrarla (si no, queda descentrada hasta repintar la nota)
+        if (!watched.has(table)) {
+          watched.add(table);
+          sizeObserver.observe(table);
+        }
+      } else reset(table);
     });
     if (isEnabled()) {
       document.querySelectorAll<HTMLElement>(SCROLLER_SELECTOR).forEach((area) => {
