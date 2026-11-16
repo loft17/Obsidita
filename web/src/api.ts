@@ -1,5 +1,5 @@
 import { t } from './i18n';
-import type { TreeItem, TrashItem, SearchResult, BookmarkStore } from './types';
+import type { TreeItem, TrashItem, SearchResult, BookmarkStore, ShortLink } from './types';
 
 const API_URL = '/api';
 
@@ -439,4 +439,15 @@ export const bookmarksApi = {
   importObsidian: (): Promise<{ added: number; skipped: number; store: BookmarkStore }> =>
     post('/bookmarks/obsidian/import'),
   exportObsidian: (): Promise<{ exported: number; kept: number }> => post('/bookmarks/obsidian/export'),
+};
+
+// Enlaces cortos privados (/<código>)
+export const linksApi = {
+  list: (): Promise<{ links: ShortLink[] }> => request('/links'),
+  create: (path: string, code?: string): Promise<{ link: ShortLink }> =>
+    post('/links', code ? { path, code } : { path }),
+  // Ruta a la que apunta un código (404 si no existe)
+  resolve: (code: string): Promise<{ path: string }> => request(`/links/${encodeURIComponent(code)}`),
+  remove: (code: string): Promise<{ success: boolean }> =>
+    request(`/links/${encodeURIComponent(code)}`, { method: 'DELETE' }),
 };

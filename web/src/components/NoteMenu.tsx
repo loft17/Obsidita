@@ -18,6 +18,7 @@ import { copyText } from '../clipboard';
 import { wikilinkTo } from '../wikilinkComplete';
 import { bookmarkOfPath, toggleBookmark } from '../bookmarks';
 import { HeadingPicker } from './BookmarkDialogs';
+import { createShortLink } from '../shortLinks';
 import '../styles/search.css';
 
 export default function NoteMenu() {
@@ -264,6 +265,14 @@ export default function NoteMenu() {
             }}
           >
             {bookmarkOfPath(bookmarks, activeTab) ? t('note.unbookmark') : t('note.bookmark')}
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              closeMenu();
+              createShortLink(activeTab);
+            }}
+          >
+            {t('file.shortlink')}
           </MenuItem>
           {!activeIsImage && isNote(activeTab) && (
             <MenuItem

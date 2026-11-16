@@ -1,13 +1,17 @@
 import { useDeferredValue, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useStore, hiddenMatchers, isHiddenPath } from '../store';
-import { filesApi, searchApi, type NoteInfo } from '../api';
+import { filesApi, linksApi, searchApi, type NoteInfo } from '../api';
+import type { ShortLink } from '../types';
+import { copyText } from '../clipboard';
+import { createShortLink, shortLinkUrl } from '../shortLinks';
+import { notify } from '../toast';
 import { getLang, useT } from '../i18n';
 import { parseNote } from '../frontmatter';
 import { findLinks, findTags, resolveLink } from '../../../server/noteContent.js';
 import { formatBytes } from '../format';
 import { fileName, isNote, noteTitle } from '../paths';
 import { flushPendingSave, NOTE_SAVED, NOTES_CHANGED } from './Editor';
-import { IconClose, IconSync } from './Icons';
+import { IconClose, IconLink, IconSync } from './Icons';
 
 // Palabras por minuto para estimar el tiempo de lectura
 const WORDS_PER_MINUTE = 225;
@@ -229,6 +233,22 @@ export default function NoteInfoModal({
   }, [path]);
 
   const paths = useMemo(() => tree.filter((i) => i.type !== 'folder').map((i) => i.path), [tree]);
+
+  // Enlaces cortos que apuntan a esta nota (los crea y borra el usuario en el menú o en Enlaces cortos)
+  const [shortLinks, setShortLinks] = useState<ShortLink[] | null>(null);
+  const loadShortLinks = () =>
+    linksApi
+      .list()
+      .then(({ links }) => setShortLinks(links.filter((l) => l.path === path)))
+      .catch(() => setShortLinks([]));
+  useEffect(() => {
+    loadShortLinks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [path]);
+  const copyShortLink = async (code: string) => {
+    await copyText(shortLinkUrl(code)).catch(() => {});
+    notify('shortlink', t('shortlink.copied'));
+  };
   const stats = useMemo(() => textStats(text), [text]);
   const outgoing = useMemo(() => (note ? outgoingLinks(text, path, paths) : []), [text, path, note, paths]);
   const tags = useMemo(() => noteTags(text), [text]);
@@ -296,6 +316,41 @@ export default function NoteInfoModal({
             <dl className="note-info-grid">
               <Row label={t('info.path')}>
                 <span className="note-info-path">{path}</span>
+              </Row>
+              <Row label={t('info.shortLinks')}>
+                {shortLinks === null ? (
+                  '…'
+                ) : shortLinks.length === 0 ? (
+                  <button
+                    type="button"
+                    className="note-info-link-action"
+                    onClick={async () => {
+                      await createShortLink(path);
+                      loadShortLinks();
+                    }}
+                  >
+                    {t('info.createShortLink')}
+                  </button>
+                ) : (
+                  <span className="note-info-links">
+                    {shortLinks.map((link) => (
+                      <span key={link.code} className="note-info-link">
+                        <span className="note-info-path" title={shortLinkUrl(link.code)}>
+                          {shortLinkUrl(link.code)}
+                        </span>
+                        <button
+                          type="button"
+                          className="icon-btn"
+                          title={t('shortlink.copy')}
+                          aria-label={t('shortlink.copy')}
+                          onClick={() => copyShortLink(link.code)}
+                        >
+                          <IconLink size={14} />
+                        </button>
+                      </span>
+                    ))}
+                  </span>
+                )}
               </Row>
               <Row label={t('info.size')}>{size === undefined ? '…' : formatBytes(size)}</Row>
               <Row label={t('info.created')} title={data?.created ? formatDate(data.created) : undefined}>

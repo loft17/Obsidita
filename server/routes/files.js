@@ -4,6 +4,7 @@ import { join } from 'path';
 import * as vault from '../vault.js';
 import { prepareLinkUpdate } from '../links.js';
 import { remapBookmarks } from '../bookmarks.js';
+import { remapLinks } from '../shortLinks.js';
 import { publicError, scriptHash } from '../security.js';
 import { MAX_UPLOAD_MB } from '../limits.js';
 import { isUploadable } from '../uploads.js';
@@ -165,6 +166,7 @@ ${md.render(body)}
     vault.renameFile(cfg.vaultPath, oldPath, newPath);
     // Los marcadores de la nota (o de la carpeta y lo que contiene) siguen a la nueva ruta
     remapBookmarks(dataDir, String(oldPath), String(newPath));
+    remapLinks(dataDir, String(oldPath), String(newPath));
     res.json({ success: true, updated: updateLinks() });
   }));
 

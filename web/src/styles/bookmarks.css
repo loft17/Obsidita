@@ -164,3 +164,73 @@
   left: auto;
   min-width: 200px;
 }
+
+/* Enlaces cortos: lista con altura limitada y formulario debajo */
+.shortlink-list {
+  max-height: 260px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+
+.shortlink-form {
+  border-top: 1px solid var(--background-modifier-border);
+  padding-top: 10px;
+}
+
+/* Enlace corto en el diálogo de información de la nota */
+.note-info-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.note-info-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.note-info-link .note-info-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-info-link-action {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-accent);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Panel de enlaces cortos (vista propia de la barra izquierda) */
+.shortlink-panel {
+  padding: 6px 6px 10px;
+}
+
+.shortlink-section-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.shortlink-panel .shortlink-list {
+  max-height: none;
+  flex: 1;
+}
+
+.shortlink-panel .shortlink-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--background-modifier-border);
+  padding-top: 8px;
+}

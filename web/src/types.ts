@@ -48,3 +48,10 @@ export interface BookmarkStore {
   groups: string[];
   items: Bookmark[];
 }
+
+// Enlace corto privado: /<code> abre la nota o carpeta `path` tras iniciar sesión
+export interface ShortLink {
+  code: string;
+  path: string;
+  createdAt: number;
+}

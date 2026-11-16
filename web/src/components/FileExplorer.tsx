@@ -13,6 +13,7 @@ import { notify } from '../toast';
 import { MenuItem, focusMenuItem, onMenuKeyDown } from './menuNav';
 import { fileShortcutFor } from '../fileShortcuts';
 import { bookmarkOfPath, toggleBookmark } from '../bookmarks';
+import { createShortLink } from '../shortLinks';
 
 interface FlatItem {
   item: TreeItem;
@@ -640,6 +641,7 @@ export default function FileExplorer() {
           <MenuItem onClick={() => runMenuAction((path) => toggleBookmark(path))}>
             {bookmarkOfPath(bookmarks, menu.path) ? t('file.unbookmark') : t('file.bookmark')}
           </MenuItem>
+          <MenuItem onClick={() => runMenuAction((path) => createShortLink(path))}>{t('file.shortlink')}</MenuItem>
           <hr className="dropdown-divider" />
           <MenuItem onClick={() => runMenuAction(handleCopy)}>{t('file.makeCopy')}</MenuItem>
           {menu.isFolder && (

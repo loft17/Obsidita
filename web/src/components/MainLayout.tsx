@@ -13,6 +13,8 @@ import SearchPanel from './SearchPanel';
 import TagsPanel from './TagsPanel';
 import TrashPanel from './TrashPanel';
 import BookmarksPanel from './BookmarksPanel';
+import ShortLinksPanel from './ShortLinksPanel';
+import { openShortLinkFromUrl } from '../shortLinks';
 import NoteInfoModal from './NoteInfoModal';
 import Tabs from './Tabs';
 import Editor, { cancelPendingSave, noteVersions, saveNote } from './Editor';
@@ -125,6 +127,10 @@ export default function MainLayout() {
   useEffect(() => {
     loadBookmarks();
   }, [loadBookmarks]);
+  // Llegada desde un enlace corto (/<código>): abre la nota una vez iniciada la sesión
+  useEffect(() => {
+    openShortLinkFromUrl();
+  }, []);
   const editMode = useStore((s) => s.editMode);
   const setEditMode = useStore((s) => s.setEditMode);
   const sidebarOpen = useStore((s) => s.sidebarOpen);
@@ -218,6 +224,8 @@ export default function MainLayout() {
               <TrashPanel />
             ) : sidebarView === 'bookmarks' ? (
               <BookmarksPanel />
+            ) : sidebarView === 'shortlinks' ? (
+              <ShortLinksPanel />
             ) : (
               <FileExplorer />
             )}

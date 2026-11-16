@@ -10,6 +10,8 @@ import filesRoutes from './routes/files.js';
 import searchRoutes from './routes/search.js';
 import settingsRoutes from './routes/settings.js';
 import bookmarksRoutes from './routes/bookmarks.js';
+import shortLinksRoutes from './routes/shortLinks.js';
+import { RESERVED_CODES } from './shortLinks.js';
 import syncRoutes from './routes/sync.js';
 import fontsRoutes from './routes/fonts.js';
 import healthRoutes from './routes/health.js';
@@ -210,6 +212,7 @@ app.use('/api', (req, res, next) => {
 
 app.use('/api/settings', settingsRoutes(dataDir, getConfig, loginLimiter, sessions));
 app.use('/api/bookmarks', express.json({ limit: 512 * 1024 }), bookmarksRoutes(dataDir, getConfig));
+app.use('/api/links', shortLinksRoutes(dataDir));
 // Al guardar una nota el cuerpo es JSON, pero /api/files/upload lo recibe en crudo: si el
 // archivo subido llega con Content-Type: application/json, el parser de aquí se lo comería
 // antes de que la ruta lo vea y la subida fallaría con "Archivo vacío"
@@ -228,6 +231,16 @@ app.use('/api/ai', express.json({ limit: AI_MAX_CHARS * 4 + 64 * 1024 }), aiRout
 // Cualquier /api que no haya casado es un 404 en JSON. Si cayera en el fallback del SPA
 // devolvería index.html con un 200 y el cliente fallaría al leer el mensaje de error
 app.use('/api', (req, res) => res.status(404).json({ error: 'No encontrado' }));
+
+// Enlace corto privado (/<código>): redirige a la app con ?go=<código>; la app abre la nota tras el
+// login (la ruta de la nota se pide a /api/links/<código>, que sí exige sesión). Va después de los
+// archivos estáticos y antes del fallback del SPA
+app.get(/^\/([A-Za-z0-9_-]{3,32})$/, (req, res, next) => {
+  const code = req.params[0];
+  if (RESERVED_CODES.has(code)) return next();
+  res.set('Cache-Control', 'no-store');
+  res.redirect(302, `/?go=${encodeURIComponent(code)}`);
+});
 
 // SPA fallback (serve index.html for client-side routing)
 if (existsSync(distPath)) {

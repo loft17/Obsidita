@@ -17,6 +17,7 @@ import {
   IconTemplate,
   IconTrash,
   IconBookmark,
+  IconLink,
   IconSettings,
   IconLogout,
 } from './Icons';
@@ -146,6 +147,16 @@ export default function Ribbon() {
           onClick={() => showSidebarView('bookmarks')}
         >
           <IconBookmark />
+        </button>
+        <button
+          type="button"
+          className={`ribbon-item ${sidebarOpen && sidebarView === 'shortlinks' ? 'active' : ''}`}
+          title={t('sidebar.shortlinks')}
+          aria-label={t('sidebar.shortlinks')}
+          aria-pressed={sidebarOpen && sidebarView === 'shortlinks'}
+          onClick={() => showSidebarView('shortlinks')}
+        >
+          <IconLink />
         </button>
         <button
           type="button"
