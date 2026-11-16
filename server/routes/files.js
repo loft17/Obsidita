@@ -136,6 +136,37 @@ ${md.render(body)}
     })
   );
 
+  // Convierte una imagen del vault: guarda `req.body` como `name` en la misma carpeta, reescribe
+  // los enlaces de todo el vault hacia el archivo nuevo y manda el original a la papelera.
+  // `path`: imagen original; `name`: nombre nuevo con su extensión (p. ej. "foto.webp")
+  router.post(
+    '/convert-image',
+    express.raw({ type: () => true, limit: MAX_UPLOAD_MB * 1024 * 1024 }),
+    withVault((cfg, req, res) => {
+      const oldPath = String(req.query.path || '');
+      const name = String(req.query.name || '');
+      if (!oldPath || !name || !Buffer.isBuffer(req.body) || !req.body.length) throw new Error('Archivo vacío');
+      if (!/\.(png|jpe?g|webp|bmp)$/i.test(name)) throw new Error('Formato de imagen no válido');
+      if (!/\.(png|jpe?g|webp|bmp|gif|svg|avif|ico)$/i.test(oldPath)) throw new Error('No es una imagen');
+      try {
+        if (statSync(vault.resolveFile(cfg.vaultPath, oldPath)).isDirectory()) throw new Error();
+      } catch {
+        throw new Error('El archivo no existe');
+      }
+      const slash = oldPath.lastIndexOf('/');
+      const folder = slash < 0 ? '' : oldPath.slice(0, slash);
+      // La ruta se calcula antes de escribir: así el cambio de enlaces ve el archivo nuevo como destino
+      const newPath = vault.newAttachmentPath(cfg.vaultPath, folder, name);
+      const updateLinks = prepareLinkUpdate(cfg.vaultPath, oldPath, newPath);
+      vault.writeAttachment(cfg.vaultPath, newPath, req.body);
+      const updated = updateLinks();
+      vault.deleteFile(cfg.vaultPath, oldPath);
+      remapBookmarks(dataDir, oldPath, newPath);
+      remapLinks(dataDir, oldPath, newPath);
+      res.json({ success: true, path: newPath, updated });
+    })
+  );
+
   // Papelera: listar, restaurar a la ruta original, borrar definitivamente y vaciar.
   // Van por POST para no chocar con DELETE /:filePath (una nota llamada "trash")
   router.get('/trash', withVault((cfg, req, res) => res.json(vault.listTrash(cfg.vaultPath))));

@@ -221,6 +221,16 @@ Errors: `400 Archivo vacío` (empty file), `400 Tipo de archivo no permitido` (e
 
 Moves the file or folder to the trash (`.trash/` inside the vault). Returns `{ "success": true }`.
 
+### `POST /api/files/convert-image?path=…&name=…`
+
+Converts an image of the vault. The body is the new image (raw binary, e.g. WebP made by the browser). It is saved as `name` in the same folder, every link in the vault is rewritten to point to it, and the original goes to the trash.
+
+```json
+{ "success": true, "path": "Images/photo.webp", "updated": ["Index.md"] }
+```
+
+Errors: the source image does not exist, or `name` is not a supported image extension.
+
 ### `POST /api/files/rename`
 
 Renames or moves a file or folder and **rewrites the links** (wikilinks and markdown links) in notes that pointed to it.

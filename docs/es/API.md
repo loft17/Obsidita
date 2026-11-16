@@ -219,6 +219,16 @@ Errores: `400 Archivo vacío`, `400 Tipo de archivo no permitido`, `413` demasia
 
 Mueve el archivo o carpeta a la papelera (`.trash/` dentro del vault). Responde `{ "success": true }`.
 
+### `POST /api/files/convert-image?path=…&name=…`
+
+Convierte una imagen del vault. El cuerpo es la imagen nueva (binario en crudo, p. ej. el WebP que genera el navegador). Se guarda como `name` en la misma carpeta, se reescriben a ella todos los enlaces del vault y la original va a la papelera.
+
+```json
+{ "success": true, "path": "Imagenes/foto.webp", "updated": ["Índice.md"] }
+```
+
+Errores: la imagen de origen no existe o `name` no tiene una extensión de imagen admitida.
+
 ### `POST /api/files/rename`
 
 Renombra o mueve un archivo o carpeta y **reescribe los enlaces** (wikilinks y enlaces markdown) de las notas que apuntaban a él.

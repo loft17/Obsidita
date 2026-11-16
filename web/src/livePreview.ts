@@ -8,10 +8,11 @@ import { Tag, tags } from '@lezer/highlight';
 import type { MarkdownConfig } from '@lezer/markdown';
 import { liveTables } from './liveTables';
 import { notePath } from './notePath';
-import { attachmentUrl, isImage, parseSize } from './attachments';
+import { attachmentPath, attachmentUrl, isImage, parseSize } from './attachments';
 import { followWikilink, isResolved } from './wikilinks';
 import { fileName } from './paths';
 import { findImages, imageFigure, imageWithWidth } from './imageTools';
+import { openImageMenu } from './imageMenuEvent';
 
 export { notePath };
 
@@ -124,6 +125,7 @@ class ImageWidget extends WidgetType {
     readonly width?: number,
     readonly height?: number,
     readonly after = false, // en la línea del cursor: va detrás de su Markdown en vez de sustituirlo
+    readonly path: string | null = null, // ruta en el vault (null: imagen externa)
   ) {
     super();
   }
@@ -133,7 +135,8 @@ class ImageWidget extends WidgetType {
       other.alt === this.alt &&
       other.width === this.width &&
       other.height === this.height &&
-      other.after === this.after
+      other.after === this.after &&
+      other.path === this.path
     );
   }
   toDOM(view: EditorView) {
@@ -143,6 +146,8 @@ class ImageWidget extends WidgetType {
       width: this.width,
       height: this.height,
       className: 'cm-lp-image',
+      // Clic derecho: renombrar o convertir la imagen (solo en edición y para imágenes del vault)
+      onMenu: this.path && !view.state.readOnly ? (e) => openImageMenu(e, this.path!) : undefined,
       onSource: () => {
         // Selecciona su Markdown: la línea pasa a ser la del cursor y se ve el código
         const at = imageAt(view, figure, this.after);
@@ -229,7 +234,14 @@ function build(view: EditorView, images: Range<Decoration>[] = []): DecorationSe
   const image = (from: number, to: number, src: string, altText: string) => {
     const { text, width, height } = parseSize(altText);
     const after = state.selection.ranges.some((r) => r.from < to && r.to > from);
-    const widget = new ImageWidget(attachmentUrl(src, currentNote), text, width, height, after);
+    const widget = new ImageWidget(
+      attachmentUrl(src, currentNote),
+      text,
+      width,
+      height,
+      after,
+      attachmentPath(src, currentNote),
+    );
     if (after) decos.push(Decoration.widget({ widget, side: 1 }).range(to));
     else if (to > from) {
       const deco = Decoration.replace({ widget });

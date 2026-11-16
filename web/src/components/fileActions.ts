@@ -3,11 +3,13 @@
 // con el ratón o con el teclado. El cálculo de rutas está en src/paths.ts
 import { useStore } from '../store';
 import { filesApi } from '../api';
-import { flushPendingSave, changeNotePath } from './Editor';
+import { flushPendingSave, changeNotePath, NOTES_CHANGED } from './Editor';
 import { flushBookmarkSaves } from '../store/bookmarks';
 import { fileName, joinPath, parentFolder } from '../paths';
 import { notify } from '../toast';
 import { t } from '../i18n';
+import { rawFileUrl } from '../attachments';
+import { changeExt, encodeImage } from '../imageConvert';
 
 export const refreshTree = async () => useStore.getState().setTree(await filesApi.getTree());
 
@@ -55,6 +57,39 @@ export const applyPathChange = async (oldPath: string, newPath: string) => {
   await changeNotePath(oldPath, newPath);
   await refreshTree();
   await useStore.getState().loadBookmarks();
+};
+
+// Tipo MIME de las imágenes que se pueden convertir (la extensión manda: el servidor no lo envía fiable)
+const SOURCE_MIME: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', bmp: 'image/bmp' };
+
+// Convierte una imagen del vault a WebP o JPG con la calidad de Preferencias → Archivos. La copia
+// nueva queda en la misma carpeta, los enlaces de todo el vault pasan a ella y la original va a la papelera
+export const convertImagePath = async (path: string, format: 'webp' | 'jpg') => {
+  try {
+    // Lo pendiente de las notas y de los marcadores se guarda antes: el servidor reescribe enlaces
+    await flushPendingSave(null);
+    await flushBookmarkSaves();
+    const ext = fileName(path).split('.').pop()?.toLowerCase() ?? '';
+    const res = await fetch(rawFileUrl(path));
+    if (!res.ok) throw new Error(res.statusText);
+    const source = new Blob([await res.blob()], { type: SOURCE_MIME[ext] });
+    const converted = await encodeImage(source, format, useStore.getState().imageQuality);
+    if (!converted) throw new Error(t('image.convertUnsupported'));
+    // Como al pegar: si no reduce el tamaño, se mantiene la original y no se toca ningún enlace
+    if (converted.size >= source.size) {
+      notify('convert-image', t('image.convertNoGain'), 'info');
+      return;
+    }
+    const name = changeExt(fileName(path), format);
+    const { path: newPath, updated } = await filesApi.convertImage(path, name, converted);
+    if (updated.length) window.dispatchEvent(new Event(NOTES_CHANGED));
+    useStore.getState().removeTab(path);
+    await refreshTree();
+    await useStore.getState().loadBookmarks();
+    notify('convert-image', t('image.converted', { name: fileName(newPath) }));
+  } catch (err) {
+    notify('convert-image', t('image.convertError', { error: (err as Error).message }), 'error');
+  }
 };
 
 // Borra y quita las pestañas que ya no existen. Lo que haya a medio guardar dentro del elemento

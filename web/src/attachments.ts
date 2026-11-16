@@ -74,6 +74,10 @@ export const rawFileUrl = (vaultPath: string) => `/api/files/raw/${encodeURIComp
 export const attachmentUrl = (src: string, notePath: string) =>
   isExternal(src) ? src : rawFileUrl(resolveAttachment(src, notePath));
 
+// Ruta dentro del vault de un src de imagen; null si es una URL externa (no se puede renombrar)
+export const attachmentPath = (src: string, notePath: string): string | null =>
+  isExternal(src) ? null : resolveAttachment(src, notePath);
+
 const EMBED = /!\[\[([^\]\n]+?)\]\]/g;
 const MD_IMAGE = /!\[[^\]\n]*\]\(\s*(?:<([^>\n]+)>|([^)\s]+))[^)\n]*\)/g;
 

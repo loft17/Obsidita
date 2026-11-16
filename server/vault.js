@@ -322,7 +322,8 @@ export const attachmentFolder = (vaultPath, notePath) => {
 };
 
 // Guarda un adjunto sin sobrescribir: "imagen.png", "imagen 1.png"...
-export const saveAttachment = (vaultPath, folder, fileName, data) => {
+// Ruta libre (relativa al vault) para un adjunto nuevo con ese nombre en `folder`
+export const newAttachmentPath = (vaultPath, folder, fileName) => {
   const safeName = basename(fileName.replace(/\\/g, '/')).replace(/[<>:"|?*\x00-\x1f]/g, '') || 'adjunto';
   const ext = extname(safeName);
   const base = basename(safeName, ext);
@@ -331,10 +332,19 @@ export const saveAttachment = (vaultPath, folder, fileName, data) => {
   for (let n = 1; entryExists(fullPath); n++) {
     fullPath = join(dirname(fullPath), `${base} ${n}${ext}`);
   }
-  mkdirSync(dirname(fullPath), { recursive: true });
-  writeFileSync(fullPath, data);
   return toVaultPath(vaultPath, fullPath);
 };
+
+// Escribe `data` en una ruta devuelta por newAttachmentPath
+export const writeAttachment = (vaultPath, filePath, data) => {
+  const fullPath = guardPath(vaultPath, filePath);
+  mkdirSync(dirname(fullPath), { recursive: true });
+  writeFileSync(fullPath, data);
+  return filePath;
+};
+
+export const saveAttachment = (vaultPath, folder, fileName, data) =>
+  writeAttachment(vaultPath, newAttachmentPath(vaultPath, folder, fileName), data);
 
 // `content`: contenido inicial (p. ej. una plantilla); vacía por defecto
 export const createNote = (vaultPath, filePath, content = '') => {

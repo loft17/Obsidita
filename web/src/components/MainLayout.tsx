@@ -26,6 +26,7 @@ import StatusBar from './StatusBar';
 import TextViewer from './TextViewer';
 import { isImage, isPdf, isPlainText } from '../attachments';
 import NoteMenu from './NoteMenu';
+import ImageContextMenu from './ImageContextMenu';
 import NoteShortcuts from './NoteShortcuts';
 import { IconBook, IconEdit, IconSidebar, IconSearch } from './Icons';
 import { useT } from '../i18n';
@@ -209,6 +210,7 @@ export default function MainLayout() {
 
   return (
     <div className={`app-container ${mobile ? 'is-mobile' : ''}`}>
+      <ImageContextMenu />
       {showRibbon && !mobile && <Ribbon />}
       <div className="main-content">
         {mobile && sidebarOpen && (

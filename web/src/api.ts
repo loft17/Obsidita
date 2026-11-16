@@ -151,6 +151,14 @@ export const filesApi = {
   // Sube un archivo (nota o imagen) a la carpeta `folder` ('' = raíz); devuelve la ruta guardada
   uploadToFolder: (folder: string, file: Blob, name: string): Promise<{ path: string }> =>
     upload(new URLSearchParams({ folder, name }), file),
+  // Sustituye la imagen `path` por `file` guardado como `name` (misma carpeta; el servidor reescribe
+  // los enlaces y manda el original a la papelera). Devuelve la ruta nueva y las notas actualizadas
+  convertImage: (path: string, name: string, file: Blob): Promise<{ path: string; updated: string[] }> =>
+    request(`/files/convert-image?${new URLSearchParams({ path, name })}`, {
+      method: 'POST',
+      headers: { 'Content-Type': file.type || 'application/octet-stream' },
+      body: file,
+    }),
   createFolder: (path: string) => post('/files/create-folder', { path }),
   downloadFolder: (path: string) => {
     return `${API_URL}/files/download-folder/${encodeURIComponent(path)}`;

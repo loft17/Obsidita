@@ -154,6 +154,7 @@ export interface FigureOptions {
   className: string; // clase del <img>
   onSource: () => void; // botón </>: mostrar el Markdown
   resize?: ResizeOptions; // sin esto no hay tirador (solo lectura)
+  onMenu?: (e: MouseEvent) => void; // clic derecho: menú de la imagen (renombrar, convertir...)
 }
 
 // <span> con la imagen, los botones (arriba a la derecha) y el tirador (abajo a la derecha)
@@ -175,6 +176,14 @@ export function imageFigure(o: FigureOptions) {
     imageBtn('is-source', ICON_CODE, t('image.source'), o.onSource),
   );
   figure.append(img, tools);
+  if (o.onMenu) {
+    const onMenu = o.onMenu;
+    figure.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onMenu(e);
+    });
+  }
   const resize = o.resize;
   if (resize) {
     const handle = document.createElement('span');

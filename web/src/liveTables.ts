@@ -9,10 +9,11 @@ import { StateEffect, StateField, Transaction, type EditorState, type Range } fr
 import { Decoration, EditorView, WidgetType, type DecorationSet } from '@codemirror/view';
 import { t, type MessageKey } from './i18n';
 import { useStore } from './store';
-import { attachmentUrl, parseSize } from './attachments';
+import { attachmentPath, attachmentUrl, parseSize } from './attachments';
 import { chooseImages, imageFiles, imageUrl, pastedName, uploadImages } from './imageUpload';
 import { notePath } from './notePath';
 import { findImages, imageFigure, imageWithWidth } from './imageTools';
+import { openImageMenu } from './imageMenuEvent';
 import { notify } from './toast';
 import { refreshWideTables } from './wideTables';
 
@@ -344,12 +345,14 @@ function syncCellImages(sizer: HTMLElement, value: string, note: string) {
   box.replaceChildren(
     ...imgs.map((i, index) => {
       const { text, width, height } = parseSize(i.alt);
+      const path = attachmentPath(i.src, note);
       const figure = imageFigure({
         src: attachmentUrl(i.src, note),
         alt: text,
         width,
         height,
         className: 'cm-lp-cell-image',
+        onMenu: readOnly || !path ? undefined : (e) => openImageMenu(e, path),
         onSource: () => showImageSource(sizer, index),
         resize: readOnly
           ? undefined
