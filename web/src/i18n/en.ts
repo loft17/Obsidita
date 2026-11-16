@@ -116,8 +116,7 @@ export const en: Messages = {
   'delete.confirmFolder':
     'Are you sure you want to delete {name} and everything in it? It will be moved to the vault trash (.trash).',
   'delete.findingImages': 'Looking for the note’s images…',
-  'delete.alsoImage': 'Also delete its image',
-  'delete.alsoImages': 'Also delete its {n} images',
+  'delete.imagesHeading': 'Images in this note ({n}) — check the ones to delete',
   'delete.sharedImage': '1 image also used in other notes will be kept.',
   'delete.sharedImages': '{n} images also used in other notes will be kept.',
   'delete.usageIncomplete': 'Not all images could be checked: uncertain ones are not offered for deletion.',

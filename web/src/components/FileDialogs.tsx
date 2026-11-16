@@ -1,7 +1,7 @@
 import { useState, useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { flushPendingSave } from './Editor';
-import { noteImageUsage } from '../attachments';
+import { noteImageUsage, rawFileUrl } from '../attachments';
 import { syncApi, type NoteCommit } from '../api';
 import { getLang, Trans, useT } from '../i18n';
 import { fileName, noteTitle } from '../paths';
@@ -405,8 +405,17 @@ export function ConfirmDialog({
   );
 }
 
-// Confirmación de borrado; si es una nota, ofrece borrar también sus imágenes (marcado por defecto).
-// Las imágenes que otras notas también usan nunca se borran.
+// Posición de la vista previa junto al cursor, sin salirse de la ventana (tamaño máximo 240 px)
+const PREVIEW_SIZE = 240;
+const previewPosition = (x: number, y: number): React.CSSProperties => {
+  const gap = 16;
+  const left = x + gap + PREVIEW_SIZE > window.innerWidth ? x - gap - PREVIEW_SIZE : x + gap;
+  const top = Math.min(Math.max(y - gap, 8), window.innerHeight - PREVIEW_SIZE - 8);
+  return { left: Math.max(8, left), top };
+};
+
+// Confirmación de borrado; si es una nota, lista sus imágenes exclusivas con una casilla cada una
+// (todas marcadas por defecto). Las imágenes que otras notas también usan nunca se ofrecen para borrar.
 export function DeleteFileDialog({
   path,
   isFolder,
@@ -425,7 +434,10 @@ export function DeleteFileDialog({
   const isNote = !isFolder && /\.md$/i.test(path);
   const [usage, setUsage] = useState<{ own: string[]; shared: string[]; complete: boolean } | null>(null);
   const [loading, setLoading] = useState(isNote);
-  const [deleteImages, setDeleteImages] = useState(true);
+  // Imágenes marcadas para borrar (subconjunto de `own`)
+  const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  // Imagen en vista previa al pasar sobre su nombre, y posición del cursor
+  const [preview, setPreview] = useState<{ path: string; x: number; y: number } | null>(null);
   const t = useT();
 
   useEffect(() => {
@@ -435,7 +447,10 @@ export function DeleteFileDialog({
       try {
         await flushPendingSave(path);
         const result = await noteImageUsage(path);
-        if (!cancelled) setUsage(result);
+        if (!cancelled) {
+          setUsage(result);
+          setSelected(new Set(result.own));
+        }
       } catch {
         // Si falla la detección se borra solo la nota
       } finally {
@@ -450,6 +465,17 @@ export function DeleteFileDialog({
   const own = usage?.own ?? [];
   const shared = usage?.shared ?? [];
   const name = fileName(path);
+  const selectedCount = own.filter((p) => selected.has(p)).length;
+  const allSelected = own.length > 0 && selectedCount === own.length;
+
+  const setImage = (p: string, on: boolean) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(p);
+      else next.delete(p);
+      return next;
+    });
+  const toggleAll = () => setSelected(allSelected ? new Set() : new Set(own));
 
   return (
     <ConfirmDialog
@@ -459,23 +485,52 @@ export function DeleteFileDialog({
       }
       confirmLabel={confirmLabel}
       disabled={loading}
-      onConfirm={() => onDelete(deleteImages ? own : [])}
+      onConfirm={() => onDelete(own.filter((p) => selected.has(p)))}
       onClose={onClose}
     >
       {loading && <p className="file-dialog-message">{t('delete.findingImages')}</p>}
       {own.length > 0 && (
         <div className="delete-images">
           <label className="delete-images-toggle">
-            <input type="checkbox" checked={deleteImages} onChange={(e) => setDeleteImages(e.target.checked)} />
-            {own.length === 1 ? t('delete.alsoImage') : t('delete.alsoImages', { n: own.length })}
+            <input
+              type="checkbox"
+              checked={allSelected}
+              ref={(el) => {
+                if (el) el.indeterminate = selectedCount > 0 && !allSelected;
+              }}
+              onChange={toggleAll}
+            />
+            {t('delete.imagesHeading', { n: own.length })}
           </label>
           <ul className="delete-images-list">
             {own.map((p) => (
-              <li key={p} title={p}>
-                {p}
+              <li key={p}>
+                <label
+                  className="delete-images-toggle"
+                  onMouseEnter={(e) => setPreview({ path: p, x: e.clientX, y: e.clientY })}
+                  onMouseMove={(e) => setPreview((cur) => (cur?.path === p ? { path: p, x: e.clientX, y: e.clientY } : cur))}
+                  onMouseLeave={() => setPreview(null)}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selected.has(p)}
+                    onChange={(e) => setImage(p, e.target.checked)}
+                  />
+                  <span className="delete-images-name">{p}</span>
+                </label>
               </li>
             ))}
           </ul>
+          {preview &&
+            createPortal(
+              <img
+                className="delete-images-preview"
+                src={rawFileUrl(preview.path)}
+                alt=""
+                style={previewPosition(preview.x, preview.y)}
+              />,
+              document.body,
+            )}
         </div>
       )}
       {shared.length > 0 && (

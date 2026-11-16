@@ -116,8 +116,7 @@ export const ca: Messages = {
   'delete.confirmFolder':
     'Segur que vols esborrar {name} i tot el seu contingut? Es mourà a la paperera de la caixa forta (.trash).',
   'delete.findingImages': 'Cercant les imatges de la nota…',
-  'delete.alsoImage': 'Esborra també la seva imatge',
-  'delete.alsoImages': 'Esborra també les seves {n} imatges',
+  'delete.imagesHeading': 'Imatges de la nota ({n}) — marca les que vols esborrar',
   'delete.sharedImage': 'Es conserva 1 imatge que també es fa servir en altres notes.',
   'delete.sharedImages': 'Es conserven {n} imatges que també es fan servir en altres notes.',
   'delete.usageIncomplete': 'No s’han pogut comprovar totes les imatges: les dubtoses no s’ofereixen per esborrar.',

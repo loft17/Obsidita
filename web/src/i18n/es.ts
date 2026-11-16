@@ -115,8 +115,7 @@ export const es = {
   'delete.confirmFolder':
     '¿Seguro que quieres borrar {name} y todo su contenido? Se moverá a la papelera de la bóveda (.trash).',
   'delete.findingImages': 'Buscando imágenes de la nota…',
-  'delete.alsoImage': 'Borrar también su imagen',
-  'delete.alsoImages': 'Borrar también sus {n} imágenes',
+  'delete.imagesHeading': 'Imágenes de la nota ({n}) — marca las que quieres borrar',
   'delete.sharedImage': 'Se conserva 1 imagen usada también en otras notas.',
   'delete.sharedImages': 'Se conservan {n} imágenes usadas también en otras notas.',
   'delete.usageIncomplete': 'No se han podido comprobar todas las imágenes: las dudosas no se ofrecen para borrar.',
