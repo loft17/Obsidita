@@ -420,7 +420,11 @@ md.core.ruler.before('inline', 'callout', (state) => {
 md.renderer.rules.blockquote_open = (tokens, idx, options, env, self) => {
   const callout = (tokens[idx].meta as { callout?: CalloutMeta } | null)?.callout;
   if (!callout) return self.renderToken(tokens, idx, options);
-  const icon = CALLOUT_ICONS[callout.type] ?? CALLOUT_ICONS.note;
+  // Tipos integrados: icono SVG fijo. Tipos propios: icono vacío que pinta el CSS
+  // con --callout-icon (ver .callout-icon.is-custom en obsidian.css)
+  const icon = CALLOUT_ICONS[callout.type]
+    ? `<span class="callout-icon">${CALLOUT_ICONS[callout.type]}</span>`
+    : '<span class="callout-icon is-custom" aria-hidden="true"></span>';
   const type = md.utils.escapeHtml(callout.type);
   const title = md.renderInline(callout.title, env);
   if (callout.fold) {
@@ -429,14 +433,14 @@ md.renderer.rules.blockquote_open = (tokens, idx, options, env, self) => {
     return (
       `<details class="callout is-foldable" data-callout="${type}"${open}>` +
       `<summary class="callout-title"><span class="callout-fold">${CALLOUT_FOLD_ICON}</span>` +
-      `<span class="callout-icon">${icon}</span>` +
+      `${icon}` +
       `<span class="callout-title-inner">${title}</span></summary>` +
       '<div class="callout-content">'
     );
   }
   return (
     `<div class="callout" data-callout="${type}">` +
-    `<div class="callout-title"><span class="callout-icon">${icon}</span>` +
+    `<div class="callout-title">${icon}` +
     `<span class="callout-title-inner">${title}</span></div>` +
     '<div class="callout-content">'
   );

@@ -58,6 +58,7 @@ import {
 import { runSync } from '../syncNotify';
 import { BUNDLED_FONTS, isBundledFont, loadBundledFont, type FontCategory } from '../fonts';
 import { useServerFonts } from '../serverFonts';
+import { applyCustomCss } from '../customCss';
 import { useIsMobile } from '../mobile';
 import AiSettings from './AiSettings';
 
@@ -359,6 +360,86 @@ function SidebarSection() {
   );
 }
 
+// CSS propio (data/custom.css en el servidor): se edita aquí y se aplica al guardar
+function CustomCssSetting() {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  // null = todavía no cargado
+  const [saved, setSaved] = useState<string | null>(null);
+  const [draft, setDraft] = useState('');
+  const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+
+  useEffect(() => {
+    if (!open || saved !== null) return;
+    let cancelled = false;
+    settingsApi
+      .getCustomCss()
+      .then((css) => {
+        if (cancelled) return;
+        setSaved(css);
+        setDraft(css);
+      })
+      .catch(() => {
+        if (!cancelled) setStatus('error');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, saved]);
+
+  const save = async () => {
+    setStatus('saving');
+    try {
+      await settingsApi.saveCustomCss(draft);
+      applyCustomCss(draft);
+      setSaved(draft);
+      setStatus('saved');
+    } catch {
+      setStatus('error');
+    }
+  };
+
+  const dirty = saved !== null && draft !== saved;
+  return (
+    <div className="setting-item">
+      <div className="setting-info">
+        <div className="setting-name">{t('settings.customCss')}</div>
+        <div className="setting-desc">{t('settings.customCss.desc')}</div>
+      </div>
+      <button onClick={() => setOpen((o) => !o)}>
+        {open ? t('settings.customCss.close') : t('settings.customCss.edit')}
+      </button>
+      {open && (
+        <div style={{ width: '100%' }}>
+          {saved === null && status !== 'error' ? (
+            <div className="setting-desc">{t('settings.customCss.loading')}</div>
+          ) : (
+            <>
+              <textarea
+                className="setting-textarea"
+                rows={14}
+                spellCheck={false}
+                value={draft}
+                onChange={(e) => {
+                  setDraft(e.target.value);
+                  setStatus('idle');
+                }}
+              />
+              <div className="setting-item" style={{ padding: 0, border: 'none' }}>
+                <button onClick={save} disabled={!dirty || status === 'saving'}>
+                  {t('settings.customCss.save')}
+                </button>
+                {status === 'saved' && !dirty && <span className="setting-desc">{t('settings.customCss.saved')}</span>}
+                {status === 'error' && <span style={errorStyle}>{t('settings.customCss.error')}</span>}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Los cambios se guardan automáticamente (el store los persiste en localStorage)
 function AppearanceSection() {
   const theme = useStore((s) => s.theme);
@@ -439,6 +520,9 @@ function AppearanceSection() {
             <span />
           </label>
         </div>
+      </div>
+      <div className="settings-group">
+        <CustomCssSetting />
       </div>
       <h3 className="settings-heading">{t('settings.site')}</h3>
       <div className="settings-group">

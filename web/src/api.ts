@@ -205,6 +205,9 @@ export const settingsApi = {
   // `null` borra la clave. keepalive: el cambio llega aunque se cierre la pestaña justo después
   setPrefs: (changes: Record<string, string | null>): Promise<{ prefs: Record<string, string> }> =>
     request('/settings/prefs', { method: 'POST', json: changes, keepalive: true }),
+  // CSS propio de data/custom.css ('' si no existe)
+  getCustomCss: async (): Promise<string> => (await send('/settings/custom-css')).text(),
+  saveCustomCss: (css: string): Promise<{ ok: boolean }> => post('/settings/custom-css', { css }),
   getVaultStats: (): Promise<VaultStats> => request('/settings/vault-stats'),
   getUpdate: (): Promise<UpdateStatus> => request('/settings/update'),
   getNotes: (): Promise<NotesConfig> => request('/settings/notes'),

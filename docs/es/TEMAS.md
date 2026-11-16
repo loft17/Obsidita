@@ -93,6 +93,31 @@ Para probarlo mientras lo editas, arranca la web en modo desarrollo (`npm run de
 - **No toques las variables de fuente** (`--font-interface`, `--font-text`, `--font-monospace`, `--font-text-size`, `--line-width`): las ajusta la app según las preferencias del usuario. Sí puedes cambiar las fuentes por defecto (`--font-interface-default` y `--font-monospace-default`).
 - Puedes cargar fuentes externas con `@import url(...)` al principio del archivo, como hace `gemini.css` con Google Fonts.
 
+### 📦 Recuadros personalizados
+
+Puedes crear tus propios tipos de recuadro dentro de un tema. Un recuadro `> [!mi-tipo]` usa el selector `data-callout="mi-tipo"`:
+
+```css
+.reading-view .callout[data-callout="idea"] {
+  --callout-color: 255, 170, 0;        /* fondo y color del título, en RGB */
+  --callout-title-color: #b36b00;      /* opcional: color del título distinto */
+  --callout-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3C/svg%3E"); /* opcional: icono */
+}
+```
+
+El icono es un SVG (en una `url("data:image/svg+xml,...")` o en un archivo). Se pinta con el color del recuadro, así que el trazo puede ser `black`. Los tipos integrados (`note`, `tip`, `warning`...) mantienen su icono; para cambiar uno de ellos, usa un tipo nuevo.
+
+Luego, en una nota:
+
+```markdown
+> [!idea] Mi idea
+> Contenido del recuadro.
+```
+
+Un tipo sin `--callout-icon` usa el icono de nota.
+
+**Sin tocar el tema**: pon esas reglas en **⚙️ Ajustes → Apariencia → CSS personalizado → Editar**. Se guardan en `data/custom.css` (en el servidor, junto a `prefs.json`) y se aplican encima del tema al guardar. No hace falta recompilar.
+
 ---
 
 ## 🎨 Variables de color

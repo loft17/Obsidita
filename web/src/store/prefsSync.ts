@@ -1,4 +1,5 @@
 import { settingsApi } from '../api';
+import { ensureCustomCss } from '../customCss';
 import { LANG_KEY, isLang, useI18n } from '../i18n';
 import { createLogger } from '../logger';
 import { useStore } from './index';
@@ -41,6 +42,7 @@ document.addEventListener('visibilitychange', () => {
 // `startup`: aún no hay ninguna nota abierta, así que el modo de la nota sigue al predeterminado
 export async function pullPrefs(startup = false) {
   loggedIn = true;
+  ensureCustomCss();
   // Con cambios por subir, lo local es más reciente: se espera a la próxima vez
   if (Object.keys(pending).length) return;
   let server: Record<string, string> | null;

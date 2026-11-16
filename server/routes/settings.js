@@ -207,6 +207,30 @@ export default (dataDir, getConfig, limiter, sessions) => {
     res.json({ prefs: readPrefs() });
   });
 
+  // CSS propio en data/custom.css: lo editas tú en el servidor y la app lo carga encima del
+  // tema al iniciar sesión (recarga la página tras cambiarlo). Sin el archivo, 204 vacío
+  const customCssPath = join(dataDir, 'custom.css');
+  router.get('/custom-css', (req, res) => {
+    if (!existsSync(customCssPath)) return res.status(204).end();
+    res.type('text/css');
+    res.set('Cache-Control', 'no-store');
+    res.sendFile(customCssPath);
+  });
+  // Guardar desde Ajustes → Apariencia. Vacío = sin CSS propio (el archivo queda vacío)
+  const MAX_CUSTOM_CSS = 64 * 1024;
+  router.post('/custom-css', (req, res) => {
+    const css = req.body?.css;
+    if (typeof css !== 'string') return res.status(400).json({ error: 'CSS no válido' });
+    if (css.length > MAX_CUSTOM_CSS) return res.status(400).json({ error: 'El CSS es demasiado largo (máximo 64 KB)' });
+    try {
+      writeFileAtomic(customCssPath, css);
+      res.json({ ok: true });
+    } catch (err) {
+      log.error('No se pudo guardar data/custom.css:', err.message);
+      res.status(500).json({ error: 'No se pudo guardar el CSS' });
+    }
+  });
+
   router.post('/prefs', (req, res) => {
     const changes = req.body;
     if (!changes || typeof changes !== 'object' || Array.isArray(changes)) {
