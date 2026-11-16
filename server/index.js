@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.js';
 import filesRoutes from './routes/files.js';
 import searchRoutes from './routes/search.js';
 import settingsRoutes from './routes/settings.js';
+import bookmarksRoutes from './routes/bookmarks.js';
 import syncRoutes from './routes/sync.js';
 import fontsRoutes from './routes/fonts.js';
 import healthRoutes from './routes/health.js';
@@ -90,7 +91,9 @@ const apiPath = (req) => req.originalUrl.split('?')[0].toLowerCase();
 const isFilesApi = (req) => apiPath(req).startsWith('/api/files/');
 const isAiApi = (req) => apiPath(req).startsWith('/api/ai/');
 const smallJson = express.json({ limit: '100kb' });
-app.use((req, res, next) => (isFilesApi(req) || isAiApi(req) ? next() : smallJson(req, res, next)));
+// Los marcadores tienen su propio límite (hasta 1000 entradas), en su ruta
+const isBookmarksApi = (req) => apiPath(req).startsWith('/api/bookmarks');
+app.use((req, res, next) => (isFilesApi(req) || isAiApi(req) || isBookmarksApi(req) ? next() : smallJson(req, res, next)));
 app.use(cookieParser(cookieSecret));
 
 // Check if configured
@@ -206,6 +209,7 @@ app.use('/api', (req, res, next) => {
 });
 
 app.use('/api/settings', settingsRoutes(dataDir, getConfig, loginLimiter, sessions));
+app.use('/api/bookmarks', express.json({ limit: 512 * 1024 }), bookmarksRoutes(dataDir, getConfig));
 // Al guardar una nota el cuerpo es JSON, pero /api/files/upload lo recibe en crudo: si el
 // archivo subido llega con Content-Type: application/json, el parser de aquí se lo comería
 // antes de que la ruta lo vea y la subida fallaría con "Archivo vacío"

@@ -12,6 +12,7 @@ import { hasExternalFiles, droppedEntries, uploadDropped } from '../folderUpload
 import { notify } from '../toast';
 import { MenuItem, focusMenuItem, onMenuKeyDown } from './menuNav';
 import { fileShortcutFor } from '../fileShortcuts';
+import { bookmarkOfPath, toggleBookmark } from '../bookmarks';
 
 interface FlatItem {
   item: TreeItem;
@@ -158,6 +159,7 @@ export default function FileExplorer() {
   const openFile = useStore((s) => s.openFile);
   const setActiveTab = useStore((s) => s.setActiveTab);
   // keyboard: abierto con el teclado (tecla de menú o Shift+F10), el foco va al primer elemento
+  const bookmarks = useStore((s) => s.bookmarks);
   const [menu, setMenu] = useState<{ x: number; y: number; path: string; isFolder: boolean; keyboard: boolean } | null>(
     null,
   );
@@ -635,6 +637,9 @@ export default function FileExplorer() {
               {t('file.info')}
             </MenuItem>
           )}
+          <MenuItem onClick={() => runMenuAction((path) => toggleBookmark(path))}>
+            {bookmarkOfPath(bookmarks, menu.path) ? t('file.unbookmark') : t('file.bookmark')}
+          </MenuItem>
           <hr className="dropdown-divider" />
           <MenuItem onClick={() => runMenuAction(handleCopy)}>{t('file.makeCopy')}</MenuItem>
           {menu.isFolder && (

@@ -1660,6 +1660,8 @@ const SHORTCUT_GROUPS: { title: MessageKey; items: { keys: string[]; desc: Messa
       { keys: ['Ctrl', 'E'], desc: 'shortcuts.toggleMode' },
       { keys: ['Ctrl', 'B'], desc: 'shortcuts.toggleSidebar' },
       { keys: ['Ctrl', 'K'], desc: 'shortcuts.aiEdit' },
+      { keys: ['Ctrl', 'D'], desc: 'shortcuts.bookmarkToggle' },
+      { keys: ['Alt', '1–9'], desc: 'shortcuts.bookmarkOpen' },
       { keys: ['Esc'], desc: 'shortcuts.close' },
     ],
   },

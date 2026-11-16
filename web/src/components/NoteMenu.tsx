@@ -16,6 +16,8 @@ import { openAiBar, useAiEnabled } from '../ai';
 import log from '../logger';
 import { copyText } from '../clipboard';
 import { wikilinkTo } from '../wikilinkComplete';
+import { bookmarkOfPath, toggleBookmark } from '../bookmarks';
+import { HeadingPicker } from './BookmarkDialogs';
 import '../styles/search.css';
 
 export default function NoteMenu() {
@@ -24,10 +26,11 @@ export default function NoteMenu() {
   // apertura para que el atajo vuelva a poner el foco en la búsqueda aunque la barra ya esté abierta
   const [search, setSearch] = useState<'find' | 'replace' | null>(null);
   const [searchFocus, setSearchFocus] = useState(0);
-  const [dialog, setDialog] = useState<'rename' | 'move' | 'delete' | 'history' | null>(null);
+  const [dialog, setDialog] = useState<'rename' | 'move' | 'delete' | 'history' | 'bookmarkHeading' | null>(null);
 
   const activeTab = useStore((s) => s.activeTab);
   const tree = useStore((s) => s.tree);
+  const bookmarks = useStore((s) => s.bookmarks);
   const editMode = useStore((s) => s.editMode);
   const rawMode = useStore((s) => s.rawMode);
   const setRawMode = useStore((s) => s.setRawMode);
@@ -257,6 +260,24 @@ export default function NoteMenu() {
           <MenuItem
             onClick={() => {
               closeMenu();
+              toggleBookmark(activeTab);
+            }}
+          >
+            {bookmarkOfPath(bookmarks, activeTab) ? t('note.unbookmark') : t('note.bookmark')}
+          </MenuItem>
+          {!activeIsImage && isNote(activeTab) && (
+            <MenuItem
+              onClick={() => {
+                closeMenu();
+                setDialog('bookmarkHeading');
+              }}
+            >
+              {t('note.bookmarkHeading')}
+            </MenuItem>
+          )}
+          <MenuItem
+            onClick={() => {
+              closeMenu();
               useStore.getState().setNoteInfoPath(activeTab);
             }}
           >
@@ -344,6 +365,7 @@ export default function NoteMenu() {
           onClose={() => setDialog(null)}
         />
       )}
+      {dialog === 'bookmarkHeading' && <HeadingPicker path={activeTab} onClose={() => setDialog(null)} />}
       {dialog === 'history' && (
         <HistoryDialog path={activeTab} onRestore={handleRestore} onClose={() => setDialog(null)} />
       )}

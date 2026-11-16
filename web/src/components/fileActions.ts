@@ -4,6 +4,7 @@
 import { useStore } from '../store';
 import { filesApi } from '../api';
 import { flushPendingSave, changeNotePath } from './Editor';
+import { flushBookmarkSaves } from '../store/bookmarks';
 import { fileName, joinPath, parentFolder } from '../paths';
 import { notify } from '../toast';
 import { t } from '../i18n';
@@ -49,8 +50,11 @@ export const createUntitledNote = async () => {
 // Renombrar y mover son el mismo cambio de ruta en el servidor: además de la ruta, se
 // reescriben los enlaces de las notas y se actualizan pestañas y carpetas abiertas
 export const applyPathChange = async (oldPath: string, newPath: string) => {
+  // Lo pendiente de los marcadores se guarda antes: el servidor mueve las rutas al renombrar
+  await flushBookmarkSaves();
   await changeNotePath(oldPath, newPath);
   await refreshTree();
+  await useStore.getState().loadBookmarks();
 };
 
 // Borra y quita las pestañas que ya no existen. Lo que haya a medio guardar dentro del elemento

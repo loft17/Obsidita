@@ -12,6 +12,7 @@ import FileExplorer from './FileExplorer';
 import SearchPanel from './SearchPanel';
 import TagsPanel from './TagsPanel';
 import TrashPanel from './TrashPanel';
+import BookmarksPanel from './BookmarksPanel';
 import NoteInfoModal from './NoteInfoModal';
 import Tabs from './Tabs';
 import Editor, { cancelPendingSave, noteVersions, saveNote } from './Editor';
@@ -119,6 +120,11 @@ function SidebarResizer() {
 
 export default function MainLayout() {
   const activeTab = useStore((s) => s.activeTab);
+  const loadBookmarks = useStore((s) => s.loadBookmarks);
+  // Los marcadores se necesitan en toda la app (Ctrl+D, Alt+1..9, la marca de la nota): se cargan al entrar
+  useEffect(() => {
+    loadBookmarks();
+  }, [loadBookmarks]);
   const editMode = useStore((s) => s.editMode);
   const setEditMode = useStore((s) => s.setEditMode);
   const sidebarOpen = useStore((s) => s.sidebarOpen);
@@ -210,6 +216,8 @@ export default function MainLayout() {
               <TagsPanel />
             ) : sidebarView === 'trash' ? (
               <TrashPanel />
+            ) : sidebarView === 'bookmarks' ? (
+              <BookmarksPanel />
             ) : (
               <FileExplorer />
             )}

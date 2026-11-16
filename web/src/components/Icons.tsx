@@ -313,3 +313,21 @@ export const IconImage = make(
     <path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21" />
   </>,
 );
+
+export const IconBookmark = make(
+  <>
+    <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z" />
+  </>,
+);
+export const IconDownload = make(
+  <>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <path d="m7 10 5 5 5-5M12 15V3" />
+  </>,
+);
+export const IconUpload = make(
+  <>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <path d="m17 8-5-5-5 5M12 3v12" />
+  </>,
+);

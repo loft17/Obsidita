@@ -30,3 +30,21 @@ export interface SearchResult {
   total: number;
   matches: SearchMatch[];
 }
+
+// Marcador: un archivo, un encabezado de una nota o una carpeta (data/bookmarks.json)
+export type BookmarkType = 'file' | 'heading' | 'folder';
+
+export interface Bookmark {
+  id: string;
+  type: BookmarkType;
+  path: string;
+  heading?: string; // solo en los de tipo heading
+  label?: string; // nombre propio; vacío = el nombre del archivo o encabezado
+  group?: string; // nombre de un grupo de BookmarkStore.groups
+  createdAt?: number;
+}
+
+export interface BookmarkStore {
+  groups: string[];
+  items: Bookmark[];
+}

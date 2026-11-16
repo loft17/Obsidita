@@ -2,16 +2,18 @@ import { create } from 'zustand';
 import { createPrefsSlice, type PrefsSlice } from './prefs';
 import { createUiSlice, type UiSlice } from './ui';
 import { createDocsSlice, type DocsSlice } from './docs';
+import { createBookmarksSlice, type BookmarksSlice } from './bookmarks';
 
 // Un único store compuesto por slices: preferencias (persistidas), interfaz y documentos.
 // Las acciones de un slice pueden leer y escribir campos de otro (p. ej. `openFile` usa
 // `defaultEditMode` y `renameTab` actualiza `expandedFolders`)
-export type AppStore = PrefsSlice & UiSlice & DocsSlice;
+export type AppStore = PrefsSlice & UiSlice & DocsSlice & BookmarksSlice;
 
 export const useStore = create<AppStore>()((...a) => ({
   ...createPrefsSlice(...a),
   ...createUiSlice(...a),
   ...createDocsSlice(...a),
+  ...createBookmarksSlice(...a),
 }));
 
 export type { Theme, FontKind, Fonts, ImageFormat } from './prefs';

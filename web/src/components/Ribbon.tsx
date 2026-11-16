@@ -16,6 +16,7 @@ import {
   IconCalendarDays,
   IconTemplate,
   IconTrash,
+  IconBookmark,
   IconSettings,
   IconLogout,
 } from './Icons';
@@ -135,6 +136,16 @@ export default function Ribbon() {
           onClick={() => showSidebarView('trash')}
         >
           <IconTrash />
+        </button>
+        <button
+          type="button"
+          className={`ribbon-item ${sidebarOpen && sidebarView === 'bookmarks' ? 'active' : ''}`}
+          title={t('sidebar.bookmarks')}
+          aria-label={t('sidebar.bookmarks')}
+          aria-pressed={sidebarOpen && sidebarView === 'bookmarks'}
+          onClick={() => showSidebarView('bookmarks')}
+        >
+          <IconBookmark />
         </button>
         <button
           type="button"

@@ -1,0 +1,166 @@
+/* Panel de marcadores (components/BookmarksPanel.tsx) */
+
+.bookmark-toolbar {
+  position: relative;
+}
+
+.bookmark-list {
+  padding-bottom: 12px;
+}
+
+/* Fila de marcador: el nombre abre el marcador; las acciones aparecen al pasar el ratón (siempre en táctil) */
+.bookmark-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  min-width: 0;
+}
+
+.bookmark-row:hover,
+.bookmark-row:focus-within {
+  background: var(--interactive-hover);
+}
+
+.bookmark-row .tree-chevron {
+  display: inline-flex;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.bookmark-open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-normal);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.bookmark-open .tree-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bookmark-sub {
+  margin-left: 6px;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.bookmark-row.is-broken .bookmark-open {
+  color: var(--text-faint);
+  text-decoration: line-through;
+}
+
+.bookmark-missing {
+  font-size: 10px;
+  color: var(--color-red);
+  white-space: nowrap;
+}
+
+.bookmark-actions {
+  display: none;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.bookmark-row:hover .bookmark-actions,
+.bookmark-row:focus-within .bookmark-actions,
+.bookmark-group-head:hover .bookmark-actions,
+.bookmark-group-head:focus-within .bookmark-actions {
+  display: inline-flex;
+}
+
+@media (hover: none) {
+  .bookmark-actions {
+    display: inline-flex;
+  }
+}
+
+.bookmark-actions .icon-btn {
+  width: 22px;
+  height: 22px;
+}
+
+/* Grupos: cabecera plegable con su número de marcadores */
+.bookmark-group {
+  margin-top: 6px;
+}
+
+.bookmark-group-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+}
+
+.bookmark-group-toggle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 2px 0;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.bookmark-group-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bookmark-count {
+  font-size: 11px;
+  font-weight: normal;
+  color: var(--text-faint);
+}
+
+.bookmark-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  text-align: center;
+  white-space: normal;
+}
+
+/* Diálogo de edición */
+.bookmark-dialog-path {
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bookmark-dialog-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.bookmark-menu {
+  right: 0;
+  left: auto;
+  min-width: 200px;
+}

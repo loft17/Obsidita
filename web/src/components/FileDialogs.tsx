@@ -19,7 +19,7 @@ const focusableIn = (root: HTMLElement) =>
 
 // Diálogo modal: role="dialog" + aria-modal, foco atrapado dentro mientras está abierto y, al
 // cerrarse, de vuelta al elemento que lo tenía antes (si nadie lo ha movido a otro sitio)
-function DialogShell({
+export function DialogShell({
   title,
   error,
   onClose,
@@ -112,7 +112,7 @@ function DialogShell({
   );
 }
 
-function DialogButtons({
+export function DialogButtons({
   confirmLabel,
   danger,
   disabled,

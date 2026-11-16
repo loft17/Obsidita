@@ -5,7 +5,7 @@ import type { AppStore } from './index';
 
 // Estado de la interfaz: barra lateral, búsqueda, ajustes y datos de la web que manda el servidor
 
-export type SidebarView = 'files' | 'search' | 'tags' | 'trash';
+export type SidebarView = 'files' | 'search' | 'tags' | 'trash' | 'bookmarks';
 
 // Título de la pestaña del navegador y de la pantalla de login
 export const DEFAULT_SITE_TITLE = 'Obsidita';

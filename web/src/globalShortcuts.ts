@@ -8,6 +8,8 @@ import { notify } from './toast';
 import { t } from './i18n';
 import { isNote } from './paths';
 import { openAiBar } from './ai';
+import { openBookmark, toggleBookmark } from './bookmarks';
+import { visualOrder } from './bookmarkUtils';
 
 // Atajos globales. Con modificador: Ctrl/Cmd+P abrir nota (`onQuickOpen`), +S guardar,
 // +E editar/leer, +B barra lateral, +K editar con IA, +Shift+F buscar. Para el archivo abierto: F2 renombrar,
@@ -29,6 +31,20 @@ export function useGlobalShortcuts(onQuickOpen: () => void) {
         if ((document.activeElement as HTMLElement | null)?.closest('button')) return;
         e.preventDefault();
         useNoteOverlayStore.getState().open(fileAction);
+        return;
+      }
+
+      // Alt+1..9: abre el marcador que ocupa ese puesto en el panel (sin Shift: en algunos teclados da símbolos)
+      if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+        const digit = /^(?:Digit|Numpad)([1-9])$/.exec(e.code);
+        if (digit && !hasOpenOverlay()) {
+          const { bookmarks, bookmarkGroups } = useStore.getState();
+          const target = visualOrder({ groups: bookmarkGroups, items: bookmarks })[Number(digit[1]) - 1];
+          if (target) {
+            e.preventDefault();
+            openBookmark(target);
+          }
+        }
         return;
       }
 
@@ -63,6 +79,12 @@ export function useGlobalShortcuts(onQuickOpen: () => void) {
         case 'b':
           e.preventDefault();
           toggleSidebar();
+          break;
+        case 'd':
+          // Marca o quita la nota abierta (el navegador usaría Ctrl+D para marcar la página)
+          if (!activeTab) break;
+          e.preventDefault();
+          toggleBookmark(activeTab);
           break;
         case 'k':
           // Solo con una nota, la IA configurada y sin un diálogo encima (si no, el atajo queda

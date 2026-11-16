@@ -15,6 +15,8 @@ The following shortcuts work anywhere in the application:
 | <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>E</kbd> | **Edit/Read** | Toggle between edit mode and reading mode |
 | <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>B</kbd> | **Sidebar** | Show or hide sidebar (explorer, search, etc.) |
 | <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>K</kbd> | **Edit with AI** | Open the AI bar on the note or the selection (if configured, see [AI.md](AI.md)) |
+| <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>D</kbd> | **Bookmark** | Bookmark or unbookmark the open note or folder (see the Bookmarks panel) |
+| <kbd>Alt</kbd> + <kbd>1</kbd> … <kbd>9</kbd> | **Open bookmark** | Open the bookmark in that position of the Bookmarks panel |
 | <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> | **Search** | Open search panel in sidebar |
 | <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + **Wheel** | **Change Font Size** | Zoom in or out the text (similar to browser zoom) |
 

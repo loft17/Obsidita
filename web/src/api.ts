@@ -1,5 +1,5 @@
 import { t } from './i18n';
-import type { TreeItem, TrashItem, SearchResult } from './types';
+import type { TreeItem, TrashItem, SearchResult, BookmarkStore } from './types';
 
 const API_URL = '/api';
 
@@ -429,4 +429,14 @@ export const aiApi = {
   ): Promise<AiEditResult> => request('/ai/edit', { method: 'POST', json: body, signal }),
   getSettings: (): Promise<AiSettings> => request('/ai/settings'),
   saveSettings: (settings: AiSettingsUpdate): Promise<AiSettings> => post('/ai/settings', settings),
+};
+
+// Marcadores (data/bookmarks.json) y su intercambio con .obsidian/bookmarks.json
+export const bookmarksApi = {
+  get: (): Promise<BookmarkStore> => request('/bookmarks'),
+  // Reemplaza la lista entera
+  save: (data: BookmarkStore): Promise<BookmarkStore> => request('/bookmarks', { method: 'PUT', json: data }),
+  importObsidian: (): Promise<{ added: number; skipped: number; store: BookmarkStore }> =>
+    post('/bookmarks/obsidian/import'),
+  exportObsidian: (): Promise<{ exported: number; kept: number }> => post('/bookmarks/obsidian/export'),
 };
