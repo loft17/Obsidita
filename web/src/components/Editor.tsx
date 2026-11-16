@@ -18,7 +18,7 @@ import { imageUpload } from '../imageUpload';
 import { autoPair } from '../autoPair';
 import { wikilinkCompletion } from '../wikilinkComplete';
 import { setEmbedContent } from '../noteEmbeds';
-import { subscribePendingScroll, takePendingLine } from '../wikilinks';
+import { subscribePendingScroll, takePendingLine, takeReadingTopLine } from '../wikilinks';
 import { useLatest } from '../latestRef';
 import { useAiStore } from '../ai';
 import { notify } from '../toast';
@@ -286,11 +286,18 @@ export default function Editor({ filePath, content, onContentChange }: Props) {
       state: createState(body, (doc) => onBodyChangeRef.current(doc), getPath),
     });
     viewRef.current = view;
+    // Viene de la vista de lectura: se sitúa en el mismo bloque, sin mover el cursor
+    const topLine = takeReadingTopLine(filePath);
+    if (topLine !== undefined) {
+      const line = view.state.doc.line(Math.min(topLine + 1, view.state.doc.lines));
+      view.dispatch({ effects: EditorView.scrollIntoView(line.from, { y: 'start' }) });
+    }
     return () => {
       view.destroy();
       viewRef.current = null;
     };
     // Solo al montar: los cambios de `body` posteriores los aplica el efecto de más abajo
+    // (filePath no cambia: la nota tiene su propio Editor por la clave de la pestaña)
   }, []);
 
   useEffect(() => {

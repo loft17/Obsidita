@@ -93,6 +93,20 @@ export function scrollToLine(container: HTMLElement, bodyLine: number) {
   target?.scrollIntoView({ block: 'center' });
 }
 
+// Línea del cuerpo (0-indexed) que queda arriba en la vista de lectura, por nota. Al pasar a
+// edición el editor la consume para seguir en el mismo sitio en vez de subir al principio
+const readingTopLines = new Map<string, number>();
+
+export function rememberReadingTopLine(path: string, bodyLine: number) {
+  readingTopLines.set(path, bodyLine);
+}
+
+export function takeReadingTopLine(path: string): number | undefined {
+  const line = readingTopLines.get(path);
+  readingTopLines.delete(path);
+  return line;
+}
+
 // Abre la nota enlazada; si no existe la crea en la raíz del vault, como Obsidian
 export async function followWikilink(inner: string, notePath: string, newTab = false) {
   const { target, heading } = parseWikilink(inner);

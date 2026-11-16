@@ -9,6 +9,7 @@ import {
   followWikilink,
   isResolved,
   parseWikilink,
+  rememberReadingTopLine,
   resolveWikilink,
   scrollToHeading,
   scrollToLine,
@@ -551,7 +552,31 @@ export default function ReadingView({ content, filePath, onContentChange }: Prop
   // Los diagramas Mermaid se dibujan con los colores del tema
   const theme = useStore((s) => s.theme);
   const contentRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollFrame = useRef(0);
   const notePath = filePath ?? '';
+
+  // Guarda el bloque que queda arriba al desplazarse: al editar, el editor se monta de nuevo
+  // y necesita saber dónde estaba (un frame por lote de eventos de scroll, no uno por evento)
+  const onScroll = () => {
+    if (scrollFrame.current) return;
+    scrollFrame.current = requestAnimationFrame(() => {
+      scrollFrame.current = 0;
+      const box = scrollRef.current;
+      const el = contentRef.current;
+      if (!box || !el || !notePath) return;
+      const top = box.getBoundingClientRect().top;
+      for (const block of el.querySelectorAll<HTMLElement>('[data-line]')) {
+        // Las notas incrustadas traen sus propias líneas: no son del cuerpo de esta nota
+        if (block.closest('.internal-embed')) continue;
+        if (block.getBoundingClientRect().bottom > top) {
+          rememberReadingTopLine(notePath, Number(block.dataset.line));
+          return;
+        }
+      }
+    });
+  };
+  useEffect(() => () => cancelAnimationFrame(scrollFrame.current), []);
 
   // Las notas incrustadas se cargan aparte: al llegar (o cambiar) se vuelve a pintar
   const embedsVersion = useSyncExternalStore(subscribeEmbeds, getEmbedsVersion);
@@ -626,7 +651,7 @@ export default function ReadingView({ content, filePath, onContentChange }: Prop
   };
 
   return (
-    <div className="reading-view">
+    <div className="reading-view" ref={scrollRef} onScroll={onScroll}>
       <div className="reading-view-inner">
         {showInlineTitle && filePath && <InlineTitle filePath={filePath} />}
 
