@@ -269,6 +269,8 @@ export const IconCodeBlock = make(
     <path d="m10 9-3 3 3 3M14 9l3 3-3 3" />
   </>,
 );
+// Seis puntos: asa para arrastrar una fila
+export const IconGrip = make(<path d="M9 5h.01M9 12h.01M9 19h.01M15 5h.01M15 12h.01M15 19h.01" />);
 export const IconListBullet = make(<path d="M3 6h.01M3 12h.01M3 18h.01M8 6h13M8 12h13M8 18h13" />);
 export const IconListOrdered = make(
   <path d="M10 6h11M10 12h11M10 18h11M4 6h1v4M4 10h2M6 18H4c0-1 2-2 2-3s-1-1.5-2-1" />,

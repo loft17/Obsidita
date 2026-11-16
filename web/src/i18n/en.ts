@@ -466,6 +466,12 @@ export const en: Messages = {
   'settings.ribbon': 'Show ribbon',
   'settings.ribbon.desc':
     'Shows a vertical toolbar on the side of the window. When hidden, its buttons move to the bottom of the sidebar.',
+  'settings.section.sidebar': 'Side menu',
+  'settings.ribbonItems.desc':
+    'Choose which ribbon buttons are shown and their order: drag the rows or use the arrows. Settings and log out always stay at the bottom.',
+  'settings.ribbonItems.show': 'Show {name}',
+  'settings.ribbonItems.up': 'Move {name} up',
+  'settings.ribbonItems.down': 'Move {name} down',
   'settings.defaultMode': 'Default note mode',
   'settings.defaultMode.desc': 'How notes open when you select them',
   'settings.defaultMode.view': 'Reading mode',

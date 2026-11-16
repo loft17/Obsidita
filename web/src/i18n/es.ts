@@ -466,6 +466,12 @@ export const es = {
   'settings.ribbon': 'Mostrar menú de cinta',
   'settings.ribbon.desc':
     'Muestra una barra de herramientas vertical en el costado de la ventana. Si se oculta, sus botones pasan al pie de la barra lateral.',
+  'settings.section.sidebar': 'Menú lateral',
+  'settings.ribbonItems.desc':
+    'Elige qué botones muestra la cinta y en qué orden: arrastra las filas o usa las flechas. Ajustes y cerrar sesión siempre quedan abajo.',
+  'settings.ribbonItems.show': 'Mostrar {name}',
+  'settings.ribbonItems.up': 'Subir {name}',
+  'settings.ribbonItems.down': 'Bajar {name}',
   'settings.defaultMode': 'Modo por defecto de las notas',
   'settings.defaultMode.desc': 'Cómo se abren las notas al seleccionarlas',
   'settings.defaultMode.view': 'Modo visor',

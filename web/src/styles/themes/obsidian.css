@@ -3445,6 +3445,44 @@ button.note-info-item {
   border-bottom: none;
 }
 
+/* Subir, bajar y mostrar/ocultar un botón de la cinta (SettingsModal, SidebarSection) */
+.ribbon-item-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.ribbon-item-controls .icon-btn:disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* Arrastrar y soltar filas del menú lateral */
+.ribbon-setting-row {
+  gap: 10px;
+}
+
+.ribbon-drag-handle {
+  display: inline-flex;
+  color: var(--text-faint);
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.ribbon-setting-row.dragging {
+  opacity: 0.4;
+}
+
+.ribbon-setting-row.drop-target {
+  box-shadow: inset 0 2px 0 var(--interactive-accent);
+}
+
+.ribbon-setting-row .setting-info {
+  flex: 1;
+  min-width: 0;
+}
+
 .setting-item select {
   appearance: none;
   padding: 6px 30px 6px 12px;

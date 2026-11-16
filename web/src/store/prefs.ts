@@ -64,6 +64,11 @@ export interface PrefsSlice {
   setShowTabHeader: (show: boolean) => void;
   showRibbon: boolean;
   setShowRibbon: (show: boolean) => void;
+  // Orden de los botones de la cinta y los ocultos (ids de ribbonItems.ts)
+  ribbonOrder: string[];
+  setRibbonOrder: (ids: string[]) => void;
+  ribbonHidden: string[];
+  setRibbonHidden: (ids: string[]) => void;
   pdfViewer: boolean;
   setPdfViewer: (enabled: boolean) => void;
   // Al entrar, volver a abrir las pestañas que estaban abiertas (ver session.ts)
@@ -115,6 +120,8 @@ const KEYS = {
   lineWidth: synced('lineWidth'),
   tabHeader: synced('showTabHeader'),
   ribbon: synced('showRibbon'),
+  ribbonOrder: synced('ribbonOrder'),
+  ribbonHidden: synced('ribbonHidden'),
   // Abrir los PDF con el visor nativo del navegador en vez de ofrecer descargarlos
   pdfViewer: synced('pdfViewer'),
   restoreTabs: synced('restoreTabs'),
@@ -182,6 +189,13 @@ const readImageFormat = (): ImageFormat => {
   return value === 'webp' || value === 'jpg' ? value : 'original';
 };
 
+// Lista de ids separados por comas (vacía = predeterminado)
+const readList = (key: string) =>
+  readString(key)
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean);
+
 const readTheme = (): Theme => {
   const value = readString(KEYS.theme);
   return value === 'light' || value === 'system' ? value : 'dark';
@@ -214,6 +228,8 @@ const readPrefs = () => ({
   lineWidth: readNumber(KEYS.lineWidth, DEFAULT_LINE_WIDTH, clampLineWidth),
   showTabHeader: readBool(KEYS.tabHeader, true),
   showRibbon: readBool(KEYS.ribbon, true),
+  ribbonOrder: readList(KEYS.ribbonOrder),
+  ribbonHidden: readList(KEYS.ribbonHidden),
   pdfViewer: readBool(KEYS.pdfViewer, false),
   restoreTabs: readBool(KEYS.restoreTabs, false),
   imageFormat: readImageFormat(),
@@ -372,6 +388,14 @@ export const createPrefsSlice: StateCreator<AppStore, [], [], PrefsSlice> = (set
     },
     setShowTabHeader: boolPref('showTabHeader', KEYS.tabHeader),
     setShowRibbon: boolPref('showRibbon', KEYS.ribbon),
+    setRibbonOrder: (ids) => {
+      save(KEYS.ribbonOrder, ids.join(','));
+      set({ ribbonOrder: ids });
+    },
+    setRibbonHidden: (ids) => {
+      save(KEYS.ribbonHidden, ids.join(','));
+      set({ ribbonHidden: ids });
+    },
     setPdfViewer: boolPref('pdfViewer', KEYS.pdfViewer),
     setRestoreTabs: boolPref('restoreTabs', KEYS.restoreTabs),
     setImageFormat: (format) => {

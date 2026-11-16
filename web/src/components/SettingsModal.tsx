@@ -35,8 +35,13 @@ import {
 } from '../templates';
 import { getLang, LANGUAGES, Trans, useI18n, useT, type Lang, type MessageKey } from '../i18n';
 import { formatBytes } from '../format';
+import { RIBBON_LABELS, ribbonLayout, type RibbonId } from '../ribbonItems';
 import {
+  IconChevronDown,
   IconChevronLeft,
+  IconChevronUp,
+  IconGrip,
+  IconSidebar,
   IconClose,
   IconEdit,
   IconEye,
@@ -63,6 +68,7 @@ interface Props {
 const SECTIONS: { id: string; label: MessageKey; Icon: typeof IconEye }[] = [
   { id: 'about', label: 'settings.section.about', Icon: IconUserCircle },
   { id: 'appearance', label: 'settings.section.appearance', Icon: IconEye },
+  { id: 'sidebar', label: 'settings.section.sidebar', Icon: IconSidebar },
   { id: 'editor', label: 'settings.section.editor', Icon: IconEdit },
   { id: 'tables', label: 'settings.section.tables', Icon: IconTable },
   { id: 'files', label: 'settings.section.files', Icon: IconFolderNew },
@@ -239,6 +245,119 @@ function SiteTitleSetting() {
 }
 
 const THEME_MODES = ['light', 'dark', 'system'] as const;
+
+// Menú lateral (la cinta de botones de la izquierda, ver ribbonItems.ts): mostrar, ocultar y ordenar
+// sus botones. Se ordena arrastrando las filas o con las flechas. Los cambios se guardan al instante
+function SidebarSection() {
+  const ribbonOrder = useStore((s) => s.ribbonOrder);
+  const setRibbonOrder = useStore((s) => s.setRibbonOrder);
+  const ribbonHidden = useStore((s) => s.ribbonHidden);
+  const setRibbonHidden = useStore((s) => s.setRibbonHidden);
+  const [dragId, setDragId] = useState<RibbonId | null>(null);
+  const [overId, setOverId] = useState<RibbonId | null>(null);
+  const t = useT();
+  const layout = ribbonLayout(ribbonOrder, ribbonHidden);
+
+  // Pone `id` en la posición `to` de la lista
+  const place = (id: RibbonId, to: number) => {
+    const ids = layout.map((item) => item.id);
+    const from = ids.indexOf(id);
+    if (from < 0 || from === to) return;
+    ids.splice(from, 1);
+    ids.splice(to, 0, id);
+    setRibbonOrder(ids);
+  };
+
+  const move = (index: number, delta: number) => place(layout[index].id, index + delta);
+
+  const setVisible = (id: RibbonId, visible: boolean) =>
+    setRibbonHidden(visible ? ribbonHidden.filter((hiddenId) => hiddenId !== id) : [...new Set([...ribbonHidden, id])]);
+
+  const endDrag = () => {
+    setDragId(null);
+    setOverId(null);
+  };
+
+  return (
+    <>
+      <div className="settings-group">
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-desc">{t('settings.ribbonItems.desc')}</div>
+          </div>
+        </div>
+        {layout.map(({ id, visible }, index) => {
+          const label = t(RIBBON_LABELS[id]);
+          const classes = ['setting-item', 'ribbon-setting-row'];
+          if (dragId === id) classes.push('dragging');
+          if (overId === id && dragId && dragId !== id) classes.push('drop-target');
+          return (
+            <div
+              className={classes.join(' ')}
+              key={id}
+              draggable
+              onDragStart={(e) => {
+                setDragId(id);
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', id);
+              }}
+              onDragOver={(e) => {
+                if (!dragId) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                if (overId !== id) setOverId(id);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (dragId) place(dragId, index);
+                endDrag();
+              }}
+              onDragEnd={endDrag}
+            >
+              <span className="ribbon-drag-handle" aria-hidden="true">
+                <IconGrip size={16} />
+              </span>
+              <div className="setting-info">
+                <div className="setting-name">{label}</div>
+              </div>
+              <div className="ribbon-item-controls">
+                <button
+                  type="button"
+                  className="icon-btn"
+                  title={t('settings.ribbonItems.up', { name: label })}
+                  aria-label={t('settings.ribbonItems.up', { name: label })}
+                  disabled={index === 0}
+                  onClick={() => move(index, -1)}
+                >
+                  <IconChevronUp size={16} />
+                </button>
+                <button
+                  type="button"
+                  className="icon-btn"
+                  title={t('settings.ribbonItems.down', { name: label })}
+                  aria-label={t('settings.ribbonItems.down', { name: label })}
+                  disabled={index === layout.length - 1}
+                  onClick={() => move(index, 1)}
+                >
+                  <IconChevronDown size={16} />
+                </button>
+                <label className="setting-toggle" title={t('settings.ribbonItems.show', { name: label })}>
+                  <input
+                    type="checkbox"
+                    checked={visible}
+                    aria-label={t('settings.ribbonItems.show', { name: label })}
+                    onChange={(e) => setVisible(id, e.target.checked)}
+                  />
+                  <span />
+                </label>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
 
 // Los cambios se guardan automáticamente (el store los persiste en localStorage)
 function AppearanceSection() {
@@ -1909,6 +2028,7 @@ export default function SettingsModal({ onClose }: Props) {
           <div className="settings-content">
             {section === 'about' && <AboutSection />}
             {section === 'appearance' && <AppearanceSection />}
+            {section === 'sidebar' && <SidebarSection />}
             {section === 'editor' && <EditorSection />}
             {section === 'tables' && <TablesSection />}
             {section === 'files' && <FilesSection />}

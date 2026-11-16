@@ -8,6 +8,7 @@ import { QuickOpenDialog } from './FileDialogs';
 import { t, useT } from '../i18n';
 import { notify } from '../toast';
 import { noteTitle } from '../paths';
+import { ribbonLayout, type RibbonId } from '../ribbonItems';
 import {
   IconSidebar,
   IconFolderOpen,
@@ -77,105 +78,75 @@ function useTemplatePicker() {
   return { open, dialog };
 }
 
-export default function Ribbon() {
+type RibbonButton = {
+  Icon: typeof IconSidebar;
+  title: string;
+  // Solo los botones que cambian la vista de la barra lateral tienen estado pulsado
+  pressed?: boolean;
+  onClick: () => void;
+};
+
+// Botones de la cinta según el estado actual (la cinta y el pie de la barra lateral los usan)
+function useRibbonButtons(openTemplates: () => void): Record<RibbonId, RibbonButton> {
   const sidebarOpen = useStore((s) => s.sidebarOpen);
   const toggleSidebar = useStore((s) => s.toggleSidebar);
   const sidebarView = useStore((s) => s.sidebarView);
   const showSidebarView = useStore((s) => s.showSidebarView);
+  const t = useT();
+
+  const view = (id: 'files' | 'search' | 'tags' | 'trash' | 'bookmarks' | 'shortlinks') => ({
+    pressed: sidebarOpen && sidebarView === id,
+    onClick: () => showSidebarView(id),
+  });
+
+  return {
+    sidebar: { Icon: IconSidebar, title: t('sidebar.toggle'), onClick: toggleSidebar },
+    files: { Icon: IconFolderOpen, title: t('sidebar.files'), ...view('files') },
+    search: { Icon: IconSearch, title: `${t('sidebar.search')} (Ctrl+Shift+F)`, ...view('search') },
+    tags: { Icon: IconTag, title: t('sidebar.tags'), ...view('tags') },
+    trash: { Icon: IconTrash, title: t('sidebar.trash'), ...view('trash') },
+    bookmarks: { Icon: IconBookmark, title: t('sidebar.bookmarks'), ...view('bookmarks') },
+    shortlinks: { Icon: IconLink, title: t('sidebar.shortlinks'), ...view('shortlinks') },
+    daily: { Icon: IconCalendarDays, title: t('daily.open'), onClick: openToday },
+    templates: { Icon: IconTemplate, title: t('templates.insert'), onClick: openTemplates },
+  };
+}
+
+// Ids visibles, en el orden elegido en los ajustes
+function useVisibleRibbonIds(): RibbonId[] {
+  const order = useStore((s) => s.ribbonOrder);
+  const hidden = useStore((s) => s.ribbonHidden);
+  return ribbonLayout(order, hidden)
+    .filter((item) => item.visible)
+    .map((item) => item.id);
+}
+
+export default function Ribbon() {
   const setSettingsOpen = useStore((s) => s.setSettingsOpen);
   const templates = useTemplatePicker();
+  const buttons = useRibbonButtons(templates.open);
+  const visible = useVisibleRibbonIds();
   const t = useT();
 
   return (
     <div className="ribbon">
       <div className="ribbon-group">
-        <button
-          type="button"
-          className="ribbon-item"
-          title={t('sidebar.toggle')}
-          aria-label={t('sidebar.toggle')}
-          onClick={toggleSidebar}
-        >
-          <IconSidebar />
-        </button>
-        <button
-          type="button"
-          className={`ribbon-item ${sidebarOpen && sidebarView === 'files' ? 'active' : ''}`}
-          title={t('sidebar.files')}
-          aria-label={t('sidebar.files')}
-          aria-pressed={sidebarOpen && sidebarView === 'files'}
-          onClick={() => showSidebarView('files')}
-        >
-          <IconFolderOpen />
-        </button>
-        <button
-          type="button"
-          className={`ribbon-item ${sidebarOpen && sidebarView === 'search' ? 'active' : ''}`}
-          title={`${t('sidebar.search')} (Ctrl+Shift+F)`}
-          aria-label={`${t('sidebar.search')} (Ctrl+Shift+F)`}
-          aria-pressed={sidebarOpen && sidebarView === 'search'}
-          onClick={() => showSidebarView('search')}
-        >
-          <IconSearch />
-        </button>
-        <button
-          type="button"
-          className={`ribbon-item ${sidebarOpen && sidebarView === 'tags' ? 'active' : ''}`}
-          title={t('sidebar.tags')}
-          aria-label={t('sidebar.tags')}
-          aria-pressed={sidebarOpen && sidebarView === 'tags'}
-          onClick={() => showSidebarView('tags')}
-        >
-          <IconTag />
-        </button>
-        <button
-          type="button"
-          className={`ribbon-item ${sidebarOpen && sidebarView === 'trash' ? 'active' : ''}`}
-          title={t('sidebar.trash')}
-          aria-label={t('sidebar.trash')}
-          aria-pressed={sidebarOpen && sidebarView === 'trash'}
-          onClick={() => showSidebarView('trash')}
-        >
-          <IconTrash />
-        </button>
-        <button
-          type="button"
-          className={`ribbon-item ${sidebarOpen && sidebarView === 'bookmarks' ? 'active' : ''}`}
-          title={t('sidebar.bookmarks')}
-          aria-label={t('sidebar.bookmarks')}
-          aria-pressed={sidebarOpen && sidebarView === 'bookmarks'}
-          onClick={() => showSidebarView('bookmarks')}
-        >
-          <IconBookmark />
-        </button>
-        <button
-          type="button"
-          className={`ribbon-item ${sidebarOpen && sidebarView === 'shortlinks' ? 'active' : ''}`}
-          title={t('sidebar.shortlinks')}
-          aria-label={t('sidebar.shortlinks')}
-          aria-pressed={sidebarOpen && sidebarView === 'shortlinks'}
-          onClick={() => showSidebarView('shortlinks')}
-        >
-          <IconLink />
-        </button>
-        <button
-          type="button"
-          className="ribbon-item"
-          title={t('daily.open')}
-          aria-label={t('daily.open')}
-          onClick={openToday}
-        >
-          <IconCalendarDays />
-        </button>
-        <button
-          type="button"
-          className="ribbon-item"
-          title={t('templates.insert')}
-          aria-label={t('templates.insert')}
-          onClick={templates.open}
-        >
-          <IconTemplate />
-        </button>
+        {visible.map((id) => {
+          const { Icon, title, pressed, onClick } = buttons[id];
+          return (
+            <button
+              key={id}
+              type="button"
+              className={`ribbon-item ${pressed ? 'active' : ''}`}
+              title={title}
+              aria-label={title}
+              aria-pressed={pressed}
+              onClick={onClick}
+            >
+              <Icon />
+            </button>
+          );
+        })}
       </div>
 
       <div className="ribbon-group bottom">
@@ -203,50 +174,27 @@ export default function Ribbon() {
   );
 }
 
-// Con la cinta oculta, sus botones pasan al pie de la barra lateral
+// Botones de la cinta que también aparecen en el pie de la barra lateral (con la cinta oculta)
+const FOOTER_IDS: RibbonId[] = ['files', 'search', 'tags', 'trash', 'daily', 'templates'];
+
+// Con la cinta oculta, sus botones pasan al pie de la barra lateral (respetan el orden y los ocultos)
 export function SidebarFooter() {
-  const sidebarView = useStore((s) => s.sidebarView);
-  const showSidebarView = useStore((s) => s.showSidebarView);
   const setSettingsOpen = useStore((s) => s.setSettingsOpen);
   const templates = useTemplatePicker();
+  const buttons = useRibbonButtons(templates.open);
+  const visible = useVisibleRibbonIds().filter((id) => FOOTER_IDS.includes(id));
   const t = useT();
 
   return (
     <div className="sidebar-footer">
-      <button
-        className={`icon-btn ${sidebarView === 'files' ? 'active' : ''}`}
-        title={t('sidebar.files')}
-        onClick={() => showSidebarView('files')}
-      >
-        <IconFolderOpen size={16} />
-      </button>
-      <button
-        className={`icon-btn ${sidebarView === 'search' ? 'active' : ''}`}
-        title={`${t('sidebar.search')} (Ctrl+Shift+F)`}
-        onClick={() => showSidebarView('search')}
-      >
-        <IconSearch size={16} />
-      </button>
-      <button
-        className={`icon-btn ${sidebarView === 'tags' ? 'active' : ''}`}
-        title={t('sidebar.tags')}
-        onClick={() => showSidebarView('tags')}
-      >
-        <IconTag size={16} />
-      </button>
-      <button
-        className={`icon-btn ${sidebarView === 'trash' ? 'active' : ''}`}
-        title={t('sidebar.trash')}
-        onClick={() => showSidebarView('trash')}
-      >
-        <IconTrash size={16} />
-      </button>
-      <button className="icon-btn" title={t('daily.open')} onClick={openToday}>
-        <IconCalendarDays size={16} />
-      </button>
-      <button className="icon-btn" title={t('templates.insert')} onClick={templates.open}>
-        <IconTemplate size={16} />
-      </button>
+      {visible.map((id) => {
+        const { Icon, title, pressed, onClick } = buttons[id];
+        return (
+          <button key={id} className={`icon-btn ${pressed ? 'active' : ''}`} title={title} onClick={onClick}>
+            <Icon size={16} />
+          </button>
+        );
+      })}
       <span className="sidebar-footer-spacer" />
       <button className="icon-btn" title={t('settings.open')} onClick={() => setSettingsOpen(true)}>
         <IconSettings size={16} />

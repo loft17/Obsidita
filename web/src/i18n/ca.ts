@@ -469,6 +469,12 @@ export const ca: Messages = {
   'settings.ribbon': 'Mostra el menú de cinta',
   'settings.ribbon.desc':
     "Mostra una barra d'eines vertical al costat de la finestra. Si s'amaga, els seus botons passen al peu de la barra lateral.",
+  'settings.section.sidebar': 'Menú lateral',
+  'settings.ribbonItems.desc':
+    'Tria quins botons mostra la cinta i en quin ordre: arrossega les files o fes servir les fletxes. Els ajustos i tancar la sessió sempre queden a baix.',
+  'settings.ribbonItems.show': 'Mostra {name}',
+  'settings.ribbonItems.up': 'Puja {name}',
+  'settings.ribbonItems.down': 'Baixa {name}',
   'settings.defaultMode': 'Mode predeterminat de les notes',
   'settings.defaultMode.desc': "Com s'obren les notes en seleccionar-les",
   'settings.defaultMode.view': 'Mode lectura',
