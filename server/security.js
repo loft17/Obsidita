@@ -19,7 +19,7 @@ const inlineScriptHashes = (distPath) => {
 // Cabeceras de seguridad para todas las respuestas (las rutas pueden sobrescribir la CSP,
 // como /api/files/raw o la exportación a PDF)
 export const securityHeaders = (distPath, getConfig) => {
-  const csp = (remoteImages) => [
+  const csp = (remoteImages, youtube) => [
     "default-src 'self'",
     `script-src 'self' ${inlineScriptHashes(distPath).join(' ')}`.trim(),
     // React (atributos style) y CodeMirror inyectan estilos en línea
@@ -29,17 +29,24 @@ export const securityHeaders = (distPath, getConfig) => {
     `img-src 'self' data: blob:${remoteImages ? ' https:' : ''}`,
     "font-src 'self' data:",
     "connect-src 'self'",
+    // Vídeos de YouTube incrustados (![[youtube:ID]]), solo si se activan en Preferencias
+    // (youtubeEmbeds en config.json). Usa el dominio sin cookies hasta que se pulsa play
+    `frame-src ${youtube ? 'https://www.youtube-nocookie.com' : "'none'"}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
   ].join('; ');
-  const strict = csp(false);
-  const remote = csp(true);
+  // Una política precalculada por combinación de ajustes (los hashes de index.html no cambian)
+  const policies = {};
+  for (const remoteImages of [false, true])
+    for (const youtube of [false, true]) policies[`${remoteImages}-${youtube}`] = csp(remoteImages, youtube);
 
   return (req, res, next) => {
+    const cfg = getConfig();
+    const key = `${cfg?.remoteImages === true}-${cfg?.youtubeEmbeds === true}`;
     res.set({
-      'Content-Security-Policy': getConfig()?.remoteImages === true ? remote : strict,
+      'Content-Security-Policy': policies[key],
       'X-Content-Type-Options': 'nosniff',
       'X-Frame-Options': 'DENY',
       'Referrer-Policy': 'no-referrer',

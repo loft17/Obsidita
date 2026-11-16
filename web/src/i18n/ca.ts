@@ -175,6 +175,7 @@ export const ca: Messages = {
   'toast.updateAvailable': 'Nova versió {version} disponible. Més informació a Preferències → Quant a',
   'embed.loadError': "No s'ha pogut carregar la nota",
   'embed.headingNotFound': 'No es troba «{heading}» a la nota',
+  'embed.youtubeOff': 'Vídeo de YouTube. Activa «Vídeos de YouTube» a Preferències per reproduir-lo aquí',
   'mermaid.error': 'Error al diagrama',
   'image.loadError': "No s'ha pogut carregar la imatge",
   'image.fitWindow': 'Fes clic per ajustar a la finestra',
@@ -433,6 +434,8 @@ export const ca: Messages = {
   'settings.remoteImages.desc':
     "Mostra les imatges enllaçades des d'altres webs (![](https://...)). En carregar-les, aquests servidors veuen la teva IP. Afecta tots els dispositius.",
   'settings.remoteImages.reload': "Recarrega per aplicar",
+  'settings.youtubeEmbeds': "Vídeos de YouTube",
+  'settings.youtubeEmbeds.desc': "Reprodueix els vídeos escrits com ![[youtube:ID]] dins la nota. En carregar-los, YouTube veu la teva IP. Afecta tots els dispositivos.",
   'settings.attachments': 'Ubicació predeterminada dels fitxers adjunts nous',
   'settings.imageFormat': 'Convertir imatges enganxades',
   'settings.imageFormat.desc':

@@ -405,24 +405,34 @@ function AppearanceSection() {
 
 // Imágenes externas: lo decide la CSP del servidor, así que vale para todos los dispositivos
 // y solo se aplica al recargar la página (la CSP llega con ella)
-function RemoteImagesSetting() {
+function ReloadToggleSetting({
+  name,
+  desc,
+  load,
+  save,
+}: {
+  name: MessageKey;
+  desc: MessageKey;
+  load: () => Promise<boolean>;
+  save: (value: boolean) => Promise<boolean>;
+}) {
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [changed, setChanged] = useState(false);
   const [error, setError] = useState('');
   const t = useT();
 
+  // Solo se lee al abrir: `load` cambia en cada render del padre y no debe repetir la petición
   useEffect(() => {
-    settingsApi
-      .getRemoteImages()
-      .then((r) => setEnabled(r.remoteImages))
+    load()
+      .then(setEnabled)
       .catch((err) => setError((err as Error).message));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggle = async (value: boolean) => {
     setError('');
     try {
-      const saved = await settingsApi.setRemoteImages(value);
-      setEnabled(saved.remoteImages);
+      setEnabled(await save(value));
       setChanged(true);
     } catch (err) {
       setError((err as Error).message);
@@ -432,8 +442,8 @@ function RemoteImagesSetting() {
   return (
     <div className="setting-item">
       <div className="setting-info">
-        <div className="setting-name">{t('settings.remoteImages')}</div>
-        <div className="setting-desc">{t('settings.remoteImages.desc')}</div>
+        <div className="setting-name">{t(name)}</div>
+        <div className="setting-desc">{t(desc)}</div>
         {error && (
           <div className="setting-desc" style={{ color: 'var(--text-error, #e5484d)' }}>
             {error}
@@ -570,7 +580,18 @@ function EditorSection() {
             <span />
           </label>
         </div>
-        <RemoteImagesSetting />
+        <ReloadToggleSetting
+          name="settings.remoteImages"
+          desc="settings.remoteImages.desc"
+          load={() => settingsApi.getRemoteImages().then((r) => r.remoteImages)}
+          save={(v) => settingsApi.setRemoteImages(v).then((r) => r.remoteImages)}
+        />
+        <ReloadToggleSetting
+          name="settings.youtubeEmbeds"
+          desc="settings.youtubeEmbeds.desc"
+          load={() => settingsApi.getYoutubeEmbeds().then((r) => r.youtubeEmbeds)}
+          save={(v) => settingsApi.setYoutubeEmbeds(v).then((r) => r.youtubeEmbeds)}
+        />
       </div>
     </>
   );

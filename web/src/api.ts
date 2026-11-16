@@ -223,6 +223,9 @@ export const settingsApi = {
   getRemoteImages: (): Promise<{ remoteImages: boolean }> => request('/settings/remote-images'),
   setRemoteImages: (remoteImages: boolean): Promise<{ remoteImages: boolean }> =>
     post('/settings/remote-images', { remoteImages }),
+  getYoutubeEmbeds: (): Promise<{ youtubeEmbeds: boolean }> => request('/settings/youtube-embeds'),
+  setYoutubeEmbeds: (youtubeEmbeds: boolean): Promise<{ youtubeEmbeds: boolean }> =>
+    post('/settings/youtube-embeds', { youtubeEmbeds }),
   getUploads: (): Promise<UploadExtensions> => request('/settings/uploads'),
   // Lista vacía = volver a las predeterminadas (notas e imágenes)
   setUploads: (extensions: string): Promise<UploadExtensions> => post('/settings/uploads', { extensions }),

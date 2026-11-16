@@ -25,6 +25,8 @@ import { t, useI18n } from '../i18n';
 import { fileName } from '../paths';
 import { copyText } from '../clipboard';
 import { enhanceReadingTables, refreshReadingTables } from '../readingTables';
+import { settingsApi } from '../api';
+import { youtubeId } from '../youtube';
 
 const md = markdownIt({
   html: false,
@@ -146,7 +148,11 @@ md.inline.ruler.before('image', 'embed', (state, silent) => {
   if (!inner || inner.includes('\n')) return false;
   if (!silent) {
     const [target] = inner.split('|');
-    if (isImage(target.split('#')[0].trim())) {
+    const videoId = youtubeId(target);
+    if (videoId) {
+      // Vídeo de YouTube (![[youtube:ID]]): se pinta como bloque o, dentro de un texto, como enlace
+      state.push('note_embed', '', 0).meta = { inner, youtube: videoId };
+    } else if (isImage(target.split('#')[0].trim())) {
       const token = state.push('image', 'img', 0);
       token.attrs = [['src', target.trim()]];
       token.content = inner.includes('|') ? inner : fileName(target.trim());
@@ -161,10 +167,17 @@ md.inline.ruler.before('image', 'embed', (state, silent) => {
 });
 
 const embedTarget = (meta: unknown) => String((meta as { inner?: string } | null)?.inner ?? '');
+const embedYoutube = (meta: unknown) => (meta as { youtube?: string } | null)?.youtube;
 
-// Una nota incrustada dentro de una línea de texto se queda en enlace
-md.renderer.rules.note_embed = (tokens, idx, _options, env) =>
-  renderWikilink(embedTarget(tokens[idx].meta), String(env?.notePath ?? ''));
+const watchUrl = (id: string) => `https://www.youtube.com/watch?v=${id}`;
+
+// Una nota incrustada dentro de una línea de texto se queda en enlace (lo mismo un vídeo)
+md.renderer.rules.note_embed = (tokens, idx, _options, env) => {
+  const videoId = embedYoutube(tokens[idx].meta);
+  if (videoId)
+    return `<a href="${watchUrl(videoId)}" target="_blank" rel="noopener noreferrer">YouTube</a>`;
+  return renderWikilink(embedTarget(tokens[idx].meta), String(env?.notePath ?? ''));
+};
 
 const renderWikilink = (inner: string, notePath: string) =>
   `<a href="#" class="${isResolved(inner, notePath) ? 'wikilink' : 'wikilink is-unresolved'}"` +
@@ -257,6 +270,22 @@ const MAX_EMBED_DEPTH = 4;
 md.renderer.rules.note_embed_block = (tokens, idx, _options, env) => {
   const inner = embedTarget(tokens[idx].meta);
   const notePath = String(env?.notePath ?? '');
+
+  // Vídeo de YouTube: iframe sin cookies (youtube-nocookie), solo si está activado en Preferencias
+  const videoId = embedYoutube(tokens[idx].meta);
+  if (videoId) {
+    if (!env?.youtube) {
+      return `<div class="youtube-embed is-off"><a href="${watchUrl(videoId)}" target="_blank" rel="noopener noreferrer">${md.utils.escapeHtml(t('embed.youtubeOff'))}</a></div>\n`;
+    }
+    // El ID ya viene validado (11 caracteres); el referrer de la app permite reproducirlo
+    return (
+      `<div class="youtube-embed"><iframe src="https://www.youtube-nocookie.com/embed/${videoId}"` +
+      ' title="YouTube" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"' +
+      ' allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"' +
+      ' allowfullscreen></iframe></div>\n'
+    );
+  }
+
   const stack: string[] = Array.isArray(env?.embedStack) ? env.embedStack : [notePath];
   const { target, heading } = parseWikilink(inner);
   const path = resolveWikilink(target, notePath);
@@ -277,7 +306,7 @@ md.renderer.rules.note_embed_block = (tokens, idx, _options, env) => {
     html =
       section === null
         ? `<div class="internal-embed-status">${md.utils.escapeHtml(t('embed.headingNotFound', { heading }))}</div>`
-        : md.render(section, { notePath: path, embedStack: [...stack, path] });
+        : md.render(section, { notePath: path, embedStack: [...stack, path], youtube: env?.youtube });
   }
   return (
     `<div class="internal-embed">${title}` +
@@ -505,9 +534,18 @@ export default function ReadingView({ content, filePath, onContentChange }: Prop
 
   // El render lee el árbol, las incrustaciones, el idioma y el tema fuera de React (del store y
   // de cachés de módulo): por eso están en las dependencias aunque no aparezcan en la función
+  // Vídeos de YouTube: el ajuste de Preferencias (null mientras se lee; se pinta como desactivado)
+  const [youtubeOn, setYoutubeOn] = useState<boolean | null>(null);
+  useEffect(() => {
+    settingsApi
+      .getYoutubeEmbeds()
+      .then((r) => setYoutubeOn(r.youtubeEmbeds))
+      .catch(() => setYoutubeOn(false));
+  }, []);
+
   const html = useMemo(
-    () => md.render(markdownContent, { notePath }),
-    [markdownContent, notePath, tree, embedsVersion, lang, theme],
+    () => md.render(markdownContent, { notePath, youtube: youtubeOn === true }),
+    [markdownContent, notePath, tree, embedsVersion, lang, theme, youtubeOn],
   );
 
   // También al volver a la pestaña y cuando el servidor reescribe enlaces

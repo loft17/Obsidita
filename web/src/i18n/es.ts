@@ -172,6 +172,7 @@ export const es = {
   'toast.updateAvailable': 'Nueva versión {version} disponible. Más información en Preferencias → Acerca de',
   'embed.loadError': 'No se pudo cargar la nota',
   'embed.headingNotFound': 'No se encuentra «{heading}» en la nota',
+  'embed.youtubeOff': 'Vídeo de YouTube. Activa «Vídeos de YouTube» en Preferencias para reproducirlo aquí',
   'mermaid.error': 'Error en el diagrama',
   'image.loadError': 'No se pudo cargar la imagen',
   'image.fitWindow': 'Clic para ajustar a la ventana',
@@ -431,6 +432,8 @@ export const es = {
   'settings.remoteImages.desc':
     "Muestra las imágenes enlazadas desde otras webs (![](https://...)). Al cargarlas, esos servidores ven tu IP. Afecta a todos los dispositivos.",
   'settings.remoteImages.reload': "Recargar para aplicar",
+  'settings.youtubeEmbeds': "Vídeos de YouTube",
+  'settings.youtubeEmbeds.desc': "Reproduce los vídeos escritos como ![[youtube:ID]] dentro de la nota. Al cargarlos, YouTube ve tu IP. Afecta a todos los dispositivos.",
   'settings.attachments': 'Ubicación predeterminada para los archivos adjuntos nuevos',
   'settings.imageFormat': 'Convertir imágenes pegadas',
   'settings.imageFormat.desc':

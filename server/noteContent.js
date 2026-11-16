@@ -77,7 +77,8 @@ export function findLinks(content) {
         const link = bar < 0 ? inner : inner.slice(0, bar);
         const hash = link.indexOf('#');
         const target = (hash < 0 ? link : link.slice(0, hash)).trim();
-        if (target) links.push({ target, embed: m[2] === '!', markdown: false });
+        // ![[youtube:ID]] es un vídeo, no una nota: no cuenta como enlace interno
+        if (target && !/^youtube:/i.test(target)) links.push({ target, embed: m[2] === '!', markdown: false });
       } else if (m[5] !== undefined) {
         const raw = m[5].startsWith('<') ? m[5].slice(1, -1) : m[5];
         if (EXTERNAL.test(raw)) continue;

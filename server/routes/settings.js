@@ -249,6 +249,27 @@ export default (dataDir, getConfig, limiter, sessions) => {
     }
   });
 
+  // Vídeos de YouTube incrustados (![[youtube:ID]]). Desactivado por defecto: el vídeo se carga
+  // desde YouTube y ese servidor ve tu IP. Lo aplica la CSP (security.js) tras recargar
+  router.get('/youtube-embeds', (req, res) => {
+    const cfg = getConfig();
+    if (!cfg) return res.status(400).json({ error: 'Not configured' });
+    res.json({ youtubeEmbeds: cfg.youtubeEmbeds === true });
+  });
+
+  router.post('/youtube-embeds', (req, res) => {
+    const cfg = getConfig();
+    if (!cfg) return res.status(400).json({ error: 'Not configured' });
+    const youtubeEmbeds = req.body?.youtubeEmbeds === true;
+    try {
+      const { youtubeEmbeds: _, ...rest } = cfg;
+      writeFileAtomic(configPath, JSON.stringify(youtubeEmbeds ? { ...rest, youtubeEmbeds } : rest, null, 2));
+      res.json({ youtubeEmbeds });
+    } catch (err) {
+      res.status(500).json({ error: publicError(err, 'No se pudo guardar') });
+    }
+  });
+
   // Extensiones que se pueden subir al explorador. Vacío o null = las predeterminadas
   router.get('/uploads', (req, res) => {
     const cfg = getConfig();

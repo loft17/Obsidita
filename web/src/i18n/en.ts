@@ -173,6 +173,7 @@ export const en: Messages = {
   'toast.updateAvailable': 'New version {version} available. More info in Settings → About',
   'embed.loadError': 'Could not load the note',
   'embed.headingNotFound': '“{heading}” was not found in the note',
+  'embed.youtubeOff': 'YouTube video. Turn on “YouTube videos” in Preferences to play it here',
   'mermaid.error': 'Diagram error',
   'image.loadError': 'Could not load the image',
   'image.fitWindow': 'Click to fit to window',
@@ -430,6 +431,8 @@ export const en: Messages = {
   'settings.remoteImages.desc':
     "Show images linked from other websites (![](https://...)). Loading them lets those servers see your IP. Applies to all devices.",
   'settings.remoteImages.reload': "Reload to apply",
+  'settings.youtubeEmbeds': "YouTube videos",
+  'settings.youtubeEmbeds.desc': "Plays the videos written as ![[youtube:ID]] inside the note. YouTube sees your IP when they load. Affects all devices.",
   'settings.attachments': 'Default location for new attachments',
   'settings.imageFormat': 'Convert pasted images',
   'settings.imageFormat.desc':
