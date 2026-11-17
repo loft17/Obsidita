@@ -69,6 +69,32 @@ function listTags(cfg) {
   return [...tags.values()].map(({ tag, paths }) => ({ tag, paths: [...paths] }));
 }
 
+// Propiedades del frontmatter de todo el vault: clave (forma de la primera aparición), tipo más
+// frecuente y en cuántas notas aparece. Las más usadas primero, como las sugerencias de Obsidian
+function listProperties(cfg) {
+  const props = new Map(); // minúsculas → { key, kinds, count }
+  for (const { file, note } of snapshot(cfg.vaultPath)) {
+    if (!note || !note.props) continue;
+    const seen = new Set();
+    for (const { key, kind } of note.props) {
+      const id = key.toLowerCase();
+      if (!props.has(id)) props.set(id, { key, kinds: new Map(), count: 0 });
+      const entry = props.get(id);
+      entry.kinds.set(kind, (entry.kinds.get(kind) ?? 0) + 1);
+      if (!seen.has(id)) {
+        seen.add(id);
+        entry.count++;
+      }
+    }
+  }
+  return [...props.values()]
+    .map(({ key, kinds, count }) => {
+      const kind = [...kinds.entries()].sort((a, b) => b[1] - a[1])[0][0];
+      return { key, kind, count };
+    })
+    .sort((a, b) => b.count - a.count || a.key.localeCompare(b.key));
+}
+
 function searchTag(cfg, tag) {
   const needle = tag.toLowerCase();
   const results = [];
@@ -148,6 +174,21 @@ export default (dataDir, getConfig) => {
       res.json(listTags(cfg));
     } catch (err) {
       res.status(400).json({ error: publicError(err, 'Error al leer las etiquetas') });
+    }
+  });
+
+  // Propiedades usadas en el vault, para sugerirlas al añadir una
+  router.get('/properties', (req, res) => {
+    try {
+      const cfg = getConfig();
+      if (!cfg) return res.status(400).json({ error: 'Not configured' });
+      if (rateLimited(req.ip)) {
+        res.set('Retry-After', String(RATE_WINDOW / 1000));
+        return res.status(429).json({ error: 'Demasiadas búsquedas. Espera un momento' });
+      }
+      res.json(listProperties(cfg));
+    } catch (err) {
+      res.status(400).json({ error: publicError(err, 'Error al leer las propiedades') });
     }
   });
 

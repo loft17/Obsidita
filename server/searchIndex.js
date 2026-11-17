@@ -1,4 +1,5 @@
 import * as vault from './vault.js';
+import { findProperties } from './noteContent.js';
 import {
   SEARCH_MAX_FILE_BYTES as MAX_FILE_SIZE,
   SEARCH_MAX_SCANNED_BYTES as MAX_INDEX_BYTES,
@@ -21,7 +22,7 @@ export const invalidateSnapshot = () => {
 };
 
 let indexedVault = null;
-const notes = new Map(); // ruta → { mtime, size, lower, tags, links }
+const notes = new Map(); // ruta → { mtime, size, lower, tags, links, props }
 
 // Obtiene el contenido de una nota del disco y devuelve sus líneas.
 // Solo se llama cuando hay una coincidencia en la búsqueda, reduciendo uso de memoria.
@@ -33,7 +34,14 @@ export const getContentLines = (vaultPath, filePath) => {
 const load = (vaultPath, file) => {
   try {
     const content = vault.readFile(vaultPath, file.path);
-    return { mtime: file.mtime, size: file.size, lower: content.toLowerCase(), tags: null, links: null };
+    return {
+      mtime: file.mtime,
+      size: file.size,
+      lower: content.toLowerCase(),
+      tags: null,
+      links: null,
+      props: findProperties(content),
+    };
   } catch {
     return null; // Archivo ilegible: se omite
   }

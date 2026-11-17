@@ -10,7 +10,53 @@ export interface ParsedNote {
 
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 
-export const isDateString = (value: unknown): value is string => typeof value === 'string' && DATE_ONLY.test(value);
+// Formatos de fecha que se reconocen en una propiedad. Se guarda el formato que tenía la nota,
+// para que al actualizarla o cambiarla con el selector siga escrita igual.
+// Los formatos con día primero (DD/MM/AAAA) son los de uso habitual en español; MM/DD no se admite
+export type DateStyle = 'iso' | 'ymd-slash' | 'dmy-slash' | 'dmy-dash' | 'dmy-dot';
+
+const DATE_PATTERNS: { style: DateStyle; re: RegExp; ymd: (m: RegExpExecArray) => [string, string, string] }[] = [
+  { style: 'iso', re: /^(\d{4})-(\d{2})-(\d{2})$/, ymd: (m) => [m[1], m[2], m[3]] },
+  { style: 'ymd-slash', re: /^(\d{4})\/(\d{1,2})\/(\d{1,2})$/, ymd: (m) => [m[1], m[2], m[3]] },
+  { style: 'dmy-slash', re: /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/, ymd: (m) => [m[3], m[2], m[1]] },
+  { style: 'dmy-dash', re: /^(\d{1,2})-(\d{1,2})-(\d{4})$/, ymd: (m) => [m[3], m[2], m[1]] },
+  { style: 'dmy-dot', re: /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/, ymd: (m) => [m[3], m[2], m[1]] },
+];
+
+// Reconoce una fecha en cualquiera de los formatos anteriores y comprueba que exista (no 31/02).
+// Devuelve la fecha en AAAA-MM-DD y el formato con el que estaba escrita
+export function parseDate(value: string): { iso: string; style: DateStyle } | null {
+  const text = value.trim();
+  for (const { style, re, ymd } of DATE_PATTERNS) {
+    const m = re.exec(text);
+    if (!m) continue;
+    const [y, mo, d] = ymd(m).map(Number);
+    const check = new Date(Date.UTC(y, mo - 1, d));
+    if (check.getUTCFullYear() !== y || check.getUTCMonth() !== mo - 1 || check.getUTCDate() !== d) return null;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return { iso: `${y}-${pad(mo)}-${pad(d)}`, style };
+  }
+  return null;
+}
+
+// Escribe una fecha AAAA-MM-DD con el formato indicado
+export function formatDate(iso: string, style: DateStyle): string {
+  const [y, m, d] = iso.split('-');
+  switch (style) {
+    case 'iso':
+      return iso;
+    case 'ymd-slash':
+      return `${y}/${m}/${d}`;
+    case 'dmy-slash':
+      return `${d}/${m}/${y}`;
+    case 'dmy-dash':
+      return `${d}-${m}-${y}`;
+    case 'dmy-dot':
+      return `${d}.${m}.${y}`;
+  }
+}
+
+export const isDateString = (value: unknown): value is string => typeof value === 'string' && parseDate(value) !== null;
 
 const FRONTMATTER = /^---[ \t]*\r?\n(?:([\s\S]*?)\r?\n)?---[ \t]*(?:\r?\n|$)/;
 
@@ -158,18 +204,20 @@ export const localDateString = (date = new Date()): string => {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 };
 
-// Pone `today` en la propiedad `key` del frontmatter, pero solo si ya tiene una fecha AAAA-MM-DD.
-// Edita solo esa línea (el resto del YAML queda igual, con sus comillas y comentarios).
-// Devuelve el mismo texto si no hay nada que cambiar
+// Pone `today` (AAAA-MM-DD) en la propiedad `key` del frontmatter, pero solo si ya tiene una
+// fecha reconocida, y con el mismo formato que tenía. Edita solo esa línea (el resto del YAML
+// queda igual, con sus comillas y comentarios). Devuelve el mismo texto si no hay nada que cambiar
 export function touchDateProperty(content: string, key: string, today: string): string {
   const match = FRONTMATTER.exec(content);
   if (!match || !key.trim() || !DATE_ONLY.test(today)) return content;
   const head = match[0];
   const esc = key.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const line = new RegExp(`^((?:"${esc}"|'${esc}'|${esc})[ \\t]*:[ \\t]*)(["']?)(\\d{4}-\\d{2}-\\d{2})\\2([ \\t]*(?:#.*)?)$`, 'm');
-  const updated = head.replace(line, (whole, pre: string, quote: string, date: string, post: string) =>
-    date === today ? whole : `${pre}${quote}${today}${quote}${post}`,
-  );
+  const line = new RegExp(`^((?:"${esc}"|'${esc}'|${esc})[ \\t]*:[ \\t]*)(["']?)([^"'#\\n]*?)\\2([ \\t]*(?:#.*)?)$`, 'm');
+  const updated = head.replace(line, (whole, pre: string, quote: string, value: string, post: string) => {
+    const current = parseDate(value);
+    if (!current || current.iso === today) return whole;
+    return `${pre}${quote}${formatDate(today, current.style)}${quote}${post}`;
+  });
   return updated === head ? content : updated + content.slice(head.length);
 }
 

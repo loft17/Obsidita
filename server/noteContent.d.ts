@@ -10,7 +10,13 @@ export interface NoteLink {
   markdown: boolean;
 }
 
+export interface NoteProperty {
+  key: string;
+  kind: 'tags' | 'list' | 'date' | 'number' | 'checkbox' | 'text';
+}
+
 export function findTags(lines: readonly string[]): TagMatch[];
+export function findProperties(content: string): NoteProperty[];
 export function findLinks(content: string): NoteLink[];
 export function linkFileName(link: NoteLink): string;
 export function resolveLink(link: NoteLink, notePath: string, paths: readonly string[]): string | null;

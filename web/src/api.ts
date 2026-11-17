@@ -311,6 +311,13 @@ export interface NoteInfo {
   backlinks: { path: string; count: number }[];
 }
 
+// Propiedad del frontmatter usada en alguna nota del vault
+export interface VaultProperty {
+  key: string;
+  kind: 'tags' | 'list' | 'date' | 'number' | 'checkbox' | 'text';
+  count: number;
+}
+
 export interface VaultTag {
   tag: string;
   paths: string[];
@@ -368,6 +375,13 @@ export const searchApi = {
   ): Promise<VaultTag[]> => {
     const { signal, retries = 1, onWait } = opts;
     return withRetry(() => request('/search/tags', { signal }), signal, retries, onWait);
+  },
+  // Propiedades usadas en el vault, para sugerirlas al añadir una
+  properties: async (
+    opts: { signal?: AbortSignal; retries?: number; onWait?: (ms: number) => void } = {},
+  ): Promise<VaultProperty[]> => {
+    const { signal, retries = 1, onWait } = opts;
+    return withRetry(() => request('/search/properties', { signal }), signal, retries, onWait);
   },
   noteInfo: async (
     path: string,

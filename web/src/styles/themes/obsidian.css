@@ -1959,6 +1959,31 @@ button.note-info-item {
   }
 }
 
+/* Asa de arrastre: el icono de la propiedad (con puntero, también en táctil) */
+.property-grip {
+  display: flex;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  border-radius: 4px;
+}
+
+.property-grip:active {
+  cursor: grabbing;
+}
+
+.property-row.dragging {
+  opacity: 0.5;
+}
+
+.property-row.drop-before {
+  box-shadow: inset 0 2px 0 var(--interactive-accent);
+}
+
+.property-row.drop-after {
+  box-shadow: inset 0 -2px 0 var(--interactive-accent);
+}
+
 .property-action {
   display: flex;
   align-items: center;
@@ -2002,8 +2027,51 @@ button.note-info-item {
   color: var(--text-normal);
 }
 
-.property-new-key {
+.property-new {
+  position: relative;
   margin-top: 2px;
+}
+
+/* Desplegable de propiedades, como el de Obsidian: bajo el campo, con scroll */
+.property-picker {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  min-width: 220px;
+  max-width: 100%;
+  max-height: 240px;
+  overflow-y: auto;
+  margin-top: 4px;
+  padding: 4px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-secondary);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.property-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 5px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-normal);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.property-picker-item svg {
+  flex: none;
+  color: var(--text-faint);
+}
+
+.property-picker-item.active {
+  background: var(--interactive-accent-hover, var(--interactive-normal));
 }
 
 /* Tags (pills) and aliases (plain text) */

@@ -46,6 +46,33 @@ export function findTags(lines) {
   return found;
 }
 
+// Propiedades (claves top-level) del frontmatter de una nota, con un tipo aproximado para el icono.
+// Mismo criterio que kindOf en la web; las claves que YAML no admite tal cual se omiten
+const PROP_KEY = /^("((?:\\.|[^"\\])*)"|([^\s#-][^:]*?)):(?:[ \t]+(.*))?$/;
+
+export function findProperties(content) {
+  const fm = FRONTMATTER.exec(content);
+  if (!fm || fm[1] === undefined) return [];
+  const lines = fm[1].split(/\r?\n/);
+  const props = [];
+  for (let i = 0; i < lines.length; i++) {
+    const m = PROP_KEY.exec(lines[i]);
+    if (!m) continue;
+    const key = m[2] !== undefined ? m[2] : m[3].trim();
+    const rest = (m[4] ?? '').trim();
+    let kind = 'text';
+    if (/^tags?$/i.test(key)) kind = 'tags';
+    else if (key === 'aliases' || key === 'cssclasses') kind = 'list';
+    else if (rest === '') kind = /^\s*-(\s|$)/.test(lines[i + 1] ?? '') ? 'list' : 'text';
+    else if (rest.startsWith('[')) kind = 'list';
+    else if (/^(true|false)$/.test(rest)) kind = 'checkbox';
+    else if (/^[-+]?(0|[1-9]\d*)(\.\d+)?$/.test(rest)) kind = 'number';
+    else if (/^["']?(\d{4}[-/]\d{1,2}[-/]\d{1,2}|\d{1,2}[-/.]\d{1,2}[-/.]\d{4})["']?$/.test(rest)) kind = 'date';
+    props.push({ key, kind });
+  }
+  return props;
+}
+
 const EXTERNAL = /^([a-z][a-z0-9+.-]*:|\/\/|#)/i;
 
 // Código en línea, [[wikilink]] (con o sin !) o el destino de un [enlace](markdown), como en links.js

@@ -258,8 +258,7 @@ export const ca: Messages = {
   'props.add': 'Afegeix una propietat',
   'props.name': 'Nom de la propietat',
   'props.remove': 'Elimina la propietat',
-  'props.moveUp': 'Puja',
-  'props.moveDown': 'Baixa',
+  'props.drag': 'Arrossega per reordenar',
   'props.removeValue': 'Treu',
   'props.searchTag': 'Cerca notes amb #{tag}',
 
