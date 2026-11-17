@@ -1,12 +1,6 @@
 // Módulos pesados que solo se usan en acciones puntuales (exportar a PDF, descargar un ZIP):
 // se cargan la primera vez que hacen falta en lugar de al arrancar, así el servidor ocupa
-// menos memoria mientras no se usan
-
-let markdownPromise;
-export const loadMarkdown = () =>
-  (markdownPromise ??= import('markdown-it').then(
-    ({ default: MarkdownIt }) => new MarkdownIt({ html: false, linkify: true, breaks: true })
-  ));
+// menos memoria mientras no se usan. El render de PDF (markdown-it) se carga en printMarkdown.js
 
 let archiverPromise;
 export const loadZipArchive = () => (archiverPromise ??= import('archiver').then((m) => m.ZipArchive));

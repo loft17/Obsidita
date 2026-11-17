@@ -8,7 +8,8 @@ import { remapLinks } from '../shortLinks.js';
 import { publicError, scriptHash } from '../security.js';
 import { MAX_UPLOAD_MB } from '../limits.js';
 import { isUploadable } from '../uploads.js';
-import { loadMarkdown, loadZipArchive, ZIP_LEVEL } from '../lazy.js';
+import { loadZipArchive, ZIP_LEVEL } from '../lazy.js';
+import { renderPrintMarkdown } from '../printMarkdown.js';
 import { createLogger } from '../logger.js';
 const log = createLogger('Files');
 
@@ -29,10 +30,22 @@ const PRINT_STYLES = `
   th { background: #f3f3f3; }
   img { max-width: 100%; }
   hr { border: none; border-top: 1px solid #ccc; margin: 2em 0; }
+  img { display: block; margin: 0.8em auto; break-inside: avoid; }
+  .missing-image { color: #888; font-style: italic; }
+  .wikilink { color: inherit; }
+  .callout { border: 1px solid #ddd; border-left: 4px solid #3b82f6; border-radius: 4px; background: #f5f9ff; padding: 10px 14px; margin: 1em 0; break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .callout[data-callout="tip"], .callout[data-callout="success"] { border-left-color: #16a34a; background: #f1faf4; }
+  .callout[data-callout="question"], .callout[data-callout="warning"] { border-left-color: #d97706; background: #fdf8ef; }
+  .callout[data-callout="failure"], .callout[data-callout="danger"], .callout[data-callout="bug"] { border-left-color: #dc2626; background: #fdf2f2; }
+  .callout[data-callout="quote"], .callout[data-callout="example"], .callout[data-callout="abstract"] { border-left-color: #7c3aed; background: #f8f5fe; }
+  .callout-title { font-weight: 600; margin-bottom: 0.3em; }
+  .callout-content > :first-child { margin-top: 0; }
+  .callout-content > :last-child { margin-bottom: 0; }
   @media print { body { padding: 0; } }
 `;
 
-const escapeHtml = (md, s) => md.utils.escapeHtml(s);
+const escapeHtml = (s) =>
+  String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 const PRINT_SCRIPT = "window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 300); });";
 // La página de exportación solo puede ejecutar su script de impresión
@@ -83,10 +96,12 @@ export default (dataDir, getConfig) => {
   }));
 
   router.get('/export-pdf/:filePath',withVault(async (cfg, req, res) => {
-    const md = await loadMarkdown();
     const raw = vault.readFile(cfg.vaultPath, req.params.filePath);
     const body = raw.replace(FRONTMATTER, '');
-    const title = escapeHtml(md, req.params.filePath.split('/').pop().replace(/\.md$/i, ''));
+    // Rutas de los adjuntos del vault (imágenes) para resolver ![[...]] como en la vista de lectura
+    const files = vault.listTree(cfg.vaultPath).filter((item) => item.type !== 'folder').map((item) => item.path);
+    const title = escapeHtml(req.params.filePath.split('/').pop().replace(/\.md$/i, ''));
+    const html = await renderPrintMarkdown(body, req.params.filePath, files);
     res.set('Content-Security-Policy', PRINT_CSP);
     res.type('html').send(`<!DOCTYPE html>
 <html>
@@ -97,7 +112,7 @@ export default (dataDir, getConfig) => {
 </head>
 <body>
 <h1>${title}</h1>
-${md.render(body)}
+${html}
 <script>${PRINT_SCRIPT}</script>
 </body>
 </html>`);
