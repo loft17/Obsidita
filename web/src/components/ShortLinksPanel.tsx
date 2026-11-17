@@ -7,7 +7,7 @@ import type { ShortLink } from '../types';
 import { useT } from '../i18n';
 import { notify } from '../toast';
 import { copyText } from '../clipboard';
-import { shortLinkUrl } from '../shortLinks';
+import { notifyShortLinksChanged, shortLinkUrl } from '../shortLinks';
 import { IconClose, IconLink } from './Icons';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : String(err));
@@ -40,6 +40,7 @@ export default function ShortLinksPanel() {
     setBusy(true);
     try {
       const { link } = await linksApi.create(target, code.trim() || undefined);
+      notifyShortLinksChanged();
       setPath('');
       setCode('');
       setError('');
@@ -56,6 +57,7 @@ export default function ShortLinksPanel() {
   const remove = async (link: ShortLink) => {
     try {
       await linksApi.remove(link.code);
+      notifyShortLinksChanged();
       setError('');
       await load();
     } catch (err) {

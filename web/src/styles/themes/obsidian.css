@@ -2834,6 +2834,22 @@ button.note-info-item {
   gap: 4px;
 }
 
+/* Indicadores de la nota: enlace corto y marcador. Apagados se ven tenues; encendidos, en color */
+.status-bar-indicator {
+  display: flex;
+  align-items: center;
+  opacity: 0.45;
+}
+
+.status-bar-indicator.is-on {
+  opacity: 1;
+  color: var(--interactive-accent);
+}
+
+.status-bar-indicator.is-filled svg {
+  fill: currentColor;
+}
+
 /* Avisos breves (guardado, sincronización): esquina inferior derecha, sobre la barra de estado */
 .toasts {
   position: fixed;

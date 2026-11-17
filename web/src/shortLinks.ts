@@ -9,10 +9,15 @@ import { isMobile } from './mobile';
 
 export const shortLinkUrl = (code: string) => `${window.location.origin}/${code}`;
 
+// Evento tras crear o borrar un enlace corto: la barra de estado vuelve a consultar cuáles hay
+export const SHORTLINKS_CHANGED = 'shortlinks-changed';
+export const notifyShortLinksChanged = () => window.dispatchEvent(new Event(SHORTLINKS_CHANGED));
+
 // Crea un enlace aleatorio para la nota o carpeta y lo copia al portapapeles
 export async function createShortLink(path: string) {
   try {
     const { link } = await linksApi.create(path);
+    notifyShortLinksChanged();
     const url = shortLinkUrl(link.code);
     await copyText(url).catch(() => {});
     notify('shortlink', t('shortlink.created', { url }));

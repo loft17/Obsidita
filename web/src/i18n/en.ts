@@ -164,6 +164,8 @@ export const en: Messages = {
   'status.words': '{n} words',
   'status.char': '{n} character',
   'status.chars': '{n} characters',
+  'status.shortLink': 'Has a short link',
+  'status.bookmarked': 'Bookmarked',
   'toast.saved': 'Saved',
   'toast.saveError': 'Could not save {name}: {error}',
   'toast.syncing': 'Syncing with GitHub…',

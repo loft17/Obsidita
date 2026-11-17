@@ -163,6 +163,8 @@ export const es = {
   'status.words': '{n} palabras',
   'status.char': '{n} carácter',
   'status.chars': '{n} caracteres',
+  'status.shortLink': 'Tiene enlace corto',
+  'status.bookmarked': 'En marcadores',
   'toast.saved': 'Guardado',
   'toast.saveError': 'No se pudo guardar {name}: {error}',
   'toast.syncing': 'Sincronizando con GitHub…',

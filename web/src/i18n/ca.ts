@@ -166,6 +166,8 @@ export const ca: Messages = {
   'status.words': '{n} paraules',
   'status.char': '{n} caràcter',
   'status.chars': '{n} caràcters',
+  'status.shortLink': 'Té enllaç curt',
+  'status.bookmarked': 'A marcadors',
   'toast.saved': 'Desat',
   'toast.saveError': "No s'ha pogut desar {name}: {error}",
   'toast.syncing': 'Sincronitzant amb GitHub…',

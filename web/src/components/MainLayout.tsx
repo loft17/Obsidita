@@ -325,7 +325,7 @@ export default function MainLayout() {
               </div>
             )}
           </div>
-          {!activeIsImage && !activeIsPdf && !mobile && <StatusBar content={fileContent} />}
+          {!activeIsImage && !activeIsPdf && !mobile && <StatusBar content={fileContent} filePath={activeTab} />}
         </div>
       </div>
       <Toasts />
