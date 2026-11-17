@@ -511,6 +511,10 @@ export const en: Messages = {
   'settings.autoPairMarkdown': 'Auto pair Markdown syntax',
   'settings.autoPairMarkdown.desc':
     'Automatically close Markdown symbols like * _ and `. With text selected, = and ~ also wrap the selection.',
+  'settings.updateDate': 'Update date when editing',
+  'settings.updateDate.desc': 'When a note is saved, sets today\'s date in its date property (YYYY-MM-DD) if it already has one. Notes without that property are not changed.',
+  'settings.updateDateProperty': 'Date property',
+  'settings.updateDateProperty.desc': 'Name of the frontmatter property that stores the last modification. Empty = actualizado.',
   'settings.pdfViewer': 'PDF viewer',
   'settings.pdfViewer.desc':
     "Open PDF files with the browser's built-in viewer instead of offering to download them.",

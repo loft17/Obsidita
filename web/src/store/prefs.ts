@@ -98,6 +98,11 @@ export interface PrefsSlice {
   // Las tablas usan todo el ancho de la nota; el texto conserva su columna
   tableWide: boolean;
   setTableWide: (enabled: boolean) => void;
+  // Al guardar una nota, pone la fecha de hoy en la propiedad de fecha indicada (si ya tiene una)
+  updateDateOnSave: boolean;
+  setUpdateDateOnSave: (enabled: boolean) => void;
+  updateDateProperty: string;
+  setUpdateDateProperty: (name: string) => void;
   // Vuelve a leer y aplicar todas las preferencias (tras recibir las del servidor)
   reloadPrefs: () => void;
 }
@@ -134,7 +139,12 @@ const KEYS = {
   tableShowCount: synced('tableShowCount'),
   tableSearchFilters: synced('tableSearchFilters'),
   tableWide: synced('tableWide'),
+  updateDateOnSave: synced('updateDateOnSave'),
+  updateDateProperty: synced('updateDateProperty'),
 };
+
+// Propiedad del frontmatter que guarda la última modificación, si no se ha elegido otra
+export const DEFAULT_UPDATE_DATE_PROPERTY = 'actualizado';
 
 const FONT_KEYS: Record<FontKind, string> = {
   interface: synced('fontInterface'),
@@ -241,6 +251,8 @@ const readPrefs = () => ({
   tableShowCount: readBool(KEYS.tableShowCount, true),
   tableSearchFilters: readBool(KEYS.tableSearchFilters, false),
   tableWide: readBool(KEYS.tableWide, false),
+  updateDateOnSave: readBool(KEYS.updateDateOnSave, false),
+  updateDateProperty: readString(KEYS.updateDateProperty).trim() || DEFAULT_UPDATE_DATE_PROPERTY,
 });
 
 // Color de la cabecera-título de las tablas: #rrggbb válido o el predeterminado
@@ -319,6 +331,12 @@ export const createPrefsSlice: StateCreator<AppStore, [], [], PrefsSlice> = (set
       set({ tableNumberColumns: value });
     },
     setTableSortToFile: boolPref('tableSortToFile', KEYS.tableSortToFile),
+    setUpdateDateOnSave: boolPref('updateDateOnSave', KEYS.updateDateOnSave),
+    setUpdateDateProperty: (name) => {
+      const value = name.trim() || DEFAULT_UPDATE_DATE_PROPERTY;
+      save(KEYS.updateDateProperty, value === DEFAULT_UPDATE_DATE_PROPERTY ? null : value);
+      set({ updateDateProperty: value });
+    },
     setTableSearchFilters: boolPref('tableSearchFilters', KEYS.tableSearchFilters),
     setTableWide: (enabled) => {
       save(KEYS.tableWide, enabled);

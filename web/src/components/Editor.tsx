@@ -2,7 +2,7 @@ import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } fro
 import { useStore } from '../store';
 import { isUnder, noteTitle } from '../paths';
 import { filesApi, ConflictError } from '../api';
-import { parseNote, composeNote, type FrontmatterData } from '../frontmatter';
+import { parseNote, composeNote, localDateString, touchDateProperty, type FrontmatterData } from '../frontmatter';
 import Properties from './Properties';
 import EditorToolbar from './EditorToolbar';
 import InlineTitle from './InlineTitle';
@@ -35,6 +35,12 @@ const AUTOSAVE_DELAY = 2000;
 
 // La barra de IA (y su diff) se descarga la primera vez que se abre
 const AiBar = lazy(() => import('./AiBar'));
+
+// Con la opción activa, pone la fecha de hoy en la propiedad de fecha de la nota (si ya tiene una)
+export function withUpdatedDate(content: string): string {
+  const { updateDateOnSave, updateDateProperty } = useStore.getState();
+  return updateDateOnSave ? touchDateProperty(content, updateDateProperty, localDateString()) : content;
+}
 
 // Versión de cada nota tal como se leyó o guardó por última vez. Al guardar se envía
 // al servidor, que rechaza el guardado si la nota ha cambiado en otro sitio desde entonces
@@ -248,7 +254,8 @@ export default function Editor({ filePath, content, onContentChange }: Props) {
 
   const handlePropertiesChange = (data: FrontmatterData) => commit(composeNote(data, body));
 
-  const commit = (newContent: string) => {
+  const commit = (edited: string) => {
+    const newContent = withUpdatedDate(edited);
     onContentChange(newContent);
     // Solo si no lo está ya: commit() corre en cada pulsación y a partir de la primera la
     // pestaña ya está sucia (setTabDirty también lo comprueba, esto evita la llamada)

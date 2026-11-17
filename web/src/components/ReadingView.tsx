@@ -19,7 +19,7 @@ import {
   wikilinkLabel,
 } from '../wikilinks';
 import { embedSection, getEmbedContent, getEmbedsVersion, refreshEmbeds, subscribeEmbeds } from '../noteEmbeds';
-import { cancelPendingSave, NOTES_CHANGED, saveNote } from './Editor';
+import { cancelPendingSave, NOTES_CHANGED, saveNote, withUpdatedDate } from './Editor';
 import { highlightCodeBlocks } from '../codeHighlight';
 import { MERMAID_ENABLED, cachedDiagram, currentDiagramTheme, renderMermaidDiagrams } from '../mermaidDiagrams';
 import { t, useI18n } from '../i18n';
@@ -643,7 +643,7 @@ export default function ReadingView({ content, filePath, onContentChange }: Prop
   const toggleTaskAt = (line: number, checked: boolean) => {
     const body = toggleTask(markdownContent, line, checked);
     if (body === null || !filePath) return;
-    const next = head + body;
+    const next = withUpdatedDate(head + body);
     // Un autoguardado programado llevaría el texto anterior: pisaría este cambio al dispararse
     cancelPendingSave(filePath);
     onContentChange?.(next);

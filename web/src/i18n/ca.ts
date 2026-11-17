@@ -514,6 +514,10 @@ export const ca: Messages = {
   'settings.autoPairMarkdown': 'Tancar símbols de Markdown automàticament',
   'settings.autoPairMarkdown.desc':
     'Tanca automàticament símbols de Markdown com * _ i `. Amb text seleccionat, = i ~ també envolten la selecció.',
+  'settings.updateDate': 'Actualitzar la data en modificar',
+  'settings.updateDate.desc': 'En desar una nota, posa la data d\'avui (AAAA-MM-DD) a la seva propietat de data si ja la té. Les notes sense aquesta propietat no canvien.',
+  'settings.updateDateProperty': 'Propietat de data',
+  'settings.updateDateProperty.desc': 'Nom de la propietat del frontmatter que guarda l\'última modificació. Buit = actualizado.',
   'settings.pdfViewer': 'Visor de PDF',
   'settings.pdfViewer.desc':
     "Obre els fitxers PDF amb el visor integrat del navegador en lloc d'oferir descarregar-los.",

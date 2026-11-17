@@ -12,6 +12,7 @@ import {
   DEFAULT_LINE_WIDTH,
   MIN_LINE_WIDTH,
   MAX_LINE_WIDTH,
+  DEFAULT_UPDATE_DATE_PROPERTY,
 } from '../store';
 import { THEME_STYLES } from '../themes';
 import {
@@ -669,6 +670,25 @@ function ReloadToggleSetting({
   );
 }
 
+// Nombre de la propiedad de fecha que se actualiza al guardar; se guarda al salir del campo
+function UpdateDatePropertyInput() {
+  const name = useStore((s) => s.updateDateProperty);
+  const setName = useStore((s) => s.setUpdateDateProperty);
+  const [text, setText] = useState(name);
+  useEffect(() => setText(name), [name]);
+  return (
+    <input
+      className="setting-input"
+      type="text"
+      placeholder={DEFAULT_UPDATE_DATE_PROPERTY}
+      value={text}
+      onChange={(e) => setText(e.target.value)}
+      onBlur={() => text.trim() !== name && setName(text)}
+      onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+    />
+  );
+}
+
 function EditorSection() {
   const defaultEditMode = useStore((s) => s.defaultEditMode);
   const setDefaultEditMode = useStore((s) => s.setDefaultEditMode);
@@ -686,6 +706,8 @@ function EditorSection() {
   const setAutoPairBrackets = useStore((s) => s.setAutoPairBrackets);
   const autoPairMarkdown = useStore((s) => s.autoPairMarkdown);
   const setAutoPairMarkdown = useStore((s) => s.setAutoPairMarkdown);
+  const updateDateOnSave = useStore((s) => s.updateDateOnSave);
+  const setUpdateDateOnSave = useStore((s) => s.setUpdateDateOnSave);
   const t = useT();
   return (
     <>
@@ -735,6 +757,23 @@ function EditorSection() {
             <input type="checkbox" checked={autoPairMarkdown} onChange={(e) => setAutoPairMarkdown(e.target.checked)} />
             <span />
           </label>
+        </div>
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.updateDate')}</div>
+            <div className="setting-desc">{t('settings.updateDate.desc')}</div>
+          </div>
+          <label className="setting-toggle">
+            <input type="checkbox" checked={updateDateOnSave} onChange={(e) => setUpdateDateOnSave(e.target.checked)} />
+            <span />
+          </label>
+        </div>
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.updateDateProperty')}</div>
+            <div className="setting-desc">{t('settings.updateDateProperty.desc')}</div>
+          </div>
+          <UpdateDatePropertyInput />
         </div>
       </div>
       <h3 className="settings-heading">{t('settings.display')}</h3>

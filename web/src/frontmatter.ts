@@ -152,6 +152,27 @@ export function stringifyFrontmatter(data: FrontmatterData): string {
   return lines.join('\n');
 }
 
+// Fecha de hoy (local) como AAAA-MM-DD, el mismo formato que isDateString
+export const localDateString = (date = new Date()): string => {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+};
+
+// Pone `today` en la propiedad `key` del frontmatter, pero solo si ya tiene una fecha AAAA-MM-DD.
+// Edita solo esa línea (el resto del YAML queda igual, con sus comillas y comentarios).
+// Devuelve el mismo texto si no hay nada que cambiar
+export function touchDateProperty(content: string, key: string, today: string): string {
+  const match = FRONTMATTER.exec(content);
+  if (!match || !key.trim() || !DATE_ONLY.test(today)) return content;
+  const head = match[0];
+  const esc = key.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const line = new RegExp(`^((?:"${esc}"|'${esc}'|${esc})[ \\t]*:[ \\t]*)(["']?)(\\d{4}-\\d{2}-\\d{2})\\2([ \\t]*(?:#.*)?)$`, 'm');
+  const updated = head.replace(line, (whole, pre: string, quote: string, date: string, post: string) =>
+    date === today ? whole : `${pre}${quote}${today}${quote}${post}`,
+  );
+  return updated === head ? content : updated + content.slice(head.length);
+}
+
 export function composeNote(data: FrontmatterData, body: string): string {
   const yaml = stringifyFrontmatter(data);
   return yaml ? `---\n${yaml}\n---\n${body}` : body;

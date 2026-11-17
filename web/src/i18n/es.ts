@@ -512,6 +512,10 @@ export const es = {
   'settings.autoPairMarkdown': 'Cerrar símbolos de Markdown automáticamente',
   'settings.autoPairMarkdown.desc':
     'Cierra automáticamente símbolos de Markdown como * _ y `. Con texto seleccionado, = y ~ también rodean la selección.',
+  'settings.updateDate': 'Actualizar fecha al modificar',
+  'settings.updateDate.desc': 'Al guardar una nota, pone la fecha de hoy en su propiedad de fecha (AAAA-MM-DD) si ya la tiene. Las notas sin esa propiedad no cambian.',
+  'settings.updateDateProperty': 'Propiedad de fecha',
+  'settings.updateDateProperty.desc': 'Nombre de la propiedad del frontmatter que guarda la última modificación. Vacío = actualizado.',
   'settings.pdfViewer': 'Visor de PDF',
   'settings.pdfViewer.desc':
     'Abre los archivos PDF con el visor integrado del navegador en vez de ofrecer descargarlos.',
