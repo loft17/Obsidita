@@ -576,6 +576,9 @@ export const ca: Messages = {
   'settings.download.git.desc': 'Historial de la sincronització amb GitHub. Pot ocupar molt.',
   'settings.download.trash': 'Inclou la paperera',
   'settings.download.trash.desc': 'Afegeix al ZIP els elements esborrats de la carpeta .trash.',
+  'settings.download.data': 'Inclou la configuració de la web',
+  'settings.download.data.desc':
+    'Afegeix la carpeta data/ de l\'app (contrasenya, claus, sessions i sincronització). Conté dades sensibles; no comparteixis el ZIP.',
   'settings.hiddenFolders': 'Amaga carpetes',
   'settings.hiddenFolders.example': '_recursos',
   'settings.hiddenFolders.desc':

@@ -574,6 +574,9 @@ export const es = {
   'settings.download.git.desc': 'Historial de la sincronización con GitHub. Puede ocupar mucho.',
   'settings.download.trash': 'Incluir papelera',
   'settings.download.trash.desc': 'Añade al ZIP los elementos borrados de la carpeta .trash.',
+  'settings.download.data': 'Incluir configuración de la web',
+  'settings.download.data.desc':
+    'Añade la carpeta data/ de la app (contraseña, claves, sesiones y sincronización). Contiene datos sensibles; no compartas el ZIP.',
   'settings.hiddenFolders': 'Ocultar carpetas',
   'settings.hiddenFolders.example': '_recursos',
   'settings.hiddenFolders.desc':

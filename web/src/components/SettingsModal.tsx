@@ -1337,6 +1337,7 @@ function FilesSection() {
   const [saving, setSaving] = useState(false);
   const [includeGit, setIncludeGit] = useState(false);
   const [includeTrash, setIncludeTrash] = useState(false);
+  const [includeData, setIncludeData] = useState(false);
   const t = useT();
 
   useEffect(() => {
@@ -1363,7 +1364,7 @@ function FilesSection() {
   };
 
   // Enlace directo: el navegador descarga el ZIP por streaming sin guardarlo en memoria
-  const downloadUrl = settingsApi.downloadVaultUrl({ git: includeGit, trash: includeTrash });
+  const downloadUrl = settingsApi.downloadVaultUrl({ git: includeGit, trash: includeTrash, data: includeData });
 
   return (
     <>
@@ -1427,6 +1428,16 @@ function FilesSection() {
           </div>
           <label className="setting-toggle">
             <input type="checkbox" checked={includeTrash} onChange={(e) => setIncludeTrash(e.target.checked)} />
+            <span />
+          </label>
+        </div>
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('settings.download.data')}</div>
+            <div className="setting-desc">{t('settings.download.data.desc')}</div>
+          </div>
+          <label className="setting-toggle">
+            <input type="checkbox" checked={includeData} onChange={(e) => setIncludeData(e.target.checked)} />
             <span />
           </label>
         </div>

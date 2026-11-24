@@ -243,10 +243,11 @@ export const settingsApi = {
   getAttachments: (): Promise<{ attachmentFolderPath: string }> => request('/settings/attachments'),
   setAttachments: (attachmentFolderPath: string): Promise<{ attachmentFolderPath: string }> =>
     post('/settings/attachments', { attachmentFolderPath }),
-  downloadVaultUrl: (opts: { git?: boolean; trash?: boolean } = {}) => {
+  downloadVaultUrl: (opts: { git?: boolean; trash?: boolean; data?: boolean } = {}) => {
     const params = new URLSearchParams();
     if (opts.git) params.set('git', '1');
     if (opts.trash) params.set('trash', '1');
+    if (opts.data) params.set('data', '1');
     const qs = params.toString();
     return `${API_URL}/settings/download-vault${qs ? `?${qs}` : ''}`;
   },

@@ -399,7 +399,8 @@ export default (dataDir, getConfig, limiter, sessions) => {
   });
 
   // Descargar el vault completo como ZIP. Se envía por streaming: el navegador lo guarda
-  // directamente sin cargarlo en memoria. .git y .trash se excluyen salvo ?git=1 / ?trash=1
+  // directamente sin cargarlo en memoria. .git y .trash se excluyen salvo ?git=1 / ?trash=1.
+  // ?data=1 añade la carpeta data/ de la app (configuración, sesiones, sync; sin copias de seguridad)
   router.get('/download-vault', async (req, res) => {
     const cfg = getConfig();
     if (!cfg) return res.status(400).json({ error: 'Not configured' });
@@ -407,6 +408,7 @@ export default (dataDir, getConfig, limiter, sessions) => {
     const excluded = new Set();
     if (req.query.git !== '1') excluded.add('.git');
     if (req.query.trash !== '1') excluded.add('.trash');
+    const includeData = req.query.data === '1';
 
     try {
       const ZipArchive = await loadZipArchive();
@@ -457,6 +459,15 @@ export default (dataDir, getConfig, limiter, sessions) => {
       };
 
       addDirToArchive(vaultPath);
+
+      if (includeData) {
+        // Solo los archivos sueltos de data/: se omiten las copias de seguridad (data/backups) y los temporales
+        for (const entry of readdirSync(dataDir, { withFileTypes: true })) {
+          if (!entry.isFile() || entry.name.endsWith('.tmp')) continue;
+          archive.file(join(dataDir, entry.name), { name: `data/${entry.name}` });
+        }
+      }
+
       archive.finalize();
     } catch (err) {
       if (!res.headersSent) {

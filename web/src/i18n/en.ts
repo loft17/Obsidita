@@ -572,6 +572,9 @@ export const en: Messages = {
   'settings.download.git.desc': 'GitHub sync history. It can be large.',
   'settings.download.trash': 'Include trash',
   'settings.download.trash.desc': 'Adds deleted items from the .trash folder to the ZIP.',
+  'settings.download.data': 'Include web configuration',
+  'settings.download.data.desc':
+    'Adds the app data/ folder (password, keys, sessions and sync). It contains sensitive data; do not share the ZIP.',
   'settings.hiddenFolders': 'Hidden folders',
   'settings.hiddenFolders.example': '_resources',
   'settings.hiddenFolders.desc':
