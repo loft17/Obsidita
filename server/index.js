@@ -6,7 +6,7 @@ import { dirname, join, extname } from 'path';
 import { readFileSync, existsSync, writeFileSync, mkdirSync, readdirSync, chmodSync, statSync, lstatSync, rmSync } from 'fs';
 import setupRoutes from './routes/setup.js';
 import authRoutes from './routes/auth.js';
-import filesRoutes from './routes/files.js';
+import filesRoutes, { sendPrintPageByName } from './routes/files.js';
 import searchRoutes from './routes/search.js';
 import settingsRoutes from './routes/settings.js';
 import bookmarksRoutes from './routes/bookmarks.js';
@@ -20,7 +20,7 @@ import { createSyncManager } from './sync.js';
 import { invalidateSnapshot } from './searchIndex.js';
 import { createSessionStore, createLoginLimiter } from './sessions.js';
 import { loadCookieSecret } from './cookieSecret.js';
-import { securityHeaders, csrfGuard } from './security.js';
+import { securityHeaders, csrfGuard, publicError } from './security.js';
 import { MAX_NOTE_MB, MAX_UPLOAD_MB, PROXY_MAX_BODY_MB, AI_MAX_CHARS } from './limits.js';
 import { createLogger } from './logger.js';
 const log = createLogger('Server');
@@ -240,6 +240,19 @@ app.get(/^\/([A-Za-z0-9_-]{3,32})$/, (req, res, next) => {
   if (RESERVED_CODES.has(code)) return next();
   res.set('Cache-Control', 'no-store');
   res.redirect(302, `/?go=${encodeURIComponent(code)}`);
+});
+
+// Exportación a PDF con URL corta: /pdf/<nombre de la nota>.md (p. ej. /pdf/Mi nota.md), sin carpetas.
+// Requiere sesión; sin ella se vuelve a la portada para entrar y reintentar
+app.get('/pdf/:name', async (req, res) => {
+  const cfg = getConfig();
+  if (!cfg || !sessions.isValid(req.signedCookies.token)) return res.redirect(302, '/');
+  res.set('Cache-Control', 'no-store');
+  try {
+    await sendPrintPageByName(cfg, req.params.name, res);
+  } catch (err) {
+    res.status(400).json({ error: publicError(err) });
+  }
 });
 
 // SPA fallback (serve index.html for client-side routing)

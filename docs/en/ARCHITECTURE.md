@@ -485,6 +485,7 @@ cleanupExpired()   // Clean expired sessions (daily)
 | `GET` | `/api/files/read/:filePath` | Note content and version (`{ content, version }`) |
 | `GET` | `/api/files/raw/:filePath` | Binary file (images, attachments) |
 | `GET` | `/api/files/export-pdf/:filePath` | Printable version (PDF) of note |
+| `GET` | `/pdf/:name` | Printable version by short note-name URL (`/pdf/Note.md`), requires session |
 | `POST` | `/api/files/write/:filePath` | Save note (`{ content, baseVersion? }`). Returns `409` if version conflict |
 | `POST` | `/api/files/upload?note=…&name=…` | Upload attachment (binary body); returns `{ path }` |
 | `DELETE` | `/api/files/:filePath` | Move to `.trash/` |

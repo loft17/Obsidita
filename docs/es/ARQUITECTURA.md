@@ -698,6 +698,7 @@ cleanupExpired()   // Limpiar sesiones expiradas (diario)
 | `GET` | `/api/files/read/:filePath` | Contenido de una nota y su versión (`{ content, version }`) |
 | `GET` | `/api/files/raw/:filePath` | Archivo binario (imágenes, adjuntos) |
 | `GET` | `/api/files/export-pdf/:filePath` | Versión imprimible (PDF) de la nota |
+| `GET` | `/pdf/:name` | Versión imprimible con URL corta por nombre de nota (`/pdf/Nota.md`), con sesión |
 | `POST` | `/api/files/write/:filePath` | Guarda una nota (`{ content, baseVersion? }`). Devuelve `409` si conflicto de versión |
 | `POST` | `/api/files/upload?note=…&name=…` | Sube adjunto (cuerpo binario); devuelve `{ path }` |
 | `DELETE` | `/api/files/:filePath` | Mueve a `.trash/` |

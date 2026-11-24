@@ -179,6 +179,10 @@ Devuelve el archivo binario tal cual (imágenes y otros adjuntos), con su `Conte
 
 Devuelve una página HTML con la nota renderizada (sin el frontmatter) que lanza el diálogo de impresión del navegador al cargarse. Es la base de "Exportar a PDF".
 
+### `GET /pdf/:name`
+
+La misma página de exportación con una URL corta que solo lleva el nombre de la nota, sin carpetas: `/pdf/Mi nota.md`. Es la que abre "Exportar a PDF" desde la web. Requiere sesión; sin ella redirige a `/`. `404` si no hay ninguna nota con ese nombre; `409` si hay varias con el mismo nombre en carpetas distintas (se listan sus rutas).
+
 ### `POST /api/files/write/:filePath`
 
 Guarda una nota (la crea si no existe, junto con sus carpetas).

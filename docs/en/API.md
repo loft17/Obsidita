@@ -181,6 +181,10 @@ Returns the binary file as-is (images and other attachments) with its `Content-T
 
 Returns an HTML page with the rendered note (frontmatter removed) that opens the browser's print dialog on load. This backs "Export to PDF".
 
+### `GET /pdf/:name`
+
+The same export page with a short URL that carries only the note's name, without folders: `/pdf/My note.md`. This is the URL "Export to PDF" opens from the web app. Requires a session; without one it redirects to `/`. `404` if no note has that name; `409` if several notes share the name in different folders (their paths are listed).
+
 ### `POST /api/files/write/:filePath`
 
 Saves a note (creating it and its folders if needed).

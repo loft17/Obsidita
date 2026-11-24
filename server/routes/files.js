@@ -51,6 +51,45 @@ const PRINT_SCRIPT = "window.addEventListener('load', function () { setTimeout(f
 // La página de exportación solo puede ejecutar su script de impresión
 const PRINT_CSP = `default-src 'none'; script-src ${scriptHash(PRINT_SCRIPT)}; style-src 'unsafe-inline'; img-src 'self' data: https:; frame-ancestors 'none'`;
 
+// Página imprimible de la nota `filePath` (ruta dentro del vault). La usan la ruta de la API
+// y la ruta corta /pdf/<nota>.md de index.js
+export const sendPrintPage = async (cfg, filePath, res) => {
+  const raw = vault.readFile(cfg.vaultPath, filePath);
+  const body = raw.replace(FRONTMATTER, '');
+  // Rutas de los adjuntos del vault (imágenes) para resolver ![[...]] como en la vista de lectura
+  const files = vault.listTree(cfg.vaultPath).filter((item) => item.type !== 'folder').map((item) => item.path);
+  const title = escapeHtml(filePath.split('/').pop().replace(/\.md$/i, ''));
+  const html = await renderPrintMarkdown(body, filePath, files);
+  res.set('Content-Security-Policy', PRINT_CSP);
+  res.type('html').send(`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>${title}</title>
+<style>${PRINT_STYLES}</style>
+</head>
+<body>
+<h1>${title}</h1>
+${html}
+<script>${PRINT_SCRIPT}</script>
+</body>
+</html>`);
+};
+
+// Página imprimible de la nota cuyo nombre (sin carpetas) es `name`, p. ej. "Mi nota.md".
+// Si hay varias notas con ese nombre en carpetas distintas no se adivina cuál: se responde 409
+export const sendPrintPageByName = async (cfg, name, res) => {
+  const matches = vault.listTree(cfg.vaultPath).filter((item) => item.type === 'file' && item.name === name);
+  if (matches.length === 0) return res.status(404).type('text').send('Nota no encontrada');
+  if (matches.length > 1) {
+    return res
+      .status(409)
+      .type('text')
+      .send(`Hay ${matches.length} notas llamadas "${name}" en distintas carpetas:\n${matches.map((m) => m.path).join('\n')}`);
+  }
+  return sendPrintPage(cfg, matches[0].path, res);
+};
+
 export default (dataDir, getConfig) => {
   const router = Router();
 
@@ -95,28 +134,7 @@ export default (dataDir, getConfig) => {
     });
   }));
 
-  router.get('/export-pdf/:filePath',withVault(async (cfg, req, res) => {
-    const raw = vault.readFile(cfg.vaultPath, req.params.filePath);
-    const body = raw.replace(FRONTMATTER, '');
-    // Rutas de los adjuntos del vault (imágenes) para resolver ![[...]] como en la vista de lectura
-    const files = vault.listTree(cfg.vaultPath).filter((item) => item.type !== 'folder').map((item) => item.path);
-    const title = escapeHtml(req.params.filePath.split('/').pop().replace(/\.md$/i, ''));
-    const html = await renderPrintMarkdown(body, req.params.filePath, files);
-    res.set('Content-Security-Policy', PRINT_CSP);
-    res.type('html').send(`<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>${title}</title>
-<style>${PRINT_STYLES}</style>
-</head>
-<body>
-<h1>${title}</h1>
-${html}
-<script>${PRINT_SCRIPT}</script>
-</body>
-</html>`);
-  }));
+  router.get('/export-pdf/:filePath', withVault((cfg, req, res) => sendPrintPage(cfg, req.params.filePath, res)));
 
   // 409 si la nota ha cambiado desde `baseVersion`: el cliente decide qué versión conservar
   router.post('/write/:filePath', withVault((cfg, req, res) => {

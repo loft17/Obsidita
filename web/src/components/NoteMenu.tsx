@@ -215,7 +215,9 @@ export default function NoteMenu() {
     // Abrir antes del await: tras él ya no cuenta como gesto del usuario y se bloquea el popup
     const win = window.open('', '_blank');
     await flushPendingSave(activeTab);
-    const url = `/api/files/export-pdf/${encodeURIComponent(activeTab)}`;
+    // Solo el nombre de la nota, sin carpetas: /pdf/<nota>.md
+    const name = activeTab.split('/').pop() ?? activeTab;
+    const url = `/pdf/${encodeURIComponent(name)}`;
     if (win) win.location.href = url;
     else notify('exportPdf', translate('note.popupBlocked'), 'error');
   };
