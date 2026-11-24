@@ -196,3 +196,18 @@ export function imageFigure(o: FigureOptions) {
   }
   return figure;
 }
+
+// Vista de lectura: el mismo botón de ampliar sobre cada imagen ya pintada (sin tirador ni
+// Markdown, que son de la edición). Las imágenes ya envueltas se saltan, así que se puede repetir
+export function enhanceReadingImages(root: HTMLElement) {
+  root.querySelectorAll<HTMLImageElement>('img').forEach((img) => {
+    if (img.parentElement?.classList.contains('cm-lp-figure')) return;
+    const figure = document.createElement('span');
+    figure.className = 'cm-lp-figure';
+    const tools = document.createElement('span');
+    tools.className = 'cm-lp-image-tools';
+    tools.append(imageBtn('is-zoom', ICON_ZOOM, t('image.zoom'), () => openImageZoom(img.src, img.alt)));
+    img.replaceWith(figure);
+    figure.append(img, tools);
+  });
+}

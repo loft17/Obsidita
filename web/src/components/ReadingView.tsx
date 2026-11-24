@@ -26,6 +26,7 @@ import { t, useI18n } from '../i18n';
 import { fileName } from '../paths';
 import { copyText } from '../clipboard';
 import { enhanceReadingTables, refreshReadingTables } from '../readingTables';
+import { enhanceReadingImages } from '../imageTools';
 import { settingsApi } from '../api';
 import { youtubeId } from '../youtube';
 
@@ -631,6 +632,8 @@ export default function ReadingView({ content, filePath, onContentChange }: Prop
     renderMermaidDiagrams(contentRef.current, t('mermaid.error'));
     // Barra de búsqueda, filtros y orden de las tablas (solo vista: no toca el archivo)
     enhanceReadingTables(contentRef.current, notePath);
+    // Botón de ampliar en las imágenes (como en la edición)
+    enhanceReadingImages(contentRef.current);
   }, [html]);
 
   // El ajuste «buscar ocultando filas» cambia cómo se aplica la búsqueda

@@ -2411,6 +2411,12 @@ button.note-info-item {
   border-radius: 4px;
 }
 
+/* Imagen con su botón de ampliar (ver enhanceReadingImages): envoltorio que no pasa del ancho de la columna */
+.reading-view-content .cm-lp-figure {
+  display: inline-block;
+  max-width: 100%;
+}
+
 /* Notas incrustadas (![[nota]]) */
 .reading-view .internal-embed {
   border-left: 2px solid var(--interactive-accent);
