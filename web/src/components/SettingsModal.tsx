@@ -1722,7 +1722,7 @@ function SyncSection() {
             </div>
           )}
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="setting-actions">
           {hasToken && (
             <button onClick={forgetToken} disabled={busy}>
               {t('sync.forgetToken')}
@@ -1883,7 +1883,7 @@ function SecuritySection() {
             </div>
           </div>
           {confirmRevoke ? (
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="setting-actions">
               <button onClick={() => setConfirmRevoke(false)} disabled={busy}>
                 {t('common.cancel')}
               </button>
@@ -2004,7 +2004,7 @@ function TwoFactorSection() {
           </button>
         )}
         {enabled === true && !mode && (
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="setting-actions">
             <button onClick={() => { reset(); setMode('regen'); }} disabled={busy}>
               {t('otp.regen')}
             </button>
@@ -2118,7 +2118,7 @@ function TwoFactorSection() {
               ))}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="setting-actions">
             <button onClick={() => navigator.clipboard?.writeText(recovery.join('\n'))}>{t('otp.copy')}</button>
             <button onClick={() => setRecovery(null)}>{t('otp.recoveryDone')}</button>
           </div>

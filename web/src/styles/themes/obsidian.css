@@ -3614,6 +3614,23 @@ button.note-info-item {
   border-bottom: none;
 }
 
+/* Los botones de una fila no se encogen ni parten el texto en varias líneas: cuando la
+   descripción es larga, es ella la que se ajusta (p. ej. "Cerrar todas" en Seguridad) */
+.setting-item button {
+  white-space: nowrap;
+}
+
+.setting-item > button,
+.setting-actions {
+  flex-shrink: 0;
+}
+
+/* Varios botones juntos a la derecha de una fila */
+.setting-actions {
+  display: flex;
+  gap: 8px;
+}
+
 /* Subir, bajar y mostrar/ocultar un botón de la cinta (SettingsModal, SidebarSection) */
 .ribbon-item-controls {
   display: flex;
