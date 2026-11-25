@@ -6,6 +6,16 @@ import * as vault from '../vault.js';
 import { publicError } from '../security.js';
 import { verifyPassword, hashPassword, MIN_PASSWORD_LENGTH } from '../password.js';
 import { sessionCookie } from '../sessions.js';
+import {
+  otpEnabled,
+  checkSecondFactor,
+  enableOtpConfig,
+  regenerateRecoveryCodes,
+  newOtpSecret,
+  otpUri,
+  validOtpSecret,
+  verifyEnrollmentCode,
+} from '../otp.js';
 import * as limits from '../limits.js';
 import { loadZipArchive, ZIP_LEVEL } from '../lazy.js';
 import { getUpdateStatus } from '../updates.js';
@@ -158,6 +168,103 @@ export default (dataDir, getConfig, limiter, sessions) => {
       attempt.release();
     }
   });
+
+  // Verificación en dos pasos (TOTP). Para activarla: se genera una clave, se confirma con un
+  // código de la app y se muestran los códigos de recuperación (solo una vez). Desactivarla o
+  // generar códigos nuevos exige la contraseña y un código (de la app o de recuperación)
+  router.get('/otp', (req, res) => {
+    const cfg = getConfig();
+    if (!cfg) return res.status(400).json({ error: 'Not configured' });
+    res.json({ enabled: otpEnabled(cfg), recoveryLeft: cfg.otp?.recovery?.length ?? 0 });
+  });
+
+  // Devuelve la clave y un QR (SVG como data: URL, permitido por la CSP en img-src) para
+  // escanearlo con la app del móvil. La librería se carga solo aquí, al configurar
+  router.post('/otp/setup', async (req, res) => {
+    const cfg = getConfig();
+    if (!cfg) return res.status(400).json({ error: 'Not configured' });
+    if (otpEnabled(cfg)) return res.status(409).json({ error: 'La verificación en dos pasos ya está activada' });
+    const secret = newOtpSecret();
+    const uri = otpUri(secret);
+    let qr = null;
+    try {
+      const { default: QRCode } = await import('qrcode');
+      const svg = await QRCode.toString(uri, { type: 'svg', margin: 2, errorCorrectionLevel: 'M' });
+      qr = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+    } catch (err) {
+      log.warn('No se pudo generar el QR de la verificación en dos pasos:', err.message);
+    }
+    res.json({ secret, uri, qr });
+  });
+
+  router.post('/otp/enable', (req, res) => {
+    const cfg = getConfig();
+    if (!cfg) return res.status(400).json({ error: 'Not configured' });
+    if (otpEnabled(cfg)) return res.status(409).json({ error: 'La verificación en dos pasos ya está activada' });
+    const secret = String(req.body?.secret ?? '').replace(/[\s-]/g, '').toUpperCase();
+    if (!validOtpSecret(secret)) return res.status(400).json({ error: 'Clave no válida' });
+    if (!verifyEnrollmentCode(secret, req.body?.code)) {
+      return res.status(400).json({ error: 'Código incorrecto. Revisa la hora del móvil y prueba con el código actual' });
+    }
+    try {
+      const next = enableOtpConfig(cfg, dataDir, secret);
+      backupData(dataDir, 'otp-enable');
+      writeFileAtomic(configPath, JSON.stringify(next.cfg, null, 2));
+      res.json({ enabled: true, recoveryCodes: next.recoveryCodes });
+    } catch (err) {
+      res.status(500).json({ error: publicError(err, 'No se pudo activar la verificación en dos pasos') });
+    }
+  });
+
+  // Acciones sensibles del segundo factor (desactivar, códigos nuevos): exigen la contraseña y un
+  // código de la app o de recuperación, con el mismo límite de intentos que el login.
+  // `action(cfg)` recibe la configuración verificada y devuelve { cfg, body } para guardar y responder
+  const withOtpConfirmation = async (req, res, action) => {
+    const cfg = getConfig();
+    if (!cfg) return res.status(400).json({ error: 'Not configured' });
+    if (!otpEnabled(cfg)) return res.status(409).json({ error: 'La verificación en dos pasos no está activada' });
+    const attempt = limiter.begin(req.ip);
+    const { wait } = attempt;
+    if (wait) {
+      res.set('Retry-After', String(wait));
+      return res.status(429).json({ error: `Demasiados intentos. Prueba de nuevo en ${Math.ceil(wait / 60)} min` });
+    }
+    try {
+      const { password, code } = req.body ?? {};
+      if (!(await verifyPassword(password, cfg.passwordHash))) {
+        attempt.fail();
+        return res.status(403).json({ error: 'Contraseña incorrecta' });
+      }
+      const check = checkSecondFactor(cfg, dataDir, code);
+      if (!check.ok) {
+        attempt.fail();
+        return res.status(403).json({ error: 'Código incorrecto' });
+      }
+      attempt.succeed();
+      const next = action(check.cfg);
+      backupData(dataDir, 'otp');
+      writeFileAtomic(configPath, JSON.stringify(next.cfg, null, 2));
+      res.json(next.body);
+    } catch (err) {
+      res.status(500).json({ error: publicError(err, 'No se pudo guardar') });
+    } finally {
+      attempt.release();
+    }
+  };
+
+  router.post('/otp/disable', (req, res) =>
+    withOtpConfirmation(req, res, (cfg) => {
+      const { otp: _, ...rest } = cfg;
+      return { cfg: rest, body: { enabled: false } };
+    })
+  );
+
+  router.post('/otp/recovery', (req, res) =>
+    withOtpConfirmation(req, res, (cfg) => {
+      const next = regenerateRecoveryCodes(cfg);
+      return { cfg: next.cfg, body: { recoveryCodes: next.recoveryCodes } };
+    })
+  );
 
   // Cierra todas las sesiones abiertas, también la actual
   router.post('/sessions/revoke', (req, res) => {

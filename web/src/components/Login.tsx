@@ -13,6 +13,9 @@ export default function Login({ onComplete, startupError }: Props) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // Con la verificación en dos pasos, tras la contraseña el servidor pide el código
+  const [needCode, setNeedCode] = useState(false);
+  const [code, setCode] = useState('');
   const t = useT();
   const siteTitle = useStore((s) => s.siteTitle);
   const message = error || startupError || '';
@@ -25,10 +28,19 @@ export default function Login({ onComplete, startupError }: Props) {
       setError(t('login.required'));
       return;
     }
+    if (needCode && !code.trim()) {
+      setError(t('otp.required'));
+      return;
+    }
 
     setLoading(true);
     try {
-      await authApi.login(password);
+      const res = await authApi.login(password, needCode ? code.trim() : undefined);
+      if (res.otpRequired) {
+        setNeedCode(true);
+        setCode('');
+        return;
+      }
       onComplete();
     } catch (err) {
       setError((err instanceof ApiError && err.data.error) || t('login.wrong'));
@@ -41,7 +53,7 @@ export default function Login({ onComplete, startupError }: Props) {
     <div className="auth-screen">
       <div className="auth-form">
         <h1>{siteTitle || DEFAULT_SITE_TITLE}</h1>
-        <p style={{ fontSize: '12px', color: 'var(--text-faint)', marginBottom: '16px' }}>{t('login.prompt')}</p>
+        <p style={{ fontSize: '12px', color: 'var(--text-faint)', marginBottom: '16px' }}>{needCode ? t('otp.loginPrompt') : t('login.prompt')}</p>
 
         {message && <div className="error">{message}</div>}
 
@@ -53,8 +65,20 @@ export default function Login({ onComplete, startupError }: Props) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
-            autoFocus
+            autoFocus={!needCode}
           />
+          {needCode && (
+            <input
+              type="text"
+              inputMode="text"
+              placeholder={t('otp.loginCode')}
+              autoComplete="one-time-code"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              disabled={loading}
+              autoFocus
+            />
+          )}
           <button type="submit" disabled={loading}>
             {loading ? t('login.verifying') : t('login.submit')}
           </button>

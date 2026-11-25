@@ -626,6 +626,32 @@ export const es = {
   'security.revoke.desc':
     'Cierra la sesión en todos los dispositivos, también en este. Las sesiones caducan solas a los {max} días o tras {idle} días sin usarse.',
   'security.revokeAll': 'Cerrar todas',
+  'otp.title': 'Verificación en dos pasos (OTP)',
+  'otp.desc': 'Pide un código de una app de autenticación (Google Authenticator, Aegis, 1Password...) además de la contraseña al entrar.',
+  'otp.descOn': 'Activada. Al entrar hay que escribir un código de la app. Códigos de recuperación restantes: {n}.',
+  'otp.enable': 'Activar',
+  'otp.enabled': 'Verificación en dos pasos activada. Guarda los códigos de recuperación.',
+  'otp.disable': 'Desactivar',
+  'otp.disabled': 'Verificación en dos pasos desactivada.',
+  'otp.regen': 'Nuevos códigos de recuperación',
+  'otp.setupHelp':
+    'Añade esta clave en tu app como clave basada en tiempo (TOTP), de 6 dígitos y 30 segundos. Después escribe el código que muestre.',
+  'otp.scanHelp': 'Escanea este código QR con tu app de autenticación y escribe el código de 6 dígitos que muestre.',
+  'otp.qrAlt': 'Código QR para la app de autenticación',
+  'otp.manualKey': 'Si no puedes escanearlo, añade esta clave a mano (basada en tiempo, 6 dígitos, 30 segundos):',
+  'otp.code': 'Código de 6 dígitos',
+  'otp.confirm': 'Confirmar',
+  'otp.disableDesc': 'Escribe tu contraseña y un código de la app (o un código de recuperación) para desactivarla.',
+  'otp.regenDesc':
+    'Escribe tu contraseña y un código de la app para generar códigos de recuperación nuevos. Los anteriores dejarán de valer.',
+  'otp.recoveryTitle': 'Códigos de recuperación',
+  'otp.recoveryDesc':
+    'Cada código sirve una sola vez, por si pierdes el acceso a tu app. Guárdalos ahora: no se volverán a mostrar.',
+  'otp.copy': 'Copiar',
+  'otp.recoveryDone': 'Ya los he guardado',
+  'otp.loginPrompt': 'Escribe el código de tu app de autenticación o un código de recuperación',
+  'otp.loginCode': 'Código de verificación',
+  'otp.required': 'Escribe el código de verificación',
 
   // Atajos
   'shortcuts.mac': 'En Mac, usa Cmd en lugar de Ctrl.',

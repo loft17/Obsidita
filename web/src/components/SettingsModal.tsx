@@ -1896,7 +1896,235 @@ function SecuritySection() {
           )}
         </div>
       </div>
+      <TwoFactorSection />
     </>
+  );
+}
+
+// Verificación en dos pasos (OTP / TOTP): además de la contraseña, el login pide un código de una
+// app de autenticación. Al activarla se muestran códigos de recuperación (una sola vez)
+function TwoFactorSection() {
+  const t = useT();
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+  const [recoveryLeft, setRecoveryLeft] = useState(0);
+  // Activación en curso: clave generada, pendiente de confirmar con un código de la app
+  const [setup, setSetup] = useState<{ secret: string; qr: string | null } | null>(null);
+  // Acción que pide contraseña + código
+  const [mode, setMode] = useState<'disable' | 'regen' | null>(null);
+  const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
+  // Códigos de recuperación recién generados
+  const [recovery, setRecovery] = useState<string[] | null>(null);
+  const [message, setMessage] = useState<{ error: boolean; text: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    settingsApi
+      .getOtp()
+      .then((s) => {
+        setEnabled(s.enabled);
+        setRecoveryLeft(s.recoveryLeft);
+      })
+      .catch((err) => setMessage({ error: true, text: (err as Error).message }));
+  }, []);
+
+  const reset = () => {
+    setSetup(null);
+    setMode(null);
+    setPassword('');
+    setCode('');
+  };
+
+  const run = async (action: () => Promise<void>) => {
+    setMessage(null);
+    setBusy(true);
+    try {
+      await action();
+    } catch (err) {
+      setMessage({ error: true, text: (err as Error).message });
+    }
+    setBusy(false);
+  };
+
+  const startSetup = () =>
+    run(async () => {
+      const s = await settingsApi.setupOtp();
+      reset();
+      setSetup({ secret: s.secret, qr: s.qr });
+    });
+
+  const enable = () =>
+    run(async () => {
+      if (!setup) return;
+      const r = await settingsApi.enableOtp(setup.secret, code.trim());
+      reset();
+      setEnabled(true);
+      setRecoveryLeft(r.recoveryCodes.length);
+      setRecovery(r.recoveryCodes);
+      setMessage({ error: false, text: t('otp.enabled') });
+    });
+
+  const disable = () =>
+    run(async () => {
+      await settingsApi.disableOtp(password, code.trim());
+      reset();
+      setEnabled(false);
+      setRecovery(null);
+      setRecoveryLeft(0);
+      setMessage({ error: false, text: t('otp.disabled') });
+    });
+
+  const regenerate = () =>
+    run(async () => {
+      const r = await settingsApi.regenerateOtpRecovery(password, code.trim());
+      reset();
+      setRecoveryLeft(r.recoveryCodes.length);
+      setRecovery(r.recoveryCodes);
+    });
+
+  const secretText = setup?.secret.match(/.{1,4}/g)?.join(' ') ?? '';
+  const canEnable = !busy && code.trim().length === 6;
+  const canConfirm = !busy && password !== '' && code.trim() !== '';
+
+  return (
+    <div className="settings-group">
+      <div className="setting-item">
+        <div className="setting-info">
+          <div className="setting-name">{t('otp.title')}</div>
+          <div className="setting-desc">{enabled ? t('otp.descOn', { n: recoveryLeft }) : t('otp.desc')}</div>
+          {message && (
+            <div className="setting-desc" style={message.error ? errorStyle : undefined}>
+              {message.text}
+            </div>
+          )}
+        </div>
+        {enabled === false && !setup && (
+          <button onClick={startSetup} disabled={busy}>
+            {t('otp.enable')}
+          </button>
+        )}
+        {enabled === true && !mode && (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => { reset(); setMode('regen'); }} disabled={busy}>
+              {t('otp.regen')}
+            </button>
+            <button onClick={() => { reset(); setMode('disable'); }} disabled={busy}>
+              {t('otp.disable')}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {setup && (
+        <>
+          <div className="setting-item">
+            <div className="setting-info">
+              <div className="setting-desc">{setup.qr ? t('otp.scanHelp') : t('otp.setupHelp')}</div>
+              {setup.qr && (
+                // Fondo blanco siempre: con el tema oscuro algunas cámaras no leen el QR
+                <img
+                  src={setup.qr}
+                  alt={t('otp.qrAlt')}
+                  width={180}
+                  height={180}
+                  style={{ display: 'block', background: '#fff', borderRadius: 6, margin: '10px 0' }}
+                />
+              )}
+              {setup.qr && <div className="setting-desc">{t('otp.manualKey')}</div>}
+              <div style={{ fontFamily: 'var(--font-mono, monospace)', letterSpacing: 1, userSelect: 'all', margin: '8px 0' }}>
+                {secretText}
+              </div>
+            </div>
+          </div>
+          <div className="setting-item">
+            <input
+              className="setting-input"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              placeholder={t('otp.code')}
+              maxLength={6}
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && canEnable && enable()}
+              disabled={busy}
+            />
+            <button onClick={enable} disabled={!canEnable}>
+              {t('otp.confirm')}
+            </button>
+            <button onClick={() => { reset(); setMessage(null); }} disabled={busy}>
+              {t('common.cancel')}
+            </button>
+          </div>
+        </>
+      )}
+
+      {mode && (
+        <>
+          <div className="setting-item">
+            <div className="setting-info">
+              <div className="setting-desc">{t(mode === 'disable' ? 'otp.disableDesc' : 'otp.regenDesc')}</div>
+            </div>
+          </div>
+          <div className="setting-item">
+            <input
+              className="setting-input"
+              type="password"
+              placeholder={t('password.current')}
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={busy}
+            />
+          </div>
+          <div className="setting-item">
+            <input
+              className="setting-input"
+              type="text"
+              placeholder={t('otp.loginCode')}
+              autoComplete="one-time-code"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && canConfirm && (mode === 'disable' ? disable() : regenerate())}
+              disabled={busy}
+            />
+            <button onClick={mode === 'disable' ? disable : regenerate} disabled={!canConfirm}>
+              {t('otp.confirm')}
+            </button>
+            <button onClick={() => { reset(); setMessage(null); }} disabled={busy}>
+              {t('common.cancel')}
+            </button>
+          </div>
+        </>
+      )}
+
+      {recovery && (
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-name">{t('otp.recoveryTitle')}</div>
+            <div className="setting-desc">{t('otp.recoveryDesc')}</div>
+            <div
+              style={{
+                fontFamily: 'var(--font-mono, monospace)',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, max-content)',
+                gap: '4px 24px',
+                margin: '8px 0',
+                userSelect: 'all',
+              }}
+            >
+              {recovery.map((c) => (
+                <span key={c}>{c}</span>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => navigator.clipboard?.writeText(recovery.join('\n'))}>{t('otp.copy')}</button>
+            <button onClick={() => setRecovery(null)}>{t('otp.recoveryDone')}</button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

@@ -623,6 +623,32 @@ export const en: Messages = {
   'security.revoke.desc':
     'Logs out on every device, including this one. Sessions expire on their own after {max} days, or after {idle} days without use.',
   'security.revokeAll': 'Log out all',
+  'otp.title': 'Two-step verification (OTP)',
+  'otp.desc': 'Asks for a code from an authenticator app (Google Authenticator, Aegis, 1Password...) in addition to your password when logging in.',
+  'otp.descOn': 'On. Logging in requires a code from the app. Recovery codes left: {n}.',
+  'otp.enable': 'Enable',
+  'otp.enabled': 'Two-step verification enabled. Save the recovery codes.',
+  'otp.disable': 'Disable',
+  'otp.disabled': 'Two-step verification disabled.',
+  'otp.regen': 'New recovery codes',
+  'otp.setupHelp':
+    'Add this key to your app as a time-based key (TOTP), 6 digits and 30 seconds. Then enter the code it shows.',
+  'otp.scanHelp': 'Scan this QR code with your authenticator app and enter the 6-digit code it shows.',
+  'otp.qrAlt': 'QR code for the authenticator app',
+  'otp.manualKey': "If you can't scan it, add this key manually (time-based, 6 digits, 30 seconds):",
+  'otp.code': '6-digit code',
+  'otp.confirm': 'Confirm',
+  'otp.disableDesc': 'Enter your password and a code from the app (or a recovery code) to disable it.',
+  'otp.regenDesc':
+    'Enter your password and a code from the app to generate new recovery codes. The previous ones will stop working.',
+  'otp.recoveryTitle': 'Recovery codes',
+  'otp.recoveryDesc':
+    'Each code works only once, in case you lose access to your app. Save them now: they will not be shown again.',
+  'otp.copy': 'Copy',
+  'otp.recoveryDone': 'I have saved them',
+  'otp.loginPrompt': 'Enter the code from your authenticator app or a recovery code',
+  'otp.loginCode': 'Verification code',
+  'otp.required': 'Enter the verification code',
 
   // Shortcuts
   'shortcuts.mac': 'On Mac, use Cmd instead of Ctrl.',

@@ -628,6 +628,32 @@ export const ca: Messages = {
   'security.revoke.desc':
     'Tanca la sessió a tots els dispositius, també en aquest. Les sessions caduquen soles als {max} dies o després de {idle} dies sense fer-se servir.',
   'security.revokeAll': 'Tanca-les totes',
+  'otp.title': 'Verificació en dos passos (OTP)',
+  'otp.desc': "Demana un codi d'una app d'autenticació (Google Authenticator, Aegis, 1Password...) a més de la contrasenya en entrar.",
+  'otp.descOn': "Activada. En entrar cal escriure un codi de l'app. Codis de recuperació restants: {n}.",
+  'otp.enable': 'Activa',
+  'otp.enabled': "Verificació en dos passos activada. Guarda els codis de recuperació.",
+  'otp.disable': 'Desactiva',
+  'otp.disabled': 'Verificació en dos passos desactivada.',
+  'otp.regen': 'Codis de recuperació nous',
+  'otp.setupHelp':
+    "Afegeix aquesta clau a la teva app com a clau basada en temps (TOTP), de 6 dígits i 30 segons. Després escriu el codi que mostri.",
+  'otp.scanHelp': "Escaneja aquest codi QR amb la teva app d'autenticació i escriu el codi de 6 dígits que mostri.",
+  'otp.qrAlt': "Codi QR per a l'app d'autenticació",
+  'otp.manualKey': "Si no el pots escanejar, afegeix aquesta clau a mà (basada en temps, 6 dígits, 30 segons):",
+  'otp.code': 'Codi de 6 dígits',
+  'otp.confirm': 'Confirma',
+  'otp.disableDesc': "Escriu la teva contrasenya i un codi de l'app (o un codi de recuperació) per desactivar-la.",
+  'otp.regenDesc':
+    "Escriu la teva contrasenya i un codi de l'app per generar codis de recuperació nous. Els anteriors deixaran de valer.",
+  'otp.recoveryTitle': 'Codis de recuperació',
+  'otp.recoveryDesc':
+    "Cada codi serveix una sola vegada, per si perds l'accés a la teva app. Guarda'ls ara: no es tornaran a mostrar.",
+  'otp.copy': 'Copia',
+  'otp.recoveryDone': 'Ja els he guardat',
+  'otp.loginPrompt': "Escriu el codi de la teva app d'autenticació o un codi de recuperació",
+  'otp.loginCode': 'Codi de verificació',
+  'otp.required': 'Escriu el codi de verificació',
 
   // Dreceres
   'shortcuts.mac': 'Al Mac, fes servir Cmd en lloc de Ctrl.',

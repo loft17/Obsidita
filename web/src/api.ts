@@ -117,7 +117,10 @@ export const setupApi = {
 
 export const authApi = {
   // El formulario muestra el `error` del servidor (contraseña incorrecta, demasiados intentos...)
-  login: (password: string) => post('/auth/login', { password }),
+  // Con la verificación en dos pasos: primero solo la contraseña (responde otpRequired) y luego
+  // contraseña + código de la app o de recuperación
+  login: (password: string, code?: string) =>
+    post<{ success?: boolean; otpRequired?: boolean }>('/auth/login', code ? { password, code } : { password }),
   logout: () => request('/auth/logout', { method: 'POST' }),
 };
 
@@ -228,6 +231,18 @@ export const settingsApi = {
   // Cierra las demás sesiones; la actual recibe una cookie nueva
   changePassword: (currentPassword: string, newPassword: string) =>
     post('/settings/password', { currentPassword, newPassword }),
+  // Verificación en dos pasos (TOTP): activar = pedir una clave nueva, confirmarla con un código
+  // y recibir los códigos de recuperación (solo se muestran una vez)
+  getOtp: (): Promise<{ enabled: boolean; recoveryLeft: number }> => request('/settings/otp'),
+  // `qr`: imagen (data: URL) para escanear con la app; null si no se pudo generar
+  setupOtp: (): Promise<{ secret: string; uri: string; qr: string | null }> => post('/settings/otp/setup'),
+  enableOtp: (secret: string, code: string): Promise<{ enabled: true; recoveryCodes: string[] }> =>
+    post('/settings/otp/enable', { secret, code }),
+  // Desactivar y generar códigos nuevos exigen la contraseña y un código (de la app o de recuperación)
+  disableOtp: (password: string, code: string): Promise<{ enabled: false }> =>
+    post('/settings/otp/disable', { password, code }),
+  regenerateOtpRecovery: (password: string, code: string): Promise<{ recoveryCodes: string[] }> =>
+    post('/settings/otp/recovery', { password, code }),
   // Cierra todas las sesiones, también la actual
   revokeSessions: () => request('/settings/sessions/revoke', { method: 'POST' }),
   setSiteTitle: (siteTitle: string): Promise<{ siteTitle: string }> => post('/settings/site-title', { siteTitle }),
